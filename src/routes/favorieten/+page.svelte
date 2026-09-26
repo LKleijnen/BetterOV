@@ -90,7 +90,7 @@
 				<span class="label">Naam</span>
 				<input class="veld" bind:value={nieuweNaam} placeholder="Bijvoorbeeld Werk of Oma" maxlength="40" />
 			</label>
-			<PlekInvoer label="Adres, halte of station" bind:waarde={nieuwePlek} gps />
+			<PlekInvoer label="Plek" bind:waarde={nieuwePlek} gps />
 			<button class="knop" type="submit"><Plus size={18} /> Bewaar plek</button>
 			{#if fout}<p class="status-fout klein">{fout}</p>{/if}
 		</form>

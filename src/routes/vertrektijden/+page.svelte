@@ -5,7 +5,7 @@
 	import { api, metCache } from '$lib/client/api';
 	import { huidigePositie } from '$lib/client/gps';
 	import { lees, schrijf } from '$lib/client/opslag';
-	import { klok, relatief, vertragingMinuten } from '$lib/tijd';
+	import { klok, vertragingMinuten } from '$lib/tijd';
 	import { spoorGewijzigd } from '$lib/reis';
 	import PlekInvoer from '$lib/components/PlekInvoer.svelte';
 	import ModusIcoon from '$lib/components/ModusIcoon.svelte';
@@ -100,6 +100,13 @@
 	const heeftTreinen = $derived((antwoord?.vertrekken ?? []).some((v) => v.modus === 'trein'));
 	const heeftAnder = $derived((antwoord?.vertrekken ?? []).some((v) => v.modus !== 'trein'));
 
+	/** "nu", "7 min", of niets als het nog meer dan een uur duurt */
+	function minutenTot(iso: string): string {
+		const min = Math.round((Date.parse(iso) - nu) / 60000);
+		if (min <= 0) return 'nu';
+		return min < 60 ? `${min} min` : '';
+	}
+
 	function ritLink(v: Vertrek): string {
 		const p = new URLSearchParams();
 		if (v.tripId) p.set('tripId', v.tripId);
@@ -114,9 +121,11 @@
 
 <main class="pagina stapel">
 	<h1>Vertrektijden</h1>
-	<div class="kaart stapel">
-		<PlekInvoer label="Halte of station" bind:waarde={halte} alleenHaltes gps={false} />
-		<button class="knop tweede" onclick={buurt}><LocateFixed size={18} /> Haltes in de buurt</button>
+	<div class="stapel">
+		<div class="rij zoekrij">
+			<div class="flex"><PlekInvoer label="Halte" bind:waarde={halte} alleenHaltes gps={false} placeholder="Halte of station" /></div>
+			<button class="icoonknop" aria-label="Haltes in de buurt" title="Haltes in de buurt" onclick={buurt}><LocateFixed size={20} /></button>
+		</div>
 	</div>
 
 	{#if fout}
@@ -150,18 +159,18 @@
 								{:else if vertraging > 0}
 									<span class="status-vertraagd klein sterk">+{vertraging}</span>
 								{:else}
-									<span class="zwak klein">{relatief(v.tijd.verwacht, nu)}</span>
+									<span class="zwak klein">{minutenTot(v.tijd.verwacht)}</span>
 								{/if}
 							</div>
 							<div class="midden-kol">
-								<div class="rij">
+								<strong class="richting">{v.richting}</strong>
+								<span class="rij tweede-regel">
 									<span class="lijn" class:ns={v.isNS} style:background={!v.isNS && v.modus !== 'trein' ? v.kleur : undefined} style:color={!v.isNS && v.modus !== 'trein' && v.kleur ? (v.tekstKleur ?? '#fff') : undefined}>
-										<ModusIcoon modus={v.modus} grootte={14} /> {v.lijn}
+										<ModusIcoon modus={v.modus} grootte={13} /> {v.lijn}
 									</span>
-									<strong class="richting">{v.richting}</strong>
-								</div>
-								<span class="zwak klein">
-									{v.productNaam ?? ''}{v.vervoerder ? ` · ${v.vervoerder}` : ''}{v.via?.length ? ` · via ${v.via.slice(0, 3).join(', ')}` : ''}
+									{#if v.via?.length || (!v.isNS && v.vervoerder)}
+										<span class="zwak klein via">{v.via?.length ? `via ${v.via.slice(0, 3).join(', ')}` : v.vervoerder}</span>
+									{/if}
 								</span>
 								{#if v.meldingen[0] && !v.uitgevallen}<span class="klein status-vertraagd">{v.meldingen[0].kop}</span>{/if}
 							</div>
@@ -198,10 +207,10 @@
 	}
 	.vertrek {
 		display: grid;
-		grid-template-columns: 62px 1fr auto;
+		grid-template-columns: 56px 1fr auto;
 		gap: 10px;
 		align-items: center;
-		padding: 12px 14px;
+		padding: 10px 12px;
 		color: inherit;
 		text-decoration: none;
 	}
@@ -230,6 +239,22 @@
 		display: flex;
 		flex-direction: column;
 		gap: 2px;
+	}
+	.zoekrij {
+		gap: 6px;
+	}
+	.flex {
+		flex: 1;
+		min-width: 0;
+	}
+	.tweede-regel {
+		gap: 6px;
+		min-width: 0;
+	}
+	.via {
+		overflow: hidden;
+		text-overflow: ellipsis;
+		white-space: nowrap;
 	}
 	.richting {
 		overflow: hidden;

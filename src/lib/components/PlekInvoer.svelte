@@ -113,21 +113,21 @@
 	}
 </script>
 
-<div class="plekveld">
-	<span class="label" id="{id}-label">{label}</span>
-	<div class="rij">
-		<button type="button" class="waarde" aria-labelledby="{id}-label {id}-knop" id="{id}-knop" onclick={openen}>
+<div class="plekveld rij">
+	<button type="button" class="waarde" aria-label="{label}: {waarde?.naam ?? placeholder}" onclick={openen}>
+		<span class="veldlabel" aria-hidden="true">{label}</span>
+		<span class="inhoud">
 			{#if waarde}
 				<span class="naam">{waarde.naam}</span>
 				{#if waarde.omschrijving}<span class="oms zwak">{waarde.omschrijving}</span>{/if}
 			{:else}
 				<span class="zwak">{placeholder}</span>
 			{/if}
-		</button>
-		{#if wisbaar && waarde}
-			<button type="button" class="icoonknop wis" aria-label="{label} wissen" onclick={() => (waarde = null)}><X size={18} /></button>
-		{/if}
-	</div>
+		</span>
+	</button>
+	{#if wisbaar && waarde}
+		<button type="button" class="icoonknop wis" aria-label="{label} wissen" onclick={() => (waarde = null)}><X size={18} /></button>
+	{/if}
 </div>
 
 {#if open}
@@ -203,26 +203,38 @@
 
 <style>
 	.plekveld {
-		display: flex;
-		flex-direction: column;
-		gap: 4px;
+		gap: 6px;
+		min-width: 0;
 	}
 	.waarde {
 		appearance: none;
 		flex: 1;
 		min-width: 0;
-		min-height: 52px;
+		min-height: 48px;
 		text-align: left;
-		padding: 8px 12px;
+		padding: 6px 12px;
 		border-radius: 12px;
 		border: 1px solid var(--rand);
 		background: var(--kaart);
 		color: var(--tekst);
 		font: inherit;
 		display: flex;
-		flex-direction: column;
-		justify-content: center;
+		align-items: center;
+		gap: 10px;
 		cursor: pointer;
+	}
+	.veldlabel {
+		flex: 0 0 auto;
+		min-width: 38px;
+		font-size: 0.8rem;
+		font-weight: 650;
+		color: var(--tekst-zwak);
+	}
+	.inhoud {
+		flex: 1;
+		min-width: 0;
+		display: flex;
+		flex-direction: column;
 	}
 	.naam {
 		font-weight: 650;

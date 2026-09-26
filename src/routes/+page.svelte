@@ -154,7 +154,7 @@
 			</div>
 
 			{#if toonVia}
-				<PlekInvoer label="Via (halte of station)" bind:waarde={planner.via} alleenHaltes gps={false} wisbaar />
+				<PlekInvoer label="Via" bind:waarde={planner.via} alleenHaltes gps={false} wisbaar placeholder="Halte of station" />
 			{:else}
 				<button type="button" class="linkknop klein" onclick={() => (toonVia = true)}>+ Via-station toevoegen</button>
 			{/if}
@@ -344,9 +344,6 @@
 		grid-template-columns: 1fr auto;
 		gap: 8px;
 		align-items: center;
-	}
-	.wissel {
-		margin-top: 18px;
 	}
 	.linkknop {
 		appearance: none;

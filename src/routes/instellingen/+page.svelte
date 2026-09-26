@@ -72,7 +72,7 @@
 			<input class="veld" bind:value={naam} maxlength="40" autocomplete="given-name" />
 			<span class="zwak klein">Zichtbaar voor mensen met wie je een reis deelt.</span>
 		</label>
-		<PlekInvoer label="Thuislocatie" bind:waarde={thuis} wisbaar />
+		<PlekInvoer label="Thuis" bind:waarde={thuis} wisbaar />
 		<span class="zwak klein">Voor "Laatste verbinding naar huis".</span>
 		<div class="stapel veld-groep">
 			<span class="label">Standaardvoorkeur</span>
