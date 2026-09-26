@@ -1,0 +1,38 @@
+{
+	"toelichting": "Schattingen voor OV-chipkaart vol tarief. Elk jaar in januari bijwerken. Bedragen in euro.",
+	"bijgewerkt": "2026-01",
+	"busTramMetro": {
+		"opstaptarief": 1.12,
+		"overstapMinuten": 35,
+		"perKmStandaard": 0.2,
+		"perKmPerVervoerder": {
+			"GVB": 0.207,
+			"RET": 0.198,
+			"HTM": 0.212,
+			"Arriva": 0.195,
+			"Connexxion": 0.203,
+			"Qbuzz": 0.194,
+			"U-OV": 0.201,
+			"Keolis": 0.2,
+			"Syntus": 0.2,
+			"EBS": 0.196,
+			"Hermes": 0.198,
+			"Breng": 0.199,
+			"Allgo": 0.202,
+			"Twents": 0.2,
+			"RRReis": 0.2,
+			"GVB Veer": 0
+		}
+	},
+	"trein": {
+		"toelichting": "Benadering van het degressieve treintarief, alleen gebruikt als de NS-prijs niet beschikbaar is of voor andere vervoerders.",
+		"basis": 0.9,
+		"schijven": [
+			{ "totKm": 50, "perKm": 0.22 },
+			{ "totKm": 100, "perKm": 0.18 },
+			{ "totKm": 200, "perKm": 0.1 },
+			{ "totKm": 100000, "perKm": 0.05 }
+		],
+		"minimum": 2.6
+	}
+}
