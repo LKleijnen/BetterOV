@@ -1,6 +1,6 @@
 // Pushmeldingen aanzetten: toestemming vragen en het FCM-token opslaan in Firestore.
 
-import { firebaseActief, vapidKey } from './config';
+import { alsApp, firebaseActief, vapidKey } from './config';
 import { fbApp } from './firebase';
 import { data } from './data.svelte';
 import { lees, schrijf } from './opslag';
@@ -11,13 +11,7 @@ export function isIOS(): boolean {
 	return typeof navigator !== 'undefined' && /iPad|iPhone|iPod/.test(navigator.userAgent);
 }
 
-export function isStandalone(): boolean {
-	if (typeof window === 'undefined') return false;
-	return (
-		matchMedia('(display-mode: standalone)').matches ||
-		(navigator as unknown as { standalone?: boolean }).standalone === true
-	);
-}
+export const isStandalone = alsApp;
 
 export function pushStatus(): PushStatus {
 	if (typeof window === 'undefined' || !('Notification' in window) || !('serviceWorker' in navigator)) {

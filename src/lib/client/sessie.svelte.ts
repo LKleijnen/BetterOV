@@ -2,7 +2,7 @@
 
 import { GoogleAuthProvider, getRedirectResult, onAuthStateChanged, signInWithPopup, signInWithRedirect, signOut } from 'firebase/auth';
 import { api, zetTokenBron } from './api';
-import { firebaseActief } from './config';
+import { alsApp, firebaseActief } from './config';
 import { fbAuth } from './firebase';
 import { lees, schrijf } from './opslag';
 
@@ -47,7 +47,16 @@ class Sessie {
 		}
 		const auth = fbAuth();
 		zetTokenBron(async () => (auth.currentUser ? auth.currentUser.getIdToken() : null));
-		getRedirectResult(auth).catch((e) => (this.fout = loginFout(e)));
+		getRedirectResult(auth)
+			.then((r) => {
+				// Terug van Google zonder resultaat: meestal blokkeert de telefoon dan de login-opslag
+				const bezig = Number(sessieLees('inlog-redirect') ?? 0);
+				sessieSchrijf('inlog-redirect', null);
+				if (!r && !auth.currentUser && Date.now() - bezig < 5 * 60000) {
+					this.fout = 'Inloggen is niet gelukt. Probeer het nog een keer; lukt het dan nog niet, meld het aan de beheerder.';
+				}
+			})
+			.catch((e) => (this.fout = loginFout(e)));
 		onAuthStateChanged(auth, async (u) => {
 			if (!u) {
 				this.uid = null;
@@ -109,10 +118,14 @@ class Sessie {
 		const auth = fbAuth();
 		const provider = new GoogleAuthProvider();
 		provider.setCustomParameters({ prompt: 'select_account' });
-		const standalone = typeof matchMedia !== 'undefined' && matchMedia('(display-mode: standalone)').matches;
 		try {
-			if (standalone) await signInWithRedirect(auth, provider);
-			else await signInWithPopup(auth, provider);
+			// Als webapp kan een pop-up niet; dan via een omleiding naar Google en terug
+			if (alsApp()) {
+				sessieSchrijf('inlog-redirect', String(Date.now()));
+				await signInWithRedirect(auth, provider);
+			} else {
+				await signInWithPopup(auth, provider);
+			}
 		} catch (e) {
 			const code = (e as { code?: string }).code ?? '';
 			if (/popup-blocked|operation-not-supported/.test(code)) {
@@ -131,6 +144,23 @@ class Sessie {
 	/** Voornaam voor begroetingen */
 	get voornaam(): string | null {
 		return this.naam?.split(' ')[0] ?? null;
+	}
+}
+
+function sessieLees(k: string): string | null {
+	try {
+		return sessionStorage.getItem(k);
+	} catch {
+		return null;
+	}
+}
+
+function sessieSchrijf(k: string, v: string | null) {
+	try {
+		if (v === null) sessionStorage.removeItem(k);
+		else sessionStorage.setItem(k, v);
+	} catch {
+		// negeren
 	}
 }
 

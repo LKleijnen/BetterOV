@@ -10,7 +10,8 @@
 			<li>Open deze pagina in <strong>Safari</strong>.</li>
 			<li>Tik op <Share size={16} aria-label="Deel" /> <strong>Deel</strong> onderin.</li>
 			<li>Kies <SquarePlus size={16} aria-hidden="true" /> <strong>Zet op beginscherm</strong> en tik op <strong>Voeg toe</strong>.</li>
-			<li>Open BetterOV vanaf je beginscherm en zet meldingen aan via <strong>Meer → Instellingen</strong>.</li>
+			<li>Open BetterOV vanaf je beginscherm en log daar opnieuw in (de app op je beginscherm heeft een eigen login).</li>
+			<li>Zet meldingen aan via <strong>Meer → Instellingen</strong>.</li>
 		</ol>
 	{:else}
 		<p>Installeer de app op je beginscherm; dan opent hij als een gewone app en krijg je meldingen tijdens je reis.</p>
