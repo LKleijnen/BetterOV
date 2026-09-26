@@ -1,4 +1,5 @@
-/* Ontwerp: rustig, groot waar het telt. Kleur alleen voor status, altijd met tekst of icoon. */
+/* Ontwerp: rustig en compact, groot waar het telt (tijden, spoor, aftelling).
+   Kleur alleen voor status, altijd met tekst of icoon. Alleen tekst die je echt nodig hebt. */
 
 :root {
 	--bg: #f4f5f7;
@@ -21,7 +22,7 @@
 	--schaduw: 0 1px 2px rgb(16 24 40 / 6%), 0 1px 3px rgb(16 24 40 / 8%);
 	--radius: 14px;
 	--radius-klein: 10px;
-	--nav-hoogte: 64px;
+	--nav-hoogte: 60px;
 	--max-breedte: 680px;
 	color-scheme: light;
 }
@@ -97,7 +98,7 @@ body {
 		Arial,
 		sans-serif;
 	font-size: 16px;
-	line-height: 1.45;
+	line-height: 1.4;
 	-webkit-font-smoothing: antialiased;
 	overscroll-behavior-y: none;
 }
@@ -114,13 +115,13 @@ h3 {
 }
 
 h1 {
-	font-size: 1.6rem;
+	font-size: 1.45rem;
 	font-weight: 750;
 	letter-spacing: -0.01em;
 }
 
 h2 {
-	font-size: 1.15rem;
+	font-size: 1.05rem;
 	font-weight: 700;
 }
 
@@ -139,13 +140,13 @@ h3 {
 }
 
 .klein {
-	font-size: 0.875rem;
+	font-size: 0.85rem;
 }
 
 .pagina {
 	max-width: var(--max-breedte);
 	margin: 0 auto;
-	padding: calc(env(safe-area-inset-top) + 16px) 16px calc(var(--nav-hoogte) + env(safe-area-inset-bottom) + 24px);
+	padding: calc(env(safe-area-inset-top) + 12px) 14px calc(var(--nav-hoogte) + env(safe-area-inset-bottom) + 20px);
 }
 
 .kaart {
@@ -153,13 +154,13 @@ h3 {
 	border: 1px solid var(--rand);
 	border-radius: var(--radius);
 	box-shadow: var(--schaduw);
-	padding: 14px 16px;
+	padding: 12px 14px;
 }
 
 .stapel {
 	display: flex;
 	flex-direction: column;
-	gap: 12px;
+	gap: 10px;
 }
 
 .rij {
@@ -178,8 +179,8 @@ h3 {
 	align-items: center;
 	justify-content: center;
 	gap: 8px;
-	min-height: 48px;
-	padding: 10px 18px;
+	min-height: 46px;
+	padding: 8px 16px;
 	border-radius: 12px;
 	border: 1px solid transparent;
 	background: var(--primair);
@@ -213,9 +214,27 @@ h3 {
 }
 
 .knop.klein {
-	min-height: 40px;
-	padding: 6px 12px;
-	font-size: 0.9rem;
+	min-height: 36px;
+	padding: 4px 12px;
+	font-size: 0.88rem;
+	border-radius: 10px;
+}
+
+/* Knop die eruitziet als tekst (voor minder belangrijke acties) */
+.tekstknop {
+	appearance: none;
+	display: inline-flex;
+	align-items: center;
+	gap: 4px;
+	min-height: 32px;
+	padding: 2px 0;
+	border: 0;
+	background: none;
+	color: var(--primair);
+	font: inherit;
+	font-size: 0.88rem;
+	font-weight: 650;
+	cursor: pointer;
 }
 
 .icoonknop {
@@ -223,8 +242,9 @@ h3 {
 	display: inline-flex;
 	align-items: center;
 	justify-content: center;
-	width: 44px;
-	height: 44px;
+	flex: 0 0 auto;
+	width: 42px;
+	height: 42px;
 	border-radius: 12px;
 	border: 1px solid var(--rand);
 	background: var(--kaart);
@@ -248,14 +268,14 @@ h3 {
 .chip {
 	appearance: none;
 	flex: 0 0 auto;
-	min-height: 40px;
-	padding: 6px 14px;
+	min-height: 36px;
+	padding: 4px 12px;
 	border-radius: 999px;
 	border: 1px solid var(--rand);
 	background: var(--kaart);
 	color: var(--tekst);
 	font: inherit;
-	font-size: 0.92rem;
+	font-size: 0.88rem;
 	font-weight: 600;
 	cursor: pointer;
 }
@@ -268,8 +288,8 @@ h3 {
 
 .veld {
 	width: 100%;
-	min-height: 48px;
-	padding: 10px 12px;
+	min-height: 46px;
+	padding: 8px 12px;
 	border-radius: 12px;
 	border: 1px solid var(--rand);
 	background: var(--kaart);
@@ -280,7 +300,8 @@ h3 {
 .veld:focus-visible,
 .knop:focus-visible,
 .chip:focus-visible,
-.icoonknop:focus-visible {
+.icoonknop:focus-visible,
+.tekstknop:focus-visible {
 	outline: 3px solid color-mix(in srgb, var(--primair) 55%, transparent);
 	outline-offset: 2px;
 }
@@ -295,11 +316,11 @@ h3 {
 
 .melding {
 	display: flex;
-	gap: 10px;
+	gap: 8px;
 	align-items: flex-start;
-	padding: 12px 14px;
+	padding: 10px 12px;
 	border-radius: var(--radius-klein);
-	font-size: 0.95rem;
+	font-size: 0.92rem;
 }
 
 .melding.info {
@@ -365,4 +386,73 @@ hr {
 		animation: none !important;
 		transition: none !important;
 	}
+}
+
+/* Spoor- of perronnummer als klein vakje; gewijzigd = opvallend */
+.spoorvak {
+	display: inline-flex;
+	align-items: baseline;
+	gap: 3px;
+	white-space: nowrap;
+	padding: 1px 7px;
+	border-radius: 7px;
+	background: var(--kaart-2);
+	border: 1px solid var(--rand);
+	font-size: 0.8rem;
+	color: var(--tekst-zwak);
+}
+
+.spoorvak strong {
+	font-size: 0.95rem;
+	color: var(--tekst);
+}
+
+.spoorvak.gewijzigd {
+	background: var(--vertraagd-zacht);
+	border-color: var(--vertraagd);
+	color: var(--vertraagd);
+}
+
+.spoorvak.gewijzigd strong {
+	color: var(--vertraagd);
+}
+
+/* Rij met acties (icoon boven een kort woord), past op één regel */
+.actiebalk {
+	display: grid;
+	grid-auto-columns: 1fr;
+	grid-auto-flow: column;
+	gap: 6px;
+}
+
+.actiebalk > button,
+.actiebalk > a {
+	appearance: none;
+	display: flex;
+	flex-direction: column;
+	align-items: center;
+	justify-content: center;
+	gap: 2px;
+	min-height: 52px;
+	padding: 6px 4px;
+	border-radius: 12px;
+	border: 1px solid var(--rand);
+	background: var(--kaart);
+	color: var(--tekst);
+	font: inherit;
+	font-size: 0.75rem;
+	font-weight: 650;
+	text-decoration: none;
+	cursor: pointer;
+	-webkit-tap-highlight-color: transparent;
+}
+
+.actiebalk > [aria-pressed='true'] {
+	background: var(--tekst);
+	color: var(--bg);
+	border-color: var(--tekst);
+}
+
+.actiebalk > :disabled {
+	opacity: 0.55;
 }
