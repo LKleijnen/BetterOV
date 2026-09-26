@@ -67,9 +67,15 @@ export interface AllowlistUitslag {
 
 const allowlistCache = new Map<string, { tot: number; toegestaan: boolean }>();
 
+/** Vergeet het onthouden antwoord, bijvoorbeeld direct nadat iemand een uitnodiging heeft gebruikt */
+export function vergeetToegang(email: string) {
+	allowlistCache.delete(email);
+}
+
 /**
  * Staat dit e-mailadres op de allowlist? Beheerders altijd wel. Zoekt zowel op het exacte
- * adres als op de genormaliseerde vorm. Een "ja" wordt 5 minuten onthouden, een "nee" 30 seconden.
+ * adres als op de genormaliseerde vorm. Een "ja" wordt 5 minuten onthouden, een "nee" 5 seconden
+ * (kort, zodat iemand die net een uitnodiging gebruikte snel binnen is).
  */
 export async function controleerAllowlist(email: string, sa: ServiceAccount | undefined, admins: string[]): Promise<AllowlistUitslag> {
 	if (isBeheerder(email, admins)) return { toegestaan: true };
@@ -81,7 +87,7 @@ export async function controleerAllowlist(email: string, sa: ServiceAccount | un
 		let toegestaan = !!(await fs.get(`allowlist/${email}`));
 		const genormaliseerd = normaliseerEmail(email);
 		if (!toegestaan && genormaliseerd !== email) toegestaan = !!(await fs.get(`allowlist/${genormaliseerd}`));
-		allowlistCache.set(email, { tot: Date.now() + (toegestaan ? 300 : 30) * 1000, toegestaan });
+		allowlistCache.set(email, { tot: Date.now() + (toegestaan ? 300 : 5) * 1000, toegestaan });
 		return { toegestaan };
 	} catch (e) {
 		return { toegestaan: false, fout: `Uitnodigingslijst lezen mislukt: ${(e as Error).message}` };

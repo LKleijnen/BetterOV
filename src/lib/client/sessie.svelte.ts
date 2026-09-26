@@ -4,7 +4,7 @@ import { GoogleAuthProvider, getRedirectResult, onAuthStateChanged, signInWithPo
 import { api, zetTokenBron } from './api';
 import { alsApp, firebaseActief } from './config';
 import { fbAuth } from './firebase';
-import { lees, schrijf } from './opslag';
+import { lees, schrijf, wis } from './opslag';
 
 export type SessieStatus = 'laden' | 'uitgelogd' | 'geweigerd' | 'ingelogd';
 
@@ -33,11 +33,17 @@ class Sessie {
 	fout = $state<string | null>(null);
 	/** Uitleg voor de beheerder waarom de toegang geweigerd is */
 	diagnose = $state<string | null>(null);
+	/** Er ligt een uitnodigingslink klaar die na het inloggen wordt ingewisseld */
+	uitnodiging = $state(false);
 	private gestart = false;
 
 	start() {
 		if (this.gestart) return;
 		this.gestart = true;
+		// Geopend via een uitnodigingslink (/uitnodiging/<code>): code bewaren tot na het inloggen
+		const code = location.pathname.match(/^\/uitnodiging\/([A-Za-z0-9_-]{20,64})\/?$/)?.[1];
+		if (code && firebaseActief) schrijf('uitnodiging', code);
+		this.uitnodiging = !!lees<string | null>('uitnodiging', null);
 		if (!firebaseActief) {
 			this.uid = 'lokaal';
 			this.naam = lees<string | null>('demo-naam', null);
@@ -80,7 +86,10 @@ class Sessie {
 
 	private async laadIk() {
 		try {
-			const ik = await api<IkAntwoord>('/api/ik', { timeoutMs: 10000 });
+			let ik = await api<IkAntwoord>('/api/ik', { timeoutMs: 10000 });
+			const code = lees<string | null>('uitnodiging', null);
+			if (code && !ik.toegestaan && firebaseActief) ik = await this.wisselUitnodigingIn(code, ik);
+			else if (code) this.vergeetUitnodiging();
 			schrijf('ik', { ...ik, uid: this.uid });
 			this.pasToe(ik);
 		} catch (e) {
@@ -95,6 +104,31 @@ class Sessie {
 				this.status = 'geweigerd';
 			}
 		}
+	}
+
+	/** Wisselt een uitnodigingslink in; geeft de nieuwe status terug */
+	private async wisselUitnodigingIn(code: string, ik: IkAntwoord): Promise<IkAntwoord> {
+		try {
+			await api('/api/uitnodiging', { body: { code }, timeoutMs: 15000 });
+			this.vergeetUitnodiging();
+			// De server onthoudt een 'nee' heel even; zo nodig één keer opnieuw vragen
+			for (let poging = 0; poging < 3; poging++) {
+				const nieuw = await api<IkAntwoord>('/api/ik', { timeoutMs: 10000 });
+				if (nieuw.toegestaan) return nieuw;
+				await new Promise((r) => setTimeout(r, 2500));
+			}
+		} catch (e) {
+			const status = (e as { status?: number }).status;
+			// Link gebruikt, verlopen of ongeldig: niet blijven proberen
+			if (status && status >= 400 && status < 500) this.vergeetUitnodiging();
+			this.fout = (e as Error).message;
+		}
+		return ik;
+	}
+
+	private vergeetUitnodiging() {
+		wis('uitnodiging');
+		this.uitnodiging = false;
 	}
 
 	private pasToe(ik: IkAntwoord) {

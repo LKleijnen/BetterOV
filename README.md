@@ -23,7 +23,7 @@ Advertentievrije OV-webapp (PWA) voor eigen gebruik en een kleine kring vrienden
 | M11 | Fallback naar de NS-planner, met melding | Server |
 | M12 | Laatste data blijft zichtbaar bij slecht bereik, met tijdstip van ophalen | Overal |
 | M13 | Favoriete reizen en plekken | Favorieten |
-| M14 | Google-login alleen voor de allowlist, sync tussen apparaten | Login, Meer → Beheer |
+| M14 | Google-login alleen voor de allowlist, uitnodigen met een eenmalige link, sync tussen apparaten | Login, Meer → Beheer |
 | M17–M19 | Instapadvies (eerste klas, stilte), waarschuwing kortere trein, voertuiginfo | Trein & instapadvies |
 | M20 | Laatste verbinding naar huis met resterende speling | Plannen |
 | M21 | Reis live delen via een link zonder login | Reis → Deel live |
@@ -109,7 +109,7 @@ Firebase → *Authentication* → *Settings* → *Authorized domains* → *Add d
 Optioneel: zet de GitHub-variabele `PUBLIC_FIREBASE_AUTH_DOMAIN` op `betterov.<jouw-subdomein>.workers.dev` en rol opnieuw uit; dan gebruikt ook de browser dit domein.
 
 ### 8. In gebruik nemen
-Open de app, log in met Google en nodig mensen uit via *Meer* → *Beheer: uitnodigingen*. Op iPhone: Safari → *Deel* → *Zet op beginscherm*, daarna meldingen aanzetten via *Meer* → *Instellingen*.
+Open de app, log in met Google en nodig mensen uit via *Meer* → *Beheer: uitnodigingen*: maak een uitnodigingslink en stuur die via WhatsApp of mail. Wie de link opent en inlogt met Google, krijgt meteen toegang (de link werkt één keer en is 7 dagen geldig). Een Gmail-adres direct toevoegen kan ook nog. Op iPhone: Safari → *Deel* → *Zet op beginscherm*, daarna meldingen aanzetten via *Meer* → *Instellingen*.
 
 ## Architectuur
 
@@ -120,6 +120,8 @@ Open de app, log in met Google en nodig mensen uit via *Meer* → *Beheer: uitno
 | `GET /api/trein/{ritnummer}` | Samenstelling, drukte, lengte t.o.v. normaal, materieel en instapadvies |
 | `GET/POST /api/prijs` | NS-prijs tussen stations, of prijs/schatting voor een heel advies |
 | `GET /api/laatste-verbinding` | Laatste reis naar huis vanaf de huidige locatie |
+| `POST /api/uitnodiging` | Uitnodigingslink inwisselen (ingelogd, nog zonder toegang) |
+| `GET/POST/DELETE /api/beheer/uitnodigingen` | Uitnodigingslinks maken, tonen en intrekken (beheerder) |
 | `POST /api/reisstatus` | Ververst een lopende reis en geeft de problemen |
 | `GET /api/spoorkaart` | Spoorlijnen (NS SpoorKaart); de app rekent zelf de route over het spoor uit |
 | `GET /api/rit`, `/api/voertuig`, `/api/zoek`, `/api/omgekeerd` | Rit met alle haltes, treinpositie, zoeken, adres bij GPS |

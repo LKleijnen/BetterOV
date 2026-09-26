@@ -16,7 +16,8 @@ export const handle: Handle = async ({ event, resolve }) => {
 			const uitslag = await controleerAllowlist(gebruiker.email, c.serviceAccount, c.beheerders);
 			const toegestaan = uitslag.toegestaan;
 			event.locals.gebruiker = { ...gebruiker, admin, toegestaan, demo: false, toegangsFout: uitslag.fout };
-			if (!toegestaan && pad !== '/api/ik') {
+			// Zonder toegang alleen: wie ben ik, en een uitnodiging inwisselen
+			if (!toegestaan && pad !== '/api/ik' && pad !== '/api/uitnodiging') {
 				return json({ fout: 'Geen toegang: je e-mailadres staat niet op de uitnodigingslijst.' }, { status: 403 });
 			}
 		} else if (c.demoToegestaan) {
