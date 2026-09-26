@@ -26,8 +26,9 @@
 	color-scheme: light;
 }
 
+/* Donker: volgt het systeem, tenzij in Instellingen "Licht" of "Donker" is gekozen (data-thema op <html>) */
 @media (prefers-color-scheme: dark) {
-	:root {
+	:root:not([data-thema='licht']) {
 		--bg: #0e1116;
 		--kaart: #171b22;
 		--kaart-2: #1f242d;
@@ -48,6 +49,28 @@
 		--schaduw: 0 1px 2px rgb(0 0 0 / 40%);
 		color-scheme: dark;
 	}
+}
+
+:root[data-thema='donker'] {
+	--bg: #0e1116;
+	--kaart: #171b22;
+	--kaart-2: #1f242d;
+	--tekst: #eef1f5;
+	--tekst-zwak: #a4acb9;
+	--rand: #2b313b;
+	--primair: #7ea3ff;
+	--primair-tekst: #0b1020;
+	--primair-zacht: #1c2742;
+	--ok: #57d98a;
+	--ok-zacht: #12301f;
+	--vertraagd: #fbbf4d;
+	--vertraagd-zacht: #3a2a0c;
+	--fout: #ff8080;
+	--fout-zacht: #3d1616;
+	--info: #7ea3ff;
+	--info-zacht: #1c2742;
+	--schaduw: 0 1px 2px rgb(0 0 0 / 40%);
+	color-scheme: dark;
 }
 
 *,
