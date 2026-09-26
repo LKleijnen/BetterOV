@@ -32,6 +32,6 @@ export const handle: Handle = async ({ event, resolve }) => {
 	const antwoord = await resolve(event);
 	antwoord.headers.set('x-content-type-options', 'nosniff');
 	antwoord.headers.set('referrer-policy', 'strict-origin-when-cross-origin');
-	if (pad.startsWith('/api/')) antwoord.headers.set('cache-control', 'no-store');
+	if (pad.startsWith('/api/') && !antwoord.headers.has('cache-control')) antwoord.headers.set('cache-control', 'no-store');
 	return antwoord;
 };

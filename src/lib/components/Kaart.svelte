@@ -1,9 +1,12 @@
 <script lang="ts">
 	import { onDestroy, onMount, untrack } from 'svelte';
 	import type { Map as MLMap, GeoJSONSource, LngLatBoundsLike } from 'maplibre-gl';
+	import { TrainTrack } from '@lucide/svelte';
 	import type { Advies, VoertuigPositie } from '$lib/types';
+	import type { SpoorNetwerk } from '$lib/spoor';
 	import { isOV } from '$lib/reis';
-	import { legLijn } from '$lib/voertuig';
+	import { lijnOverSpoor, spoorNetwerk, wilSpoor } from '$lib/client/spoorkaart';
+	import { lees, schrijf } from '$lib/client/opslag';
 	// MapLibre zoekt zijn worker naast het eigen script; na bundelen staat die ergens anders
 	import workerUrl from 'maplibre-gl/dist/maplibre-gl-worker.mjs?worker&url';
 
@@ -28,6 +31,36 @@
 	let geladen = $state(false);
 	let fout = $state<string | null>(null);
 
+	// Treinen over het echte spoor (NS SpoorKaart) en optioneel alle spoorlijnen als laag
+	let spoor = $state.raw<SpoorNetwerk | null>(null);
+	let spoorLaag = $state(lees('kaart-spoorlaag', false));
+	const lijnen = $derived((advies?.legs ?? []).map((leg) => lijnOverSpoor(leg, spoor)));
+
+	$effect(() => {
+		const nodig = spoorLaag || (advies?.legs ?? []).some(wilSpoor);
+		if (!nodig || spoor) return;
+		void spoorNetwerk().then((n) => (spoor = n));
+	});
+
+	function wisselSpoorLaag() {
+		spoorLaag = !spoorLaag;
+		schrijf('kaart-spoorlaag', spoorLaag);
+	}
+
+	function spoorGeoJson() {
+		const features =
+			spoorLaag && spoor
+				? [
+						{
+							type: 'Feature' as const,
+							properties: {},
+							geometry: { type: 'MultiLineString' as const, coordinates: spoor.randen.map((r) => r.lijn) }
+						}
+					]
+				: [];
+		return { type: 'FeatureCollection' as const, features };
+	}
+
 	const donker = typeof matchMedia !== 'undefined' && matchMedia('(prefers-color-scheme: dark)').matches;
 	const STIJL = `https://tiles.openfreemap.org/styles/${donker ? 'dark' : 'liberty'}`;
 
@@ -39,7 +72,7 @@
 				kleur: leg.isNS ? '#ffc917' : (leg.kleur ?? (isOV(leg) ? '#1d4ed8' : '#6b7280')),
 				focus: focusLeg === -1 || focusLeg === i
 			},
-			geometry: { type: 'LineString' as const, coordinates: legLijn(leg) }
+			geometry: { type: 'LineString' as const, coordinates: lijnen[i] }
 		}));
 		return { type: 'FeatureCollection' as const, features };
 	}
@@ -68,7 +101,7 @@
 	function grenzen(): LngLatBoundsLike | null {
 		const legs = advies?.legs ?? [];
 		const gekozen = focusLeg >= 0 && legs[focusLeg] ? [legs[focusLeg]] : legs;
-		const punten = gekozen.flatMap(legLijn);
+		const punten = gekozen.flatMap((leg) => lijnen[legs.indexOf(leg)] ?? []);
 		if (eigenPositie && focusLeg < 0) punten.push([eigenPositie.lon, eigenPositie.lat]);
 		if (extraPunt) punten.push([extraPunt.lon, extraPunt.lat]);
 		if (punten.length === 0) return null;
@@ -105,11 +138,19 @@
 			});
 			kaart.on('load', () => {
 				if (!kaart) return;
+				kaart.addSource('spoor', { type: 'geojson', data: spoorGeoJson() });
 				kaart.addSource('route', { type: 'geojson', data: routeGeoJson() });
 				kaart.addSource('haltes', { type: 'geojson', data: haltesGeoJson() });
 				kaart.addSource('ik', { type: 'geojson', data: puntGeoJson(eigenPositie) });
 				kaart.addSource('voertuig', { type: 'geojson', data: puntGeoJson(voertuig) });
 				kaart.addSource('extra', { type: 'geojson', data: puntGeoJson(extraPunt) });
+				kaart.addLayer({
+					id: 'spoor',
+					type: 'line',
+					source: 'spoor',
+					layout: { 'line-cap': 'round', 'line-join': 'round' },
+					paint: { 'line-color': donker ? '#8b95a7' : '#5b6474', 'line-width': 1.6, 'line-opacity': 0.7 }
+				});
 				kaart.addLayer({
 					id: 'route-rand',
 					type: 'line',
@@ -182,6 +223,10 @@
 		(kaart.getSource('haltes') as GeoJSONSource | undefined)?.setData(h);
 	});
 	$effect(() => {
+		const d = spoorGeoJson();
+		if (geladen && kaart) (kaart.getSource('spoor') as GeoJSONSource | undefined)?.setData(d);
+	});
+	$effect(() => {
 		const d = puntGeoJson(eigenPositie);
 		if (geladen && kaart) (kaart.getSource('ik') as GeoJSONSource | undefined)?.setData(d);
 	});
@@ -194,9 +239,7 @@
 		if (geladen && kaart) (kaart.getSource('extra') as GeoJSONSource | undefined)?.setData(d);
 	});
 	// Alleen opnieuw inzoomen als de route of de gekozen rit verandert, niet bij elke GPS-update
-	const routeSleutel = $derived(
-		`${focusLeg}|${(advies?.legs ?? []).map((l) => `${l.van.naam}:${l.naar.naam}:${l.polyline?.punten.length ?? 0}`).join('|')}`
-	);
+	const routeSleutel = $derived(`${focusLeg}|${lijnen.map((l) => `${l.length}:${l[0]?.join(',')}:${l[l.length - 1]?.join(',')}`).join('|')}`);
 	let eersteKeer = true;
 	$effect(() => {
 		void routeSleutel;
@@ -211,6 +254,11 @@
 
 <div class="kaartvak" style:height={hoogte}>
 	<div class="kaart-el" bind:this={container} role="region" aria-label="Kaart met de route"></div>
+	{#if geladen}
+		<button type="button" class="spoorknop" aria-pressed={spoorLaag} onclick={wisselSpoorLaag} title="Spoorlijnen tonen">
+			<TrainTrack size={16} aria-hidden="true" /> Spoor
+		</button>
+	{/if}
 	{#if fout}<div class="kaartfout zwak klein">{fout}</div>{/if}
 </div>
 
@@ -225,6 +273,28 @@
 	.kaart-el {
 		position: absolute;
 		inset: 0;
+	}
+	.spoorknop {
+		position: absolute;
+		top: 10px;
+		left: 10px;
+		display: inline-flex;
+		align-items: center;
+		gap: 4px;
+		padding: 5px 10px;
+		border-radius: 999px;
+		border: 1px solid var(--rand);
+		background: var(--kaart);
+		color: var(--tekst);
+		font: inherit;
+		font-size: 0.8rem;
+		font-weight: 650;
+		box-shadow: var(--schaduw);
+		cursor: pointer;
+	}
+	.spoorknop[aria-pressed='true'] {
+		background: var(--tekst);
+		color: var(--bg);
 	}
 	.kaartfout {
 		position: absolute;

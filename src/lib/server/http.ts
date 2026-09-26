@@ -59,6 +59,25 @@ export async function haalJson<T>(url: string, opties: HaalOpties = {}): Promise
 	}
 }
 
+/** Zoals haalJson, maar geeft de ruwe tekst terug (voor grote antwoorden die de server doorgeeft) */
+export async function haalTekst(url: string, opties: HaalOpties = {}): Promise<string> {
+	const controller = new AbortController();
+	const timeout = opties.timeoutMs ?? 10000;
+	const timer = setTimeout(() => controller.abort(), timeout);
+	try {
+		const antwoord = await fetch(url, { headers: { accept: 'application/json', ...opties.headers }, signal: controller.signal });
+		const tekst = await antwoord.text();
+		if (!antwoord.ok) throw new ApiFout(`HTTP ${antwoord.status} ${tekst.slice(0, 300)}`.trim(), antwoord.status, opties.bron);
+		return tekst;
+	} catch (e) {
+		if (e instanceof ApiFout) throw e;
+		if (controller.signal.aborted) throw new ApiFout(`Geen antwoord binnen ${timeout / 1000} s`, 0, opties.bron);
+		throw new ApiFout(`Verbinding mislukt: ${(e as Error).message}`, 0, opties.bron);
+	} finally {
+		clearTimeout(timer);
+	}
+}
+
 export function queryString(params: Record<string, string | number | boolean | undefined | null | string[]>): string {
 	const delen: string[] = [];
 	for (const [k, v] of Object.entries(params)) {
@@ -94,6 +113,31 @@ export async function gedeeldGecached<T>(sleutel: string, seconden: number, maak
 						headers: { 'content-type': 'application/json', 'cache-control': `max-age=${seconden}` }
 					})
 				);
+			} catch {
+				// cache is best effort
+			}
+		}
+		return waarde;
+	});
+}
+
+/** Zoals gedeeldGecached, maar voor ruwe tekst: zonder JSON-verwerking (scheelt rekentijd bij grote bestanden) */
+export async function gedeeldGecachedTekst(sleutel: string, seconden: number, maak: () => Promise<string>): Promise<string> {
+	return gecached(sleutel, seconden, async () => {
+		const cf = (globalThis as unknown as { caches?: { default?: Cache } }).caches?.default;
+		const verzoek = new Request(`https://cache.betterov.intern/${encodeURIComponent(sleutel)}`);
+		if (cf) {
+			try {
+				const hit = await cf.match(verzoek);
+				if (hit) return await hit.text();
+			} catch {
+				// cache is best effort
+			}
+		}
+		const waarde = await maak();
+		if (cf) {
+			try {
+				await cf.put(verzoek, new Response(waarde, { headers: { 'content-type': 'application/json', 'cache-control': `max-age=${seconden}` } }));
 			} catch {
 				// cache is best effort
 			}

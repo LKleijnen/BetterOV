@@ -7,6 +7,7 @@
 	import { legNaam } from '$lib/reis';
 	import { klok } from '$lib/tijd';
 	import { geschattePositie } from '$lib/voertuig';
+	import { legLijnOverSpoor } from '$lib/client/spoorkaart';
 	import Tijd from '$lib/components/Tijd.svelte';
 	import LijnLabel from '$lib/components/LijnLabel.svelte';
 	import Onderblad from '$lib/components/Onderblad.svelte';
@@ -51,7 +52,7 @@
 				return;
 			}
 		}
-		positie = geschattePositie(leg);
+		positie = geschattePositie(leg, Date.now(), await legLijnOverSpoor(leg));
 	}
 
 	onMount(() => {
