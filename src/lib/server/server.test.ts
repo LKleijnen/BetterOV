@@ -1,5 +1,5 @@
 import { afterEach, describe, expect, it, vi } from 'vitest';
-import { normaliseerItinerary, modusVan } from './motis';
+import { normaliseerItinerary, modusVan, treinProduct } from './motis';
 import { nsTijd, nsTripNaarAdvies, stationVoorPlek, type NsStation } from './ns';
 import { snijLeg, herplanLooplegs } from './reisstatus';
 import { schattingTrein, berekenPrijs } from './prijs';
@@ -112,6 +112,14 @@ describe('Transitous-normalisatie', () => {
 		expect(trein.tussenstops[0].naam).toBe('Amsterdam Amstel');
 		expect(trein.meldingen[0].ernst).toBe('waarschuwing');
 		expect(a.overstappen).toBe(0);
+	});
+
+	it('maakt een label zonder dubbele productnaam', () => {
+		expect(treinProduct({ category: { shortName: 'IC', name: 'Intercity' }, routeShortName: 'IC', displayName: 'IC 3045' })).toEqual({ productNaam: 'Intercity', lijn: 'IC' });
+		// Arriva Limburg: lijncode zegt meer dan "ST"
+		expect(treinProduct({ category: { shortName: 'ST', name: 'Stoptrein' }, routeShortName: 'RS18' })).toEqual({ productNaam: 'Stoptrein', lijn: 'RS18' });
+		expect(treinProduct({ displayName: 'Stoptrein RS18' })).toEqual({ productNaam: 'Stoptrein', lijn: 'RS18' });
+		expect(treinProduct({ displayName: 'Sprinter 4867' })).toEqual({ productNaam: 'Sprinter', lijn: 'SPR' });
 	});
 
 	it('kent vervoerswijzen', () => {

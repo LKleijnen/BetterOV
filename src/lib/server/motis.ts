@@ -179,21 +179,38 @@ const TREINPRODUCTEN: Record<string, string> = {
 	SNEL: 'Sneltrein'
 };
 
-function treinProduct(l: { category?: { name: string; shortName: string }; routeShortName?: string; routeLongName?: string; displayName?: string }): { productNaam: string; lijn?: string } {
+/** Lijncode zoals RS18, RE 19 of S3 (geen ritnummer, geen productafkorting) */
+function isLijncode(x: string | undefined): x is string {
+	return !!x && /^[A-Z]{1,4} ?\d{1,3}[A-Z]?$/i.test(x.trim()) && !TREINPRODUCTEN[x.trim().toUpperCase()];
+}
+
+/** Product (Intercity, Stoptrein, …) en korte lijnaanduiding voor het label, zonder dubbelingen */
+export function treinProduct(l: { category?: { name: string; shortName: string }; routeShortName?: string; routeLongName?: string; displayName?: string }): { productNaam: string; lijn?: string } {
 	const kandidaten = [l.category?.shortName, l.category?.name, l.routeShortName, l.routeLongName, l.displayName]
 		.filter((x): x is string => !!x)
 		.map((x) => x.trim());
+	let product: { productNaam: string; afk?: string; rest?: string } | undefined;
 	for (const k of kandidaten) {
-		const eersteWoord = k.split(/\s+/)[0].toUpperCase();
-		if (TREINPRODUCTEN[eersteWoord]) return { productNaam: TREINPRODUCTEN[eersteWoord], lijn: eersteWoord };
-		const naam = Object.values(TREINPRODUCTEN).find((p) => p.toLowerCase() === k.toLowerCase());
+		const woorden = k.split(/\s+/);
+		const eersteWoord = woorden[0].toUpperCase();
+		if (TREINPRODUCTEN[eersteWoord]) {
+			product = { productNaam: TREINPRODUCTEN[eersteWoord], afk: eersteWoord, rest: woorden.slice(1).join(' ') };
+			break;
+		}
+		// Volledige naam, eventueel met een lijncode erachter ("Stoptrein RS18")
+		const naam = Object.values(TREINPRODUCTEN).find(
+			(p) => k.toLowerCase() === p.toLowerCase() || k.toLowerCase().startsWith(`${p.toLowerCase()} `)
+		);
 		if (naam) {
-			const afk = Object.keys(TREINPRODUCTEN).find((a) => TREINPRODUCTEN[a] === naam);
-			return { productNaam: naam, lijn: afk };
+			product = { productNaam: naam, afk: Object.keys(TREINPRODUCTEN).find((a) => TREINPRODUCTEN[a] === naam), rest: k.slice(naam.length).trim() };
+			break;
 		}
 	}
+	// Een echte lijncode (RS18) zegt meer dan de productafkorting (ST)
+	const lijncode = [l.routeShortName, product?.rest, l.displayName?.split(/\s+/).slice(1).join(' ')].find(isLijncode);
+	if (product) return { productNaam: product.productNaam, lijn: lijncode?.trim() ?? product.afk };
 	const eerste = kandidaten.find((k) => !/^\d+$/.test(k));
-	return { productNaam: eerste ?? 'Trein', lijn: eerste };
+	return { productNaam: eerste ?? 'Trein', lijn: lijncode?.trim() ?? eerste };
 }
 
 function ritnummerVan(l: { tripShortName?: string; displayName?: string }): string | undefined {
