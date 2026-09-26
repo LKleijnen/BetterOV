@@ -12,7 +12,7 @@
 
 	<section class="kaart stapel">
 		<p>BetterOV is een advertentievrije OV-planner voor een kleine kring vrienden en familie. De app bewaakt je reis en geeft alternatieven als het misgaat.</p>
-		<p class="zwak klein">Open source: <a href="https://github.com/lkleijnen/betterov" rel="noopener" target="_blank">github.com/lkleijnen/betterov</a></p>
+		<p class="zwak klein">Open source: <a href="https://github.com/LKleijnen/BetterOV" rel="noopener" target="_blank">github.com/LKleijnen/BetterOV</a></p>
 	</section>
 
 	<section class="kaart stapel">

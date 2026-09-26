@@ -18,8 +18,13 @@ export const handle: Handle = async ({ event, resolve }) => {
 			if (!toegestaan && pad !== '/api/ik') {
 				return json({ fout: 'Geen toegang: je e-mailadres staat niet op de uitnodigingslijst.' }, { status: 403 });
 			}
-		} else {
+		} else if (c.demoToegestaan) {
 			event.locals.gebruiker = { uid: 'demo', email: 'demo@lokaal', admin: true, toegestaan: true, demo: true };
+		} else {
+			return json(
+				{ fout: 'De app is nog niet ingesteld: Firebase-configuratie ontbreekt (of zet DEMO_MODUS=1).' },
+				{ status: 503 }
+			);
 		}
 	}
 

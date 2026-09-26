@@ -2,6 +2,7 @@
 // lokale meldingen bij nieuwe problemen, locatie delen en automatisch afronden.
 
 import type { Advies, Probleem } from '$lib/types';
+import { probleemTitel } from '$lib/reis';
 import { api, metCache } from './api';
 import { data } from './data.svelte';
 import { volgPositie } from './gps';
@@ -110,23 +111,8 @@ class Actief {
 		// Alleen een systeemmelding als de app niet in beeld is; in beeld toont het scherm het probleem
 		if (document.visibilityState !== 'visible') {
 			const eerste = nieuw.find((p) => p.ernstig) ?? nieuw[0];
-			await lokaleMelding(titelVoor(eerste), eerste.tekst);
+			await lokaleMelding(probleemTitel(eerste), eerste.tekst);
 		}
-	}
-}
-
-export function titelVoor(p: Probleem): string {
-	switch (p.soort) {
-		case 'uitval':
-			return 'Rit valt uit';
-		case 'overstap':
-			return 'Overstap niet haalbaar';
-		case 'spoor':
-			return 'Spoorwijziging';
-		case 'vertraging':
-			return 'Vertraging';
-		case 'krap':
-			return 'Krappe overstap';
 	}
 }
 

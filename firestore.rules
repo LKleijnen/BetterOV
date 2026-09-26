@@ -1,0 +1,62 @@
+rules_version = '2';
+
+// Beveiligingsregels voor BetterOV.
+// - Alleen ingelogde gebruikers met een geverifieerd e-mailadres op de allowlist mogen iets.
+// - Iedereen ziet alleen zijn eigen gegevens.
+// - Een gedeelde reis is zonder login leesbaar met de (onraadbare) ID, tot verlooptOp.
+// - De allowlist wordt alleen door de server (service account) beheerd.
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    function ingelogd() {
+      return request.auth != null && request.auth.token.email_verified == true;
+    }
+
+    function email() {
+      return request.auth.token.email.lower();
+    }
+
+    function toegestaan() {
+      return ingelogd() && exists(/databases/$(database)/documents/allowlist/$(email()));
+    }
+
+    function eigenaar(uid) {
+      return toegestaan() && request.auth.uid == uid;
+    }
+
+    match /allowlist/{adres} {
+      // Alleen je eigen regel mag je zien; wijzigen gaat via de server
+      allow get: if ingelogd() && email() == adres;
+      allow list, write: if false;
+    }
+
+    match /users/{uid} {
+      allow read, write: if eigenaar(uid);
+
+      match /{sub=**} {
+        allow read, write: if eigenaar(uid);
+      }
+    }
+
+    // Kopie van de actieve reis voor de cron-worker; één per gebruiker
+    match /actieveReizen/{uid} {
+      allow read, write: if eigenaar(uid);
+    }
+
+    match /gedeeldeReizen/{shareId} {
+      // Lezen zonder login, alleen per ID (geen lijst) en alleen zolang de link geldig is
+      allow get: if resource.data.verlooptOp > request.time;
+      allow list: if false;
+      allow create: if toegestaan()
+        && request.resource.data.uid == request.auth.uid
+        && request.resource.data.verlooptOp is timestamp
+        && request.resource.data.verlooptOp < request.time + duration.value(3, 'd');
+      allow update: if toegestaan()
+        && resource.data.uid == request.auth.uid
+        && request.resource.data.uid == request.auth.uid
+        && request.resource.data.verlooptOp < request.time + duration.value(3, 'd');
+      allow delete: if toegestaan() && resource.data.uid == request.auth.uid;
+    }
+  }
+}

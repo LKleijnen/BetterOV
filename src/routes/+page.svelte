@@ -302,7 +302,7 @@
 			{/if}
 			{#if planner.opgehaaldOp}
 				<p class="zwak klein midden">
-					{planner.bron === 'ns' ? 'Via NS-planner' : 'Via Transitous'} · opgehaald om {klok(planner.opgehaaldOp)}{planner.uitCache ? ' (opgeslagen)' : ''}
+					{#if planner.bron === 'ns'}Via NS-planner{:else}Via <a href="https://transitous.org/sources/" target="_blank" rel="noopener">Transitous</a>{/if} · opgehaald om {klok(planner.opgehaaldOp)}{planner.uitCache ? ' (opgeslagen)' : ''}
 				</p>
 			{/if}
 			<button class="knop tweede" onclick={() => { planner.adviezen = []; planner.gezocht = null; formulierOpen = true; }}>

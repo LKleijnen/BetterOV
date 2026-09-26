@@ -289,3 +289,18 @@ export function herbereken(advies: Advies): Advies {
 		drukte: hoogsteDrukte(legs.filter((l) => l.isNS).map((l) => l.drukte))
 	};
 }
+
+export function probleemTitel(p: Probleem): string {
+	switch (p.soort) {
+		case 'uitval':
+			return 'Rit valt uit';
+		case 'overstap':
+			return 'Overstap niet haalbaar';
+		case 'spoor':
+			return 'Spoorwijziging';
+		case 'vertraging':
+			return 'Vertraging';
+		case 'krap':
+			return 'Krappe overstap';
+	}
+}

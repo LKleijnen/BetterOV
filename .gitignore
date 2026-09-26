@@ -15,6 +15,9 @@ Thumbs.db
 # Env
 .env
 .env.*
+.dev.vars
+test-results
+playwright-report
 !.env.example
 !.env.test
 

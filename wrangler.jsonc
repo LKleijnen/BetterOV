@@ -1,15 +1,28 @@
 {
 	"$schema": "./node_modules/wrangler/config-schema.json",
+	// De app (SvelteKit) als Cloudflare Worker met statische assets.
+	// Publieke Firebase-config en overige instellingen komen uit "vars" (of --var bij deploy).
+	// Secrets: NS_API_KEY, FIREBASE_SERVICE_ACCOUNT, ADMIN_EMAILS (via GitHub Actions of `npx wrangler secret put`).
 	"name": "betterov",
 	"compatibility_date": "2026-09-25",
-	"compatibility_flags": [
-		"nodejs_als"
-	],
+	"compatibility_flags": ["nodejs_als"],
 	"main": ".svelte-kit/cloudflare/_worker.js",
 	"assets": {
 		"binding": "ASSETS",
 		"directory": ".svelte-kit/cloudflare"
 	},
 	"workers_dev": true,
-	"preview_urls": true
+	"preview_urls": true,
+	"observability": {
+		"enabled": true
+	},
+	"vars": {
+		"PUBLIC_FIREBASE_API_KEY": "",
+		"PUBLIC_FIREBASE_AUTH_DOMAIN": "",
+		"PUBLIC_FIREBASE_PROJECT_ID": "",
+		"PUBLIC_FIREBASE_APP_ID": "",
+		"PUBLIC_FIREBASE_MESSAGING_SENDER_ID": "",
+		"PUBLIC_FIREBASE_VAPID_KEY": "",
+		"DEMO_MODUS": "0"
+	}
 }

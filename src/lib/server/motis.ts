@@ -7,7 +7,7 @@ import { ApiFout, haalJson, queryString } from './http';
 
 export const TRANSITOUS = 'https://api.transitous.org';
 // Transitous vraagt om een User-Agent met appnaam, versie en contact.
-export const USER_AGENT = 'BetterOV/0.1 (+https://github.com/lkleijnen/betterov)';
+export const USER_AGENT = 'BetterOV/0.1 (+https://github.com/LKleijnen/BetterOV)';
 
 // Transitous draait een recente MOTIS-release (v6-endpoints). Bij 404 vallen we terug op v5.
 let apiVersie = 'v6';

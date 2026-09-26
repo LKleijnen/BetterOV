@@ -1,18 +1,21 @@
 {
 	"name": "betterov",
 	"private": true,
-	"version": "0.0.1",
+	"version": "0.1.0",
 	"type": "module",
 	"scripts": {
 		"dev": "vite dev",
+		"dev:mock": "MOCK_API=1 vite dev",
 		"build": "wrangler types --check && vite build",
 		"preview": "wrangler dev .svelte-kit/cloudflare/_worker.js --port 4173",
 		"prepare": "svelte-kit sync || echo ''",
-		"check": "wrangler types --check && svelte-kit sync && svelte-check --tsconfig ./tsconfig.json",
+		"check": "wrangler types --check && svelte-kit sync && svelte-check --tsconfig ./tsconfig.json && tsc -p cron/tsconfig.json",
 		"check:watch": "svelte-kit sync && svelte-check --tsconfig ./tsconfig.json --watch",
 		"gen": "wrangler types",
 		"test:unit": "vitest",
-		"test": "npm run test:unit -- --run"
+		"test": "npm run test:unit -- --run",
+		"test:e2e": "playwright test",
+		"deploy": "npm run build && wrangler deploy && wrangler deploy --config cron/wrangler.jsonc"
 	},
 	"devDependencies": {
 		"@playwright/test": "^1.63.0",
@@ -35,5 +38,7 @@
 		"firebase": "^12.19.0",
 		"jose": "^6.2.12",
 		"maplibre-gl": "^6.11.2"
-	}
+	},
+	"description": "Advertentievrije OV-planner die je reis bewaakt en alternatieven geeft als het misgaat.",
+	"license": "MIT"
 }

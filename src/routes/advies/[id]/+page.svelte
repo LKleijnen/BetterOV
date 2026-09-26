@@ -36,7 +36,9 @@
 		a.legs.forEach((leg, i) => {
 			if (!leg.isNS || !leg.ritnummer || ms(leg.aankomst.verwacht) < Date.now()) return;
 			haalTreinInfo(leg)
-				.then((info) => (treinInfo[i] = info))
+				.then((info) => {
+					treinInfo[i] = info;
+				})
 				.catch(() => {});
 		});
 	});
