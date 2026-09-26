@@ -24,3 +24,6 @@ playwright-report
 # Vite
 vite.config.js.timestamp-*
 vite.config.ts.timestamp-*
+
+# Gegenereerd door `npm run gen` (wrangler types)
+worker-configuration.d.ts

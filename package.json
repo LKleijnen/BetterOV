@@ -6,10 +6,10 @@
 	"scripts": {
 		"dev": "vite dev",
 		"dev:mock": "MOCK_API=1 vite dev",
-		"build": "wrangler types --check --env-file .env.example && vite build",
+		"build": "npm run gen && vite build",
 		"preview": "wrangler dev .svelte-kit/cloudflare/_worker.js --port 4173",
-		"prepare": "svelte-kit sync || echo ''",
-		"check": "wrangler types --check --env-file .env.example && svelte-kit sync && svelte-check --tsconfig ./tsconfig.json && tsc -p cron/tsconfig.json",
+		"prepare": "(npm run gen && svelte-kit sync) || echo ''",
+		"check": "npm run gen && svelte-kit sync && svelte-check --tsconfig ./tsconfig.json && tsc -p cron/tsconfig.json",
 		"check:watch": "svelte-kit sync && svelte-check --tsconfig ./tsconfig.json --watch",
 		"gen": "wrangler types --env-file .env.example",
 		"test:unit": "vitest",
