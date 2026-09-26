@@ -9,8 +9,15 @@
 	import Drukte from './Drukte.svelte';
 	import Prijs from './Prijs.svelte';
 	import Spoor from './Spoor.svelte';
+	import { LABEL_NAMEN, type AdviesLabel } from '$lib/labels';
 
-	let { advies, href, toonPrijs = true, toonDrukte = true }: { advies: Advies; href: string; toonPrijs?: boolean; toonDrukte?: boolean } = $props();
+	let {
+		advies,
+		href,
+		toonPrijs = true,
+		toonDrukte = true,
+		labels = []
+	}: { advies: Advies; href: string; toonPrijs?: boolean; toonDrukte?: boolean; labels?: AdviesLabel[] } = $props();
 
 	// Alleen wat je nodig hebt om te kiezen: tijden, duur, ritten, spoor. Status alleen als er iets is.
 	const status = $derived(adviesStatus(advies));
@@ -23,6 +30,11 @@
 </script>
 
 <a class="advies kaart" {href} data-sveltekit-preload-data="off">
+	{#if labels.length}
+		<div class="rij labels">
+			{#each labels as l (l)}<span class="adviestag {l}">{LABEL_NAMEN[l]}</span>{/each}
+		</div>
+	{/if}
 	<div class="rij tussen">
 		<div class="rij tijden">
 			<Tijd tijd={advies.vertrek} groot />
@@ -106,5 +118,23 @@
 	}
 	.rechts {
 		margin-left: auto;
+	}
+	.labels {
+		gap: 4px;
+		flex-wrap: wrap;
+		margin-bottom: -2px;
+	}
+	.adviestag {
+		padding: 1px 7px;
+		border-radius: 6px;
+		font-size: 0.72rem;
+		font-weight: 750;
+		background: var(--primair-zacht);
+		color: var(--primair);
+	}
+	.adviestag.goedkoopst,
+	.adviestag.rustigst {
+		background: var(--ok-zacht);
+		color: var(--ok);
 	}
 </style>

@@ -1,14 +1,12 @@
 <script lang="ts">
 	import { goto } from '$app/navigation';
 	import { ChevronLeft, Clock, Info, Pencil, Star, TriangleAlert } from '@lucide/svelte';
-	import type { Voorkeur } from '$lib/types';
-	import { momentTekst, planner, VOORKEUR_LABELS } from '$lib/client/planner.svelte';
+	import { momentTekst, planner } from '$lib/client/planner.svelte';
+	import { adviesLabels } from '$lib/labels';
 	import { data } from '$lib/client/data.svelte';
 	import { klok } from '$lib/tijd';
 	import AdviesKaart from '$lib/components/AdviesKaart.svelte';
 	import { optiesTekst } from '$lib/reisopties';
-
-	const voorkeuren: Voorkeur[] = ['snelst', 'overstappen', 'goedkoopst', 'drukte'];
 
 	// Zonder zoekopdracht (bijvoorbeeld na herladen zonder resultaten) terug naar het startscherm
 	$effect(() => {
@@ -25,7 +23,8 @@
 		else await data.zetFavoriet({ van, naar, via: planner.via ?? undefined, voorkeur: planner.voorkeur });
 	}
 
-	const toonDrukteKeuze = $derived(planner.drukteBeschikbaar || planner.voorkeur === 'drukte');
+	// Snelst, goedkoopst, minste overstappen en rustigst als label in de gewone lijst
+	const labels = $derived(adviesLabels(planner.adviezen));
 </script>
 
 <svelte:head><title>Reisadviezen · BetterOV</title></svelte:head>
@@ -41,14 +40,6 @@
 			<Star size={20} fill={favoriet ? 'currentColor' : 'none'} />
 		</button>
 	</header>
-
-	<div class="chips" role="group" aria-label="Sorteer op">
-		{#each voorkeuren as v (v)}
-			{#if v !== 'drukte' || toonDrukteKeuze}
-				<button type="button" class="chip" aria-pressed={planner.voorkeur === v} disabled={planner.laden !== null} onclick={() => planner.kiesVoorkeur(v)}>{VOORKEUR_LABELS[v]}</button>
-			{/if}
-		{/each}
-	</div>
 
 	{#if planner.melding}
 		<div class="melding waarschuwing" role="status"><Info size={18} /> <span>{planner.melding}</span></div>
@@ -67,7 +58,7 @@
 		{#each [1, 2, 3, 4] as i (i)}<div class="kaart skelet" aria-hidden="true"></div>{/each}
 	{:else}
 		{#each planner.adviezen as advies (advies.id)}
-			<AdviesKaart {advies} href="/advies/{advies.id}" toonDrukte={planner.drukteBeschikbaar} />
+			<AdviesKaart {advies} href="/advies/{advies.id}" toonDrukte={planner.drukteBeschikbaar} labels={labels.get(advies.id)} />
 		{:else}
 			{#if !planner.fout}<p class="zwak">Geen reizen gevonden.</p>{/if}
 		{/each}

@@ -272,6 +272,7 @@ export interface WeekItem {
 export interface Profiel {
 	naam?: string;
 	thuislocatie?: Plek;
+	/** Niet meer in gebruik: snelst/goedkoopst/… zijn nu labels in de lijst */
 	standaardvoorkeur?: Voorkeur;
 	installatieUitlegGezien?: boolean;
 }

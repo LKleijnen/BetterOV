@@ -35,9 +35,12 @@ test('plannen, details, reis starten en vertrekbord', async ({ page }) => {
 	await expect(page.getByRole('button', { name: 'Eerder' })).toBeVisible();
 	await expect(page.getByRole('button', { name: 'Later' })).toBeVisible();
 
-	// Voorkeur wisselen herberekent zonder opnieuw in te voeren
-	await page.getByRole('group', { name: 'Sorteer op' }).getByRole('button', { name: 'Minste overstappen' }).click();
-	await expect(page.locator('a.advies').first().locator('.lijnlabel')).toHaveCount(1);
+	// Snelst/minste overstappen/goedkoopst staan als label in de lijst, die op vertrektijd staat
+	await expect(page.locator('a.advies .adviestag').first()).toBeVisible();
+	const vertrektijden = await page.locator('a.advies .tijden .tijdblok:first-child .tijd').allTextContents();
+	const minuten = vertrektijden.map((t) => Number(t.slice(0, 2)) * 60 + Number(t.slice(3, 5)));
+	// Oplopend (een sprong terug van meer dan 12 uur is middernacht)
+	for (let i = 1; i < minuten.length; i++) expect(minuten[i] >= minuten[i - 1] || minuten[i - 1] - minuten[i] > 720).toBe(true);
 
 	// Favoriet bewaren
 	await page.getByRole('button', { name: 'Bewaar als favoriet' }).click();
