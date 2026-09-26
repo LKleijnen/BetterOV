@@ -16,6 +16,7 @@ interface IkAntwoord {
 	nsIngesteld: boolean;
 	pushIngesteld: boolean;
 	mock: boolean;
+	diagnose?: { beheerders: number; serviceAccount: boolean; fout?: string };
 }
 
 class Sessie {
@@ -30,6 +31,8 @@ class Sessie {
 	pushIngesteld = $state(false);
 	mock = $state(false);
 	fout = $state<string | null>(null);
+	/** Uitleg voor de beheerder waarom de toegang geweigerd is */
+	diagnose = $state<string | null>(null);
 	private gestart = false;
 
 	start() {
@@ -60,6 +63,12 @@ class Sessie {
 		});
 	}
 
+	/** Toegang opnieuw controleren (bijvoorbeeld nadat de beheerder je heeft toegevoegd) */
+	async opnieuw() {
+		this.fout = null;
+		await this.laadIk();
+	}
+
 	private async laadIk() {
 		try {
 			const ik = await api<IkAntwoord>('/api/ik', { timeoutMs: 10000 });
@@ -85,6 +94,14 @@ class Sessie {
 		this.pushIngesteld = ik.pushIngesteld;
 		this.mock = ik.mock;
 		this.status = ik.toegestaan ? 'ingelogd' : 'geweigerd';
+		const d = ik.diagnose;
+		if (ik.toegestaan || !d) this.diagnose = null;
+		else if (d.fout) this.diagnose = d.fout;
+		else if (d.beheerders === 0)
+			this.diagnose =
+				'Er is nog geen beheerder ingesteld. Zet je e-mailadres in het GitHub-secret ADMIN_EMAILS en draai de workflow "Testen en uitrollen" opnieuw.';
+		else
+			this.diagnose = `Er ${d.beheerders === 1 ? 'is 1 beheerder' : `zijn ${d.beheerders} beheerders`} ingesteld, maar dit adres hoort daar niet bij en staat niet op de uitnodigingslijst.`;
 	}
 
 	async login() {

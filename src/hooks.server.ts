@@ -1,6 +1,6 @@
 import { json, type Handle } from '@sveltejs/kit';
 import { config } from '$lib/server/config';
-import { controleerIdToken, opAllowlist } from '$lib/server/auth';
+import { controleerAllowlist, controleerIdToken, isBeheerder } from '$lib/server/auth';
 
 export const handle: Handle = async ({ event, resolve }) => {
 	const pad = event.url.pathname;
@@ -12,9 +12,10 @@ export const handle: Handle = async ({ event, resolve }) => {
 			const token = kop.startsWith('Bearer ') ? kop.slice(7) : '';
 			const gebruiker = token ? await controleerIdToken(token, c.projectId) : null;
 			if (!gebruiker) return json({ fout: 'Je bent niet ingelogd.' }, { status: 401 });
-			const admin = c.beheerders.includes(gebruiker.email);
-			const toegestaan = await opAllowlist(gebruiker.email, c.serviceAccount, c.beheerders).catch(() => false);
-			event.locals.gebruiker = { ...gebruiker, admin, toegestaan, demo: false };
+			const admin = isBeheerder(gebruiker.email, c.beheerders);
+			const uitslag = await controleerAllowlist(gebruiker.email, c.serviceAccount, c.beheerders);
+			const toegestaan = uitslag.toegestaan;
+			event.locals.gebruiker = { ...gebruiker, admin, toegestaan, demo: false, toegangsFout: uitslag.fout };
 			if (!toegestaan && pad !== '/api/ik') {
 				return json({ fout: 'Geen toegang: je e-mailadres staat niet op de uitnodigingslijst.' }, { status: 403 });
 			}
