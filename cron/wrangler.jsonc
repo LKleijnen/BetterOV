@@ -1,0 +1,18 @@
+{
+	"$schema": "../node_modules/wrangler/config-schema.json",
+	// Cron-worker: bewaakt actieve reizen en stuurt pushmeldingen.
+	// Secrets (via GitHub Actions of `npx wrangler secret put ... --config cron/wrangler.jsonc`):
+	//   FIREBASE_SERVICE_ACCOUNT, NS_API_KEY
+	"name": "betterov-cron",
+	"main": "src/index.ts",
+	"compatibility_date": "2026-09-25",
+	"triggers": {
+		"crons": ["* * * * *"]
+	},
+	"observability": {
+		"enabled": true
+	},
+	"vars": {
+		"APP_URL": ""
+	}
+}

@@ -1,0 +1,345 @@
+/* Ontwerp: rustig, groot waar het telt. Kleur alleen voor status, altijd met tekst of icoon. */
+
+:root {
+	--bg: #f4f5f7;
+	--kaart: #ffffff;
+	--kaart-2: #f0f2f5;
+	--tekst: #121722;
+	--tekst-zwak: #566070;
+	--rand: #dfe3e9;
+	--primair: #1d4ed8;
+	--primair-tekst: #ffffff;
+	--primair-zacht: #e6edfd;
+	--ok: #11763a;
+	--ok-zacht: #e3f4e9;
+	--vertraagd: #a44d06;
+	--vertraagd-zacht: #fdf0dc;
+	--fout: #c01c1c;
+	--fout-zacht: #fde7e7;
+	--info: #1d4ed8;
+	--info-zacht: #e6edfd;
+	--schaduw: 0 1px 2px rgb(16 24 40 / 6%), 0 1px 3px rgb(16 24 40 / 8%);
+	--radius: 14px;
+	--radius-klein: 10px;
+	--nav-hoogte: 64px;
+	--max-breedte: 680px;
+	color-scheme: light;
+}
+
+@media (prefers-color-scheme: dark) {
+	:root {
+		--bg: #0e1116;
+		--kaart: #171b22;
+		--kaart-2: #1f242d;
+		--tekst: #eef1f5;
+		--tekst-zwak: #a4acb9;
+		--rand: #2b313b;
+		--primair: #7ea3ff;
+		--primair-tekst: #0b1020;
+		--primair-zacht: #1c2742;
+		--ok: #57d98a;
+		--ok-zacht: #12301f;
+		--vertraagd: #fbbf4d;
+		--vertraagd-zacht: #3a2a0c;
+		--fout: #ff8080;
+		--fout-zacht: #3d1616;
+		--info: #7ea3ff;
+		--info-zacht: #1c2742;
+		--schaduw: 0 1px 2px rgb(0 0 0 / 40%);
+		color-scheme: dark;
+	}
+}
+
+*,
+*::before,
+*::after {
+	box-sizing: border-box;
+}
+
+html {
+	-webkit-text-size-adjust: 100%;
+	text-size-adjust: 100%;
+}
+
+body {
+	margin: 0;
+	background: var(--bg);
+	color: var(--tekst);
+	font-family:
+		system-ui,
+		-apple-system,
+		'Segoe UI',
+		Roboto,
+		'Helvetica Neue',
+		Arial,
+		sans-serif;
+	font-size: 16px;
+	line-height: 1.45;
+	-webkit-font-smoothing: antialiased;
+	overscroll-behavior-y: none;
+}
+
+a {
+	color: var(--primair);
+}
+
+h1,
+h2,
+h3 {
+	line-height: 1.2;
+	margin: 0 0 0.5rem;
+}
+
+h1 {
+	font-size: 1.6rem;
+	font-weight: 750;
+	letter-spacing: -0.01em;
+}
+
+h2 {
+	font-size: 1.15rem;
+	font-weight: 700;
+}
+
+h3 {
+	font-size: 1rem;
+	font-weight: 650;
+}
+
+.tijd,
+.getal {
+	font-variant-numeric: tabular-nums;
+}
+
+.zwak {
+	color: var(--tekst-zwak);
+}
+
+.klein {
+	font-size: 0.875rem;
+}
+
+.pagina {
+	max-width: var(--max-breedte);
+	margin: 0 auto;
+	padding: calc(env(safe-area-inset-top) + 16px) 16px calc(var(--nav-hoogte) + env(safe-area-inset-bottom) + 24px);
+}
+
+.kaart {
+	background: var(--kaart);
+	border: 1px solid var(--rand);
+	border-radius: var(--radius);
+	box-shadow: var(--schaduw);
+	padding: 14px 16px;
+}
+
+.stapel {
+	display: flex;
+	flex-direction: column;
+	gap: 12px;
+}
+
+.rij {
+	display: flex;
+	align-items: center;
+	gap: 8px;
+}
+
+.tussen {
+	justify-content: space-between;
+}
+
+.knop {
+	appearance: none;
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+	gap: 8px;
+	min-height: 48px;
+	padding: 10px 18px;
+	border-radius: 12px;
+	border: 1px solid transparent;
+	background: var(--primair);
+	color: var(--primair-tekst);
+	font: inherit;
+	font-weight: 650;
+	cursor: pointer;
+	text-decoration: none;
+	-webkit-tap-highlight-color: transparent;
+}
+
+.knop:disabled {
+	opacity: 0.55;
+	cursor: default;
+}
+
+.knop.tweede {
+	background: var(--kaart);
+	color: var(--tekst);
+	border-color: var(--rand);
+}
+
+.knop.gevaar {
+	background: var(--fout-zacht);
+	color: var(--fout);
+	border-color: transparent;
+}
+
+.knop.vol {
+	width: 100%;
+}
+
+.knop.klein {
+	min-height: 40px;
+	padding: 6px 12px;
+	font-size: 0.9rem;
+}
+
+.icoonknop {
+	appearance: none;
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+	width: 44px;
+	height: 44px;
+	border-radius: 12px;
+	border: 1px solid var(--rand);
+	background: var(--kaart);
+	color: var(--tekst);
+	cursor: pointer;
+	-webkit-tap-highlight-color: transparent;
+}
+
+.chips {
+	display: flex;
+	gap: 8px;
+	overflow-x: auto;
+	scrollbar-width: none;
+	padding-bottom: 2px;
+}
+
+.chips::-webkit-scrollbar {
+	display: none;
+}
+
+.chip {
+	appearance: none;
+	flex: 0 0 auto;
+	min-height: 40px;
+	padding: 6px 14px;
+	border-radius: 999px;
+	border: 1px solid var(--rand);
+	background: var(--kaart);
+	color: var(--tekst);
+	font: inherit;
+	font-size: 0.92rem;
+	font-weight: 600;
+	cursor: pointer;
+}
+
+.chip[aria-pressed='true'] {
+	background: var(--tekst);
+	color: var(--bg);
+	border-color: var(--tekst);
+}
+
+.veld {
+	width: 100%;
+	min-height: 48px;
+	padding: 10px 12px;
+	border-radius: 12px;
+	border: 1px solid var(--rand);
+	background: var(--kaart);
+	color: var(--tekst);
+	font: inherit;
+}
+
+.veld:focus-visible,
+.knop:focus-visible,
+.chip:focus-visible,
+.icoonknop:focus-visible {
+	outline: 3px solid color-mix(in srgb, var(--primair) 55%, transparent);
+	outline-offset: 2px;
+}
+
+.label {
+	font-size: 0.8rem;
+	font-weight: 650;
+	color: var(--tekst-zwak);
+	text-transform: uppercase;
+	letter-spacing: 0.04em;
+}
+
+.melding {
+	display: flex;
+	gap: 10px;
+	align-items: flex-start;
+	padding: 12px 14px;
+	border-radius: var(--radius-klein);
+	font-size: 0.95rem;
+}
+
+.melding.info {
+	background: var(--info-zacht);
+	color: var(--tekst);
+}
+
+.melding.waarschuwing {
+	background: var(--vertraagd-zacht);
+	color: var(--tekst);
+}
+
+.melding.fout {
+	background: var(--fout-zacht);
+	color: var(--tekst);
+}
+
+.melding.ok {
+	background: var(--ok-zacht);
+	color: var(--tekst);
+}
+
+.melding > svg {
+	flex: 0 0 auto;
+	margin-top: 2px;
+}
+
+.status-ok {
+	color: var(--ok);
+}
+
+.status-vertraagd {
+	color: var(--vertraagd);
+}
+
+.status-fout {
+	color: var(--fout);
+}
+
+.visueel-verborgen {
+	position: absolute;
+	width: 1px;
+	height: 1px;
+	overflow: hidden;
+	clip: rect(0 0 0 0);
+	white-space: nowrap;
+}
+
+.lijst {
+	list-style: none;
+	margin: 0;
+	padding: 0;
+}
+
+hr {
+	border: 0;
+	border-top: 1px solid var(--rand);
+	margin: 12px 0;
+}
+
+@media (prefers-reduced-motion: reduce) {
+	* {
+		animation: none !important;
+		transition: none !important;
+	}
+}
