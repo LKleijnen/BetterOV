@@ -100,9 +100,12 @@ Merge de pull request naar `main`. De GitHub Action test, bouwt en rolt de app e
 ### 7. Domein toestaan in Firebase
 Firebase → *Authentication* → *Settings* → *Authorized domains* → *Add domain* → `betterov.<jouw-subdomein>.workers.dev`.
 
-**Aanbevolen voor iPhone** (inloggen vanuit de app op het beginscherm):
-1. Zet de GitHub-variabele `PUBLIC_FIREBASE_AUTH_DOMAIN` op `betterov.<jouw-subdomein>.workers.dev` en rol opnieuw uit (*Actions* → *Testen en uitrollen* → *Run workflow*).
-2. [Google Cloud Console](https://console.cloud.google.com/apis/credentials) (zelfde project) → *OAuth 2.0 Client IDs* → *Web client (auto created by Google Service)* → *Authorized redirect URIs* → toevoegen: `https://betterov.<jouw-subdomein>.workers.dev/__/auth/handler`.
+**Nodig voor de app op het beginscherm** (iPhone én Android): als webapp logt de app in via zijn eigen domein (de proxy op `/__/auth/`), omdat telefoons in app-modus de opslag van `firebaseapp.com` blokkeren. Google moet dat adres kennen:
+1. [Google Cloud Console → Credentials](https://console.cloud.google.com/apis/credentials) (bovenaan hetzelfde project kiezen als in Firebase).
+2. Onder *OAuth 2.0 Client IDs* → klik op **Web client (auto created by Google Service)**.
+3. Bij *Authorized redirect URIs* → *Add URI* → `https://betterov.<jouw-subdomein>.workers.dev/__/auth/handler` → **Save**. (Het kan tot 5 minuten duren voordat dit werkt.)
+
+Optioneel: zet de GitHub-variabele `PUBLIC_FIREBASE_AUTH_DOMAIN` op `betterov.<jouw-subdomein>.workers.dev` en rol opnieuw uit; dan gebruikt ook de browser dit domein.
 
 ### 8. In gebruik nemen
 Open de app, log in met Google en nodig mensen uit via *Meer* → *Beheer: uitnodigingen*. Op iPhone: Safari → *Deel* → *Zet op beginscherm*, daarna meldingen aanzetten via *Meer* → *Instellingen*.
