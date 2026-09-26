@@ -345,6 +345,35 @@ describe('planner', () => {
 		expect(r.adviezen).toHaveLength(1);
 	});
 
+	it('geeft reisopties door aan Transitous en filtert treinen met reservering', async () => {
+		const urls: string[] = [];
+		const eurostar = structuredClone(motisItinerary);
+		eurostar.legs[1].displayName = 'Eurostar 9311';
+		eurostar.legs[1].routeShortName = 'Eurostar';
+		eurostar.legs[1].agencyName = 'Eurostar';
+		eurostar.legs[1].tripId = 'est-1';
+		vi.stubGlobal('fetch', (url: string) => {
+			urls.push(url);
+			if (url.includes('transitous')) return Promise.resolve(new Response(JSON.stringify({ itineraries: [motisItinerary, eurostar] })));
+			return Promise.resolve(new Response('{}', { status: 404 }));
+		});
+		const r = await plan(
+			{
+				van: { naam: 'Oudegracht 100', lat: 52.09, lon: 5.12 },
+				naar: { naam: 'Damrak 1', lat: 52.37, lon: 4.89 },
+				voorkeur: 'snelst',
+				opties: { extraOverstaptijd: 5, vervoer: ['trein', 'metro'], zonderReservering: true, toegankelijk: true }
+			},
+			{}
+		);
+		const motis = urls.find((u) => u.includes('/plan?'))!;
+		expect(motis).toContain('additionalTransferTime=5');
+		expect(motis).toContain('pedestrianProfile=WHEELCHAIR');
+		expect(decodeURIComponent(motis)).toContain('transitModes=HIGHSPEED_RAIL,LONG_DISTANCE,NIGHT_RAIL,REGIONAL_RAIL,SUBURBAN,SUBWAY');
+		expect(r.adviezen).toHaveLength(1);
+		expect(r.adviezen[0].legs[1].productNaam).toBe('Intercity');
+	});
+
 	it('sorteert op voorkeur', () => {
 		const snel = maakAdvies([ovLeg('A', 'B', '10:10', '10:40')]);
 		const traagDirect = maakAdvies([ovLeg('A', 'B', '10:00', '10:50')]);
