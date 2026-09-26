@@ -51,10 +51,7 @@ Transitous is alleen gratis voor open-source projecten. Maak de repo openbaar: G
 
 ### 2. NS API-key
 1. Ga naar [apiportal.ns.nl](https://apiportal.ns.nl) en maak een account.
-2. Abonneer je (*Products* → *Subscribe*) op de product(en) met deze API's:
-   - **Reisinformatie API** (verplicht): fallback-planner, vertrektijden, drukte, materieel, stations.
-   - **Virtual Train API** (verplicht voor instapadvies, kortere trein en treinposities).
-   - **NS.nl-Public-Price-Information** (optioneel, voor nog preciezere prijzen).
+2. *Products* → **Ns-App** → *Subscribe* (naam bijvoorbeeld `BetterOV`). Dit product bevat alles wat de app nodig heeft: de **Reisinformatie API** en de **Virtual Train API** (plus Disruptions, Stations, Places en SpoorKaart voor later).
 3. *Profile* → kopieer de **Primary key**. Eén key werkt voor alle producten waarop je geabonneerd bent.
 
 Let op: de Reisinformatie API heeft een limiet van 300 verzoeken per 5 minuten. Voor ongeveer 20 gebruikers is dat genoeg, omdat de app antwoorden cachet.
