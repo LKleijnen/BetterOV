@@ -1,9 +1,11 @@
 <script lang="ts">
-	import { onDestroy, onMount } from 'svelte';
+	import { onDestroy, onMount, untrack } from 'svelte';
 	import type { Map as MLMap, GeoJSONSource, LngLatBoundsLike } from 'maplibre-gl';
 	import type { Advies, VoertuigPositie } from '$lib/types';
 	import { isOV } from '$lib/reis';
 	import { legLijn } from '$lib/voertuig';
+	// MapLibre zoekt zijn worker naast het eigen script; na bundelen staat die ergens anders
+	import workerUrl from 'maplibre-gl/dist/maplibre-gl-worker.mjs?worker&url';
 
 	let {
 		advies,
@@ -88,6 +90,7 @@
 			const maplibre = await import('maplibre-gl');
 			await import('maplibre-gl/dist/maplibre-gl.css');
 			if (!container) return;
+			maplibre.setWorkerUrl(workerUrl);
 			kaart = new maplibre.Map({
 				container,
 				style: STIJL,
@@ -162,8 +165,6 @@
 					paint: { 'circle-radius': 7, 'circle-color': '#2563eb', 'circle-stroke-width': 3, 'circle-stroke-color': '#ffffff' }
 				});
 				geladen = true;
-				const b = grenzen();
-				if (b) kaart.fitBounds(b, { padding: 40, duration: 0, maxZoom: 16 });
 			});
 		} catch (e) {
 			fout = 'Kaart kon niet worden geladen.';
@@ -192,11 +193,19 @@
 		const d = puntGeoJson(extraPunt);
 		if (geladen && kaart) (kaart.getSource('extra') as GeoJSONSource | undefined)?.setData(d);
 	});
+	// Alleen opnieuw inzoomen als de route of de gekozen rit verandert, niet bij elke GPS-update
+	const routeSleutel = $derived(
+		`${focusLeg}|${(advies?.legs ?? []).map((l) => `${l.van.naam}:${l.naar.naam}:${l.polyline?.punten.length ?? 0}`).join('|')}`
+	);
+	let eersteKeer = true;
 	$effect(() => {
-		void focusLeg;
+		void routeSleutel;
 		if (!geladen || !kaart) return;
-		const b = grenzen();
-		if (b) kaart.fitBounds(b, { padding: 40, maxZoom: 16 });
+		untrack(() => {
+			const b = grenzen();
+			if (b) kaart!.fitBounds(b, { padding: 40, maxZoom: 16, duration: eersteKeer ? 0 : 600 });
+			eersteKeer = false;
+		});
 	});
 </script>
 

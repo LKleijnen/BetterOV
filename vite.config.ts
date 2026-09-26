@@ -12,6 +12,8 @@ export default defineConfig({
 			adapter: adapter()
 		})
 	],
+	// Web workers (zoals die van MapLibre) als ES-module, zodat ze imports mogen gebruiken
+	worker: { format: 'es' },
 	test: {
 		expect: { requireAssertions: true },
 		projects: [
