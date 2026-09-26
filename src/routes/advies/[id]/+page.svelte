@@ -1,5 +1,5 @@
 <script lang="ts">
-	import { onDestroy } from 'svelte';
+	import { onDestroy, untrack } from 'svelte';
 	import type { PageProps } from './$types';
 	import { goto } from '$app/navigation';
 	import { CalendarPlus, ChevronLeft, Footprints, Map as KaartIcoon, Play, Star, TriangleAlert, Info } from '@lucide/svelte';
@@ -64,17 +64,18 @@
 	let stopGps: (() => void) | undefined;
 
 	$effect(() => {
-		if (nuVertrekken) {
+		if (!nuVertrekken) return;
+		untrack(() => {
 			gpsFout = null;
 			stopGps = volgPositie(
 				(p) => (positie = p),
 				(f) => (gpsFout = f)
 			);
-		} else {
+		});
+		return () => {
 			stopGps?.();
 			stopGps = undefined;
-		}
-		return () => stopGps?.();
+		};
 	});
 	onDestroy(() => stopGps?.());
 

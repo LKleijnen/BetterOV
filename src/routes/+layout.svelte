@@ -1,6 +1,6 @@
 <script lang="ts">
 	import '../app.css';
-	import { onMount } from 'svelte';
+	import { onMount, untrack } from 'svelte';
 	import { page } from '$app/state';
 	import { goto } from '$app/navigation';
 	import { sessie } from '$lib/client/sessie.svelte';
@@ -29,16 +29,21 @@
 	});
 
 	$effect(() => {
-		data.start(sessie.status === 'ingelogd' ? sessie.uid : null);
+		const uid = sessie.status === 'ingelogd' ? sessie.uid : null;
+		untrack(() => data.start(uid));
 	});
 
 	$effect(() => {
-		if (data.actieveReis) {
-			actief.start();
-			actief.synchroniseerLocatieDelen();
-		} else {
-			actief.stop();
-		}
+		const heeftReis = !!data.actieveReis;
+		void data.actieveReis?.gedeeldId;
+		untrack(() => {
+			if (heeftReis) {
+				actief.start();
+				actief.synchroniseerLocatieDelen();
+			} else {
+				actief.stop();
+			}
+		});
 	});
 
 	// Tijdens een reis is het actieve-reisscherm het startscherm

@@ -299,7 +299,7 @@ h3 {
 	color: var(--tekst);
 }
 
-.melding :global(svg) {
+.melding > svg {
 	flex: 0 0 auto;
 	margin-top: 2px;
 }

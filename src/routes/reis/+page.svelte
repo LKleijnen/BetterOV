@@ -1,5 +1,5 @@
 <script lang="ts">
-	import { onDestroy } from 'svelte';
+	import { onDestroy, untrack } from 'svelte';
 	import { goto } from '$app/navigation';
 	import {
 		CalendarPlus,
@@ -91,7 +91,7 @@
 		const sleutel = `${reis.id}:${p.sleutel}`;
 		if (sleutel === altVoor) return;
 		altVoor = sleutel;
-		void laadAlternatieven(p);
+		untrack(() => void laadAlternatieven(p));
 	});
 
 	async function kies(a: Advies) {
@@ -129,14 +129,12 @@
 	}
 
 	$effect(() => {
-		if (kaartOpen) {
+		if (!kaartOpen) return;
+		untrack(() => {
 			stopGps = volgPositie((p) => (mijnPositie = p));
 			void werkVoertuigBij();
 			voertuigTimer = setInterval(() => void werkVoertuigBij(), 15000);
-		} else {
-			stopGps?.();
-			clearInterval(voertuigTimer);
-		}
+		});
 		return () => {
 			stopGps?.();
 			clearInterval(voertuigTimer);

@@ -1,5 +1,5 @@
 <script lang="ts">
-	import { onDestroy, onMount } from 'svelte';
+	import { onDestroy, onMount, untrack } from 'svelte';
 	import { LocateFixed, RefreshCw, TriangleAlert, Info, ChevronRight } from '@lucide/svelte';
 	import type { Plek, Vertrek, VertrekAntwoord } from '$lib/types';
 	import { api, metCache } from '$lib/client/api';
@@ -54,13 +54,15 @@
 	}
 
 	$effect(() => {
-		// Nieuwe halte gekozen
-		if (halte) {
-			schrijf('vertrek-halte', halte);
+		// Nieuwe halte gekozen; alleen op `halte` reageren, niet op de laadstatus
+		const gekozen = halte;
+		if (!gekozen) return;
+		untrack(() => {
+			schrijf('vertrek-halte', gekozen);
 			inDeBuurt = null;
 			antwoord = null;
 			void laad();
-		}
+		});
 	});
 
 	async function buurt() {
