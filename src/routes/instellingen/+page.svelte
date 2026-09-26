@@ -5,7 +5,14 @@
 	import { sessie } from '$lib/client/sessie.svelte';
 	import { VOORKEUR_LABELS } from '$lib/client/planner.svelte';
 	import { isIOS, isStandalone, pushStatus, zetPushAan, lokaleMelding, type PushStatus } from '$lib/client/push';
+	import { weergave, type Thema } from '$lib/client/thema.svelte';
 	import PlekInvoer from '$lib/components/PlekInvoer.svelte';
+
+	const themas: { waarde: Thema; label: string }[] = [
+		{ waarde: 'systeem', label: 'Automatisch' },
+		{ waarde: 'licht', label: 'Licht' },
+		{ waarde: 'donker', label: 'Donker' }
+	];
 
 	let naam = $state(data.profiel.naam ?? sessie.naam ?? '');
 	let thuis = $state<Plek | null>(data.profiel.thuislocatie ?? null);
@@ -101,9 +108,14 @@
 		{/if}
 	</section>
 
-	<section class="kaart stapel">
-		<h2>Weergave</h2>
-		<p class="zwak klein">De app volgt automatisch de lichte of donkere modus van je telefoon.</p>
+	<section class="kaart stapel" aria-labelledby="weergave-kop">
+		<h2 id="weergave-kop">Weergave</h2>
+		<div class="chips" role="group" aria-label="Weergave">
+			{#each themas as t (t.waarde)}
+				<button type="button" class="chip" aria-pressed={weergave.thema === t.waarde} onclick={() => weergave.zet(t.waarde)}>{t.label}</button>
+			{/each}
+		</div>
+		{#if weergave.thema === 'systeem'}<p class="zwak klein">Volgt de lichte of donkere modus van je telefoon.</p>{/if}
 	</section>
 </main>
 

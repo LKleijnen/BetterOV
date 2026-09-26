@@ -7,6 +7,7 @@
 	import { isOV } from '$lib/reis';
 	import { lijnOverSpoor, spoorNetwerk, wilSpoor } from '$lib/client/spoorkaart';
 	import { lees, schrijf } from '$lib/client/opslag';
+	import { weergave } from '$lib/client/thema.svelte';
 	// MapLibre zoekt zijn worker naast het eigen script; na bundelen staat die ergens anders
 	import workerUrl from 'maplibre-gl/dist/maplibre-gl-worker.mjs?worker&url';
 
@@ -61,7 +62,7 @@
 		return { type: 'FeatureCollection' as const, features };
 	}
 
-	const donker = typeof matchMedia !== 'undefined' && matchMedia('(prefers-color-scheme: dark)').matches;
+	const donker = weergave.donker;
 	const STIJL = `https://tiles.openfreemap.org/styles/${donker ? 'dark' : 'liberty'}`;
 
 	function routeGeoJson() {
