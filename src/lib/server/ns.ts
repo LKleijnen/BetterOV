@@ -5,7 +5,7 @@
 import type { Advies, Drukte, Halte, Leg, Melding, Modus, Plek, Tijd, TreinDeel, BakInfo, Vertrek, VoertuigPositie } from '../types';
 import { adviesId, herbereken } from '../reis';
 import { afstandMeter, looptijdSeconden } from '../geo';
-import { ApiFout, gecached, gedeeldGecached, haalJson, queryString } from './http';
+import { ApiFout, gecached, gedeeldGecached, gedeeldGecachedTekst, haalJson, haalTekst, queryString } from './http';
 
 export const NS_BASIS = 'https://gateway.apiportal.ns.nl';
 
@@ -603,6 +603,28 @@ export async function nsTreinPositie(key: string | undefined, ritnummer: string)
 		tijd: new Date().toISOString(),
 		soort: 'gps'
 	};
+}
+
+// ---------- Spoorkaart (spoorgeometrie) ----------
+
+/**
+ * De NS SpoorKaart (GeoJSON met alle spoorlijnen) als ruwe tekst. Niet parsen op de server:
+ * het bestand is groot en de app rekent zelf de route over het spoor uit. Eén dag gecachet.
+ */
+export async function nsSpoorkaart(key: string | undefined): Promise<string> {
+	if (!key) throw new ApiFout('NS API-key is niet ingesteld', 0, 'ns');
+	return gedeeldGecachedTekst('ns-spoorkaart-v1', 86400, async () => {
+		let laatste: unknown;
+		for (const pad of ['/Spoorkaart-API/api/v1/spoorkaart', '/Spoorkaart-API/api/v1/spoorkaart.json']) {
+			try {
+				return await haalTekst(`${NS_BASIS}${pad}`, { timeoutMs: 15000, headers: { 'Ocp-Apim-Subscription-Key': key }, bron: 'ns' });
+			} catch (e) {
+				laatste = e;
+				if (!(e instanceof ApiFout && e.status === 404)) throw e;
+			}
+		}
+		throw laatste;
+	});
 }
 
 // ---------- Prijzen ----------

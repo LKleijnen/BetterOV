@@ -19,7 +19,7 @@ Advertentievrije OV-webapp (PWA) voor eigen gebruik en een kleine kring vrienden
 | M6 | *Nu vertrekken*: looptijd vanaf GPS en aftelling | Reisadvies |
 | M7, M8 | Actieve reis met één tik; ververst bij openen en elke 30 s; alternatieven vanaf het overstappunt | Reis |
 | M9 | Pushmelding binnen 2 min bij uitval, onhaalbare overstap, spoorwijziging, vertraging | Cron-worker |
-| M10 | Live kaart met eigen positie en (geschatte of GPS-)positie van het voertuig | Reis → Live kaart |
+| M10 | Live kaart met eigen positie en (geschatte of GPS-)positie van het voertuig; treinen over het echte spoor (NS SpoorKaart), optioneel alle spoorlijnen | Reis → Live kaart |
 | M11 | Fallback naar de NS-planner, met melding | Server |
 | M12 | Laatste data blijft zichtbaar bij slecht bereik, met tijdstip van ophalen | Overal |
 | M13 | Favoriete reizen en plekken | Favorieten |
@@ -120,6 +120,7 @@ Open de app, log in met Google en nodig mensen uit via *Meer* → *Beheer: uitno
 | `GET/POST /api/prijs` | NS-prijs tussen stations, of prijs/schatting voor een heel advies |
 | `GET /api/laatste-verbinding` | Laatste reis naar huis vanaf de huidige locatie |
 | `POST /api/reisstatus` | Ververst een lopende reis en geeft de problemen |
+| `GET /api/spoorkaart` | Spoorlijnen (NS SpoorKaart); de app rekent zelf de route over het spoor uit |
 | `GET /api/rit`, `/api/voertuig`, `/api/zoek`, `/api/omgekeerd` | Rit met alle haltes, treinpositie, zoeken, adres bij GPS |
 | Cron (elke minuut) | Controleert actieve reizen, stuurt push, rondt reizen af, ruimt gedeelde reizen op |
 

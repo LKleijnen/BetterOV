@@ -12,14 +12,14 @@ export function legLijn(leg: Leg): [number, number][] {
 	return [leg.van, ...leg.tussenstops, leg.naar].map((h) => [h.lon, h.lat] as [number, number]);
 }
 
-export function geschattePositie(leg: Leg, nu = Date.now()): VoertuigPositie | null {
+/** Geschatte positie; geef `lijn` mee om over het spoor te interpoleren in plaats van over de plannerlijn */
+export function geschattePositie(leg: Leg, nu = Date.now(), lijn: [number, number][] = legLijn(leg)): VoertuigPositie | null {
 	const haltes: Halte[] = [leg.van, ...leg.tussenstops, leg.naar];
 	const tijden = haltes.map((h, i) => {
 		const aankomst = i === 0 ? ms(leg.vertrek.verwacht) : ms(h.aankomst?.verwacht ?? h.vertrek?.verwacht);
 		const vertrek = i === haltes.length - 1 ? ms(leg.aankomst.verwacht) : ms(h.vertrek?.verwacht ?? h.aankomst?.verwacht);
 		return { aankomst, vertrek };
 	});
-	const lijn = legLijn(leg);
 	const tijd = new Date(nu).toISOString();
 	if (nu <= tijden[0].vertrek) return { lat: leg.van.lat, lon: leg.van.lon, tijd, soort: 'geschat' };
 	if (nu >= tijden[tijden.length - 1].aankomst) return { lat: leg.naar.lat, lon: leg.naar.lon, tijd, soort: 'geschat' };

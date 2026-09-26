@@ -28,6 +28,7 @@
 	import { huidigeStap, isOV } from '$lib/reis';
 	import { klok, ms, relatief } from '$lib/tijd';
 	import { geschattePositie } from '$lib/voertuig';
+	import { legLijnOverSpoor } from '$lib/client/spoorkaart';
 	import { downloadIcs, maakIcs } from '$lib/ics';
 	import ReisTijdlijn from '$lib/components/ReisTijdlijn.svelte';
 	import Aftelling from '$lib/components/Aftelling.svelte';
@@ -127,7 +128,7 @@
 				return;
 			}
 		}
-		voertuig = geschattePositie(leg);
+		voertuig = geschattePositie(leg, Date.now(), await legLijnOverSpoor(leg));
 	}
 
 	$effect(() => {

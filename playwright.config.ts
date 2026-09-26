@@ -12,7 +12,11 @@ export default defineConfig({
 		timezoneId: 'Europe/Amsterdam',
 		geolocation: { latitude: 52.0907, longitude: 5.1214 },
 		permissions: ['geolocation'],
-		launchOptions: process.env.PW_CHROMIUM ? { executablePath: process.env.PW_CHROMIUM } : {}
+		launchOptions: {
+			executablePath: process.env.PW_CHROMIUM || undefined,
+			// WebGL zonder GPU, zodat de kaart (MapLibre) ook in tests tekent
+			args: ['--use-gl=swiftshader', '--enable-unsafe-swiftshader', '--ignore-gpu-blocklist']
+		}
 	},
 	projects: [{ name: 'mobiel', use: { browserName: 'chromium' } }],
 	webServer: {

@@ -209,6 +209,32 @@ export function mockPlan(v: { van: Plek; naar: Plek; tijd?: string; voorkeur: Vo
 	};
 }
 
+/** Nep-spoorkaart: gebogen lijnen tussen de nepstations, zodat de route over het spoor zichtbaar anders is */
+export function mockSpoorkaart() {
+	const paren: [number, number][] = [
+		[0, 4], [0, 1], [0, 2], [0, 3], [0, 6], [0, 9], [0, 10], [1, 5], [5, 8], [8, 2], [2, 3], [4, 7], [7, 11], [10, 6]
+	];
+	const bocht = (a: Plek, b: Plek): [number, number][] => {
+		const punten: [number, number][] = [];
+		for (let i = 0; i <= 12; i++) {
+			const f = i / 12;
+			const uit = Math.sin(f * Math.PI) * 0.06;
+			punten.push([a.lon + (b.lon - a.lon) * f + uit, a.lat + (b.lat - a.lat) * f - uit / 2]);
+		}
+		return punten;
+	};
+	return {
+		payload: {
+			type: 'FeatureCollection',
+			features: paren.map(([a, b]) => ({
+				type: 'Feature',
+				properties: { from: STATIONS[a].naam, to: STATIONS[b].naam },
+				geometry: { type: 'LineString', coordinates: bocht(STATIONS[a], STATIONS[b]) }
+			}))
+		}
+	};
+}
+
 export function mockVertrektijden(naam = 'Utrecht Centraal'): VertrekAntwoord {
 	const nu = Date.now();
 	const vertrekken: Vertrek[] = [];

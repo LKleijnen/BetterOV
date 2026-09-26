@@ -40,6 +40,8 @@ Advertentievrije OV-webapp (PWA) voor een kleine kring (±20 mensen, alleen op u
 
 ## Bekende open punten
 - **NS Virtual Train API** (instapadvies per bak, kortere trein, treinposities) is niet openbaar gedocumenteerd en nog niet met echte data getest. Parser: `nsSamenstelling` in `ns.ts`; de UI heeft "Ruwe NS-data" om het echte formaat te bekijken.
+- **NS SpoorKaart** (`nsSpoorkaart` in `ns.ts`, pad `/Spoorkaart-API/api/v1/spoorkaart`) is nog niet met echte data getest; de app leest elke GeoJSON-lijn en valt zonder spoorkaart terug op de lijn van de planner (`src/lib/spoor.ts`).
+- MapLibre v6 zoekt zijn worker naast het eigen script; na bundelen klopt dat niet, dus `Kaart.svelte` zet `setWorkerUrl` (import met `?worker&url`, `worker.format: 'es'` in `vite.config.ts`).
 - Voertuignummer van bus/tram zit niet in de open data van Transitous.
 - Busprijzen zijn schattingen: `tarieven.json` elk jaar in januari bijwerken.
-- Ideeën voor later (zitten al in het NS-product "Ns-App"): Disruptions API (werkzaamheden op vaste reizen), OV-fiets-beschikbaarheid, SpoorKaart (treinroutes over het spoor), Places/Stations (voorzieningen), stationsplattegrond bij overstappen.
+- Ideeën voor later (zitten al in het NS-product "Ns-App"): Disruptions API (werkzaamheden op vaste reizen), OV-fiets-beschikbaarheid, Places/Stations (voorzieningen), stationsplattegrond bij overstappen.

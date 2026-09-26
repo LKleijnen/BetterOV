@@ -89,3 +89,28 @@ test('agenda-export levert een .ics-bestand', async ({ page }) => {
 	const bestand = await download;
 	expect(bestand.suggestedFilename()).toMatch(/\.ics$/);
 });
+
+test('kaart laadt (worker) en tekent de route over het spoor', async ({ page }) => {
+	const fouten: string[] = [];
+	page.on('pageerror', (e) => fouten.push(e.message));
+	page.on('console', (m) => m.type() === 'error' && fouten.push(m.text()));
+	// Kaartstijl lokaal: de tegelserver hoeft voor deze test niet bereikbaar te zijn
+	await page.route('https://tiles.openfreemap.org/**', (route) =>
+		route.fulfill({
+			contentType: 'application/json',
+			body: JSON.stringify({ version: 8, sources: {}, layers: [{ id: 'achtergrond', type: 'background', paint: { 'background-color': '#dde' } }] })
+		})
+	);
+	const spoorkaart = page.waitForResponse('**/api/spoorkaart');
+	await page.goto('/');
+	await kiesPlek(page, /^Van/, 'utrecht c', /Utrecht Centraal/);
+	await kiesPlek(page, /^Naar/, 'amsterdam c', /Amsterdam Centraal/);
+	await page.getByRole('button', { name: 'Plan reis' }).click();
+	await page.locator('a.advies').first().click();
+	await page.getByRole('button', { name: 'Kaart' }).first().click();
+	expect((await spoorkaart).status()).toBe(200);
+	await expect(page.getByRole('button', { name: 'Spoor' })).toBeVisible();
+	await expect(page.locator('canvas.maplibregl-canvas')).toHaveCount(1);
+	await expect(page.getByText('Kaart kon niet worden geladen.')).toHaveCount(0);
+	expect(fouten.filter((f) => !/GL Driver|WebGL/.test(f))).toEqual([]);
+});
