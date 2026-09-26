@@ -10,6 +10,7 @@ Advertentievrije OV-webapp (PWA) voor een kleine kring (±20 mensen, alleen op u
 - **€0**: alleen gratis tiers, geen creditcard. Firebase blijft op Spark (dus géén Cloud Functions). Cloudflare Workers Free: max ±50 subrequests per aanroep (cron houdt 45 aan).
 - **Open source**: de repo moet publiek blijven (eis van Transitous). Geen geheimen in de code.
 - Transitous vraagt een User-Agent met contact (`USER_AGENT` in `src/lib/server/motis.ts`) en een zichtbare bronvermelding.
+- Reisopties (`src/lib/reisopties.ts`): naar MOTIS als `additionalTransferTime`/`transitModes`/`pedestrianProfile`; naar NS als `addChangeTime`, `excludeTrainsWithReservationRequired`, `disabledTransportModalities`, `searchForAccessibleTrip` (niet officieel bevestigd; bij HTTP 400 opnieuw zonder). `pastBij` filtert de uitkomst altijd nog zelf.
 - NS Reisinformatie API: 300 verzoeken per 5 minuten → altijd cachen (`gecached`/`gedeeldGecached` in `src/lib/server/http.ts`).
 
 ## Architectuur

@@ -2,6 +2,7 @@
 
 import type { Advies, Plek, Probleem, Reis, WeekItem } from '$lib/types';
 import { plekNaarParams } from '$lib/plekparams';
+import { optiesNaarParams } from '$lib/reisopties';
 import { adviesId, herbereken, isOV } from '$lib/reis';
 import { ms, nlDatum } from '$lib/tijd';
 import { api } from './api';
@@ -95,6 +96,8 @@ export async function zoekAlternatieven(reis: Reis, probleem: Probleem | null): 
 	plekNaarParams('naar', reis.naar, p);
 	p.set('tijd', tijd);
 	p.set('voorkeur', 'snelst');
+	// Dezelfde reisopties als bij plannen (bijvoorbeeld extra overstaptijd)
+	optiesNaarParams(planner.opties, p);
 	const r = await api<{ adviezen: Advies[]; melding?: string }>(`/api/plan?${p}`, { timeoutMs: 20000 });
 	// Het huidige (problematische) vervolg niet opnieuw aanbieden
 	const huidigeTrips = new Set(reis.advies.legs.slice(vanafLeg).map((l) => l.tripId).filter(Boolean));

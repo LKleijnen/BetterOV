@@ -12,7 +12,8 @@ Advertentievrije OV-webapp (PWA) voor eigen gebruik en een kleine kring vrienden
 
 | ID | Functie | Waar |
 | --- | --- | --- |
-| M1–M2 | Plannen van adres, halte, station, favoriete plek of GPS; datum/tijd, vertrek/aankomst, via; eerder/later | Plannen |
+| M1–M2 | Plannen van adres, halte, station, favoriete plek of GPS; datum/tijd, vertrek/aankomst; eerder/later | Plannen |
+| — | Reisopties zoals in de NS-app: via, extra overstaptijd, vervoermiddelen, treinen met reservering verbergen, toegankelijk | Plannen → Reisopties |
 | M3 | Tussenstops, perrons, overstapmarge (rood onder 3 min), spoorwijziging gemarkeerd | Reisadvies |
 | M4, M15, M16 | Voorkeur snelst / minste overstappen / goedkoopst / minst druk (wisselen herberekent) | Resultaten |
 | M5 | Vertrekbord per halte of in de buurt, ververst elke 30 s | Vertrek |

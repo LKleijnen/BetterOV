@@ -100,6 +100,27 @@ test('startscherm: tijd kiezen en recente zoekopdracht opnieuw plannen', async (
 	await expect(page.locator('a.advies').first()).toBeVisible();
 });
 
+test('reisopties: zonder bus plannen', async ({ page }) => {
+	await page.goto('/');
+	await kiesPlek(page, /^Van/, 'oudegr', /Oudegracht 100/);
+	await kiesPlek(page, /^Naar/, 'kerkstraat', /Kerkstraat 12/);
+	await page.getByRole('button', { name: 'Plan reis' }).click();
+	await page.waitForURL('**/reisadviezen');
+	// Met nepdata heeft één advies een bus aan het eind
+	await expect(page.locator('a.advies .lijnlabel', { hasText: '12' })).toHaveCount(1);
+
+	await page.getByRole('link', { name: 'Terug naar plannen' }).click();
+	await page.getByRole('button', { name: /Reisopties/ }).click();
+	await page.getByRole('group', { name: 'Vervoermiddelen' }).getByRole('button', { name: 'Bus' }).click();
+	await page.getByRole('button', { name: '10 min' }).click();
+	await page.getByRole('button', { name: 'Klaar' }).click();
+	await expect(page.getByText('+10 min overstap · zonder bus')).toBeVisible();
+	await page.getByRole('button', { name: 'Plan reis' }).click();
+	await page.waitForURL('**/reisadviezen');
+	await expect(page.locator('a.advies').first()).toBeVisible();
+	await expect(page.locator('a.advies .lijnlabel', { hasText: '12' })).toHaveCount(0);
+});
+
 test('overstap klapt uit naar lopen en wachten', async ({ page }) => {
 	await page.goto('/');
 	await kiesPlek(page, /^Van/, 'amersfoort', /Amersfoort Centraal/);

@@ -1,6 +1,6 @@
 <script lang="ts">
 	import { goto } from '$app/navigation';
-	import { ArrowUpDown, CalendarDays, ChevronRight, Clock, History, House, Info, MapPin, Navigation, Play, Search, Star, TriangleAlert } from '@lucide/svelte';
+	import { ArrowUpDown, CalendarDays, ChevronRight, Clock, History, House, Info, MapPin, Navigation, Play, Search, SlidersHorizontal, Star, TriangleAlert } from '@lucide/svelte';
 	import type { Plek, WeekItem } from '$lib/types';
 	import { momentTekst, onthoudAdvies, planner, recenteZoekopdrachten, type RecenteZoekopdracht } from '$lib/client/planner.svelte';
 	import { data } from '$lib/client/data.svelte';
@@ -12,9 +12,12 @@
 	import AdviesKaart from '$lib/components/AdviesKaart.svelte';
 	import Onderblad from '$lib/components/Onderblad.svelte';
 	import MomentKiezer from '$lib/components/MomentKiezer.svelte';
+	import Reisopties from '$lib/components/Reisopties.svelte';
+	import { aantalAfwijkend, optiesTekst } from '$lib/reisopties';
 
-	let toonVia = $state(!!planner.via);
 	let momentOpen = $state(false);
+	let optiesOpen = $state(false);
+	const aantalOpties = $derived(aantalAfwijkend(planner.opties) + (planner.via ? 1 : 0));
 	let fout = $state<string | null>(null);
 
 	$effect(() => {
@@ -144,9 +147,6 @@
 			<div class="stapel velden">
 				<PlekInvoer label="Van" bind:waarde={planner.van} />
 				<PlekInvoer label="Naar" bind:waarde={planner.naar} />
-				{#if toonVia}
-					<PlekInvoer label="Via" bind:waarde={planner.via} alleenHaltes gps={false} wisbaar placeholder="Halte of station" />
-				{/if}
 			</div>
 			<button type="button" class="icoonknop wissel" aria-label="Van en naar omwisselen" onclick={() => planner.wissel()}>
 				<ArrowUpDown size={20} />
@@ -157,10 +157,14 @@
 			<button type="button" class="knop tweede klein moment" onclick={() => (momentOpen = true)}>
 				<Clock size={16} /> {momentTekst(planner)}
 			</button>
-			{#if !toonVia}
-				<button type="button" class="tekstknop" onclick={() => (toonVia = true)}>+ Via</button>
-			{/if}
+			<button type="button" class="knop tweede klein" onclick={() => (optiesOpen = true)}>
+				<SlidersHorizontal size={16} /> Reisopties
+				{#if aantalOpties > 0}<span class="teller" aria-label="{aantalOpties} aangepast">{aantalOpties}</span>{/if}
+			</button>
 		</div>
+		{#if planner.via || aantalOpties > 0}
+			<p class="zwak klein samenvatting-opties">{[planner.via ? `via ${planner.via.naam}` : '', optiesTekst(planner.opties)].filter(Boolean).join(' · ')}</p>
+		{/if}
 
 		<button class="knop vol" type="submit"><Search size={20} /> Plan reis</button>
 		{#if fout}
@@ -268,6 +272,7 @@
 </main>
 
 <MomentKiezer bind:open={momentOpen} />
+<Reisopties bind:open={optiesOpen} />
 
 <Onderblad bind:open={huisOpen} titel="Laatste verbinding naar huis">
 	{#if huisBezig}
@@ -317,6 +322,20 @@
 	}
 	.moment {
 		flex: 0 1 auto;
+	}
+	.teller {
+		min-width: 18px;
+		height: 18px;
+		padding: 0 5px;
+		border-radius: 9px;
+		background: var(--primair);
+		color: var(--primair-tekst);
+		font-size: 0.72rem;
+		line-height: 18px;
+		text-align: center;
+	}
+	.samenvatting-opties {
+		margin: 0;
 	}
 	.actieve-reis,
 	.snelrij {
