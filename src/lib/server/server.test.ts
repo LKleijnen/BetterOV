@@ -6,6 +6,7 @@ import { schattingTrein, berekenPrijs } from './prijs';
 import { naarVelden, vanVelden, Tijdstempel } from './firestore';
 import { plan, sorteer } from './planner';
 import { berekenInstapadvies } from './trein';
+import { bakIndeling } from './ns';
 import { kiesLaatste } from './laatste';
 import { maakAdvies, ovLeg, loopLeg, t } from '../testdata';
 
@@ -236,6 +237,48 @@ describe('instapadvies', () => {
 		expect(advies?.nauwkeurig).toBe(true);
 		expect(advies?.eersteKlas).toEqual([{ van: 0, tot: 0.25 }]);
 		expect(advies?.samenvatting).toEqual(['Eerste klas: voorin', 'Stiltecoupé: achterin']);
+	});
+});
+
+describe('stilte en eerste klas per bak', () => {
+	it('tekent treinstel-informatie niet op elke bak', () => {
+		// Elke bak draagt de faciliteiten van het hele treinstel mee: niet bruikbaar per bak
+		const bakken = [1, 2, 3, 4].map(() => ({ faciliteiten: ['STILTE', 'TOILET'] }));
+		expect(bakIndeling(bakken)).toBeUndefined();
+	});
+
+	it('negeert afbeeldingen en links bij het zoeken naar stilte', () => {
+		const bakken = [
+			{ afbeelding: { url: 'https://x/icm_stilte.png' }, klasse: 1 },
+			{ afbeelding: { url: 'https://x/icm_stilte.png' } },
+			{ afbeelding: { url: 'https://x/icm_stilte.png' }, type: 'STILTE' }
+		];
+		expect(bakIndeling(bakken)).toEqual([
+			{ eersteKlas: true, stilte: false, drukte: undefined },
+			{ eersteKlas: false, stilte: false, drukte: undefined },
+			{ eersteKlas: false, stilte: true, drukte: undefined }
+		]);
+	});
+
+	it('benoemt stilte per treinstel als de indeling per bak ontbreekt', () => {
+		const advies = berekenInstapadvies({
+			ritnummer: '2',
+			delen: [
+				{ faciliteiten: ['STILTE'], bakken: 4 },
+				{ faciliteiten: ['TOILET'], bakken: 3 }
+			],
+			ingekort: false,
+			rijrichting: 'links',
+			eersteKlasPerDeel: [true, true],
+			ruw: null
+		});
+		expect(advies?.stilte).toEqual([]);
+		expect(advies?.eersteKlas).toEqual([]);
+		expect(advies?.nauwkeurig).toBe(false);
+		expect(advies?.samenvatting).toEqual([
+			'Eerste klas: in het voorste treinstel en in het achterste treinstel',
+			'Stiltecoupé: in het voorste treinstel'
+		]);
 	});
 });
 

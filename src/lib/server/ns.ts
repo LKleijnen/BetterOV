@@ -509,27 +509,38 @@ function tekstVelden(x: Ruw, diepte = 0): string[] {
 	if (Array.isArray(x)) return x.flatMap((y) => tekstVelden(y, diepte + 1));
 	if (typeof x === 'object') {
 		return Object.entries(x).flatMap(([k, v]) =>
-			typeof v === 'boolean' && v ? [k] : tekstVelden(v, diepte + 1)
+			// Afbeeldingen en links overslaan: een bestandsnaam als ".../stilte.png" zegt niets over deze bak
+			/afbeelding|image|url|uri|href|icon/i.test(k) ? [] : typeof v === 'boolean' && v ? [k] : tekstVelden(v, diepte + 1)
 		);
 	}
 	return [];
 }
 
-/** Probeert klasse en stilte per bak te lezen; geeft undefined als de data dat niet bevat */
-function bakIndeling(bakken: Ruw[]): BakInfo[] | undefined {
+/**
+ * Probeert klasse en stilte per bak te lezen; geeft undefined als de data dat niet echt per bak bevat.
+ * Staat iets bij élke bak van een treinstel (meerdere bakken), dan is het treinstel-informatie die
+ * per bak herhaald wordt en niet te gebruiken voor de plek in de trein.
+ */
+export function bakIndeling(bakken: Ruw[]): BakInfo[] | undefined {
 	if (!Array.isArray(bakken) || bakken.length === 0) return undefined;
-	let gevonden = false;
 	const indeling = bakken.map((b): BakInfo => {
-		const velden = tekstVelden({ ...b, afbeelding: undefined }).map((s) => s.toUpperCase());
+		const velden = tekstVelden(b).map((s) => s.toUpperCase());
 		const eersteKlas =
 			b?.klasse === 1 ||
 			b?.klasse === '1' ||
 			velden.some((s) => /EERSTE[_ ]?KLAS|FIRST[_ ]?CLASS|^1E[_ ]?KLAS/.test(s));
 		const stilte = velden.some((s) => /STILTE|SILENCE|QUIET/.test(s));
-		if (eersteKlas || stilte) gevonden = true;
 		return { eersteKlas, stilte, drukte: nsDrukte(b?.drukte?.niveau ?? b?.drukte) };
 	});
-	return gevonden ? indeling : undefined;
+	const overal = (f: (b: BakInfo) => boolean) => indeling.length > 1 && indeling.every(f);
+	const stilteBruikbaar = !overal((b) => b.stilte);
+	const eersteBruikbaar = !overal((b) => b.eersteKlas);
+	const schoon = indeling.map((b) => ({
+		...b,
+		stilte: stilteBruikbaar && b.stilte,
+		eersteKlas: eersteBruikbaar && b.eersteKlas
+	}));
+	return schoon.some((b) => b.stilte || b.eersteKlas) ? schoon : undefined;
 }
 
 export async function nsSamenstelling(
@@ -567,6 +578,9 @@ export async function nsSamenstelling(
 		const eersteKlasPerDeel = delenRuw.map((m) => {
 			const z = m?.zitplaatsInfo ?? {};
 			return Object.entries(z).some(([k, v]) => /eerste|first/i.test(k) && typeof v === 'number' && v > 0);
+		});
+		eersteKlasPerDeel.forEach((ja, i) => {
+			if (ja) delen[i].eersteKlas = true;
 		});
 		const rijrichting = String(r?.rijrichting ?? '').toUpperCase();
 		const bakkenTotaal = delen.reduce((s, d) => s + d.bakken, 0);

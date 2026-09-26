@@ -159,7 +159,9 @@ export interface TreinDeel {
 	bakken: number;
 	afbeelding?: string;
 	eindbestemming?: string;
-	/** Per bak: klasse en stilte, voor zover bekend */
+	/** Dit treinstel heeft eerste klas (ergens); zegt niets over welke bak */
+	eersteKlas?: boolean;
+	/** Per bak: klasse en stilte, alleen als de NS-data dat per bak geeft */
 	indeling?: BakInfo[];
 }
 

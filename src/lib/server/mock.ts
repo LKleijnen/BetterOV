@@ -235,6 +235,37 @@ export function mockSpoorkaart() {
 	};
 }
 
+/** Intercity (ICM) zonder indeling per bak: stilte en eerste klas alleen per treinstel bekend */
+function mockIcm(ritnummer: string): TreinInfo {
+	return {
+		ritnummer,
+		station: 'Utrecht Centraal',
+		type: 'ICM',
+		vervoerder: 'NS',
+		spoor: '7',
+		delen: [
+			{ nummer: '4235', type: 'ICM-4', faciliteiten: ['TOILET', 'STILTE', 'WIFI'], bakken: 4, eersteKlas: true },
+			{ nummer: '4031', type: 'ICM-3', faciliteiten: ['TOILET', 'WIFI'], bakken: 3, eersteKlas: true }
+		],
+		aantalBakken: 7,
+		normaalBakken: 7,
+		ingekort: false,
+		lengteMeter: 188,
+		drukte: 'gemiddeld',
+		faciliteiten: ['TOILET', 'STILTE', 'WIFI'],
+		instapadvies: {
+			eersteKlas: [],
+			stilte: [],
+			rijrichting: 'rechts',
+			samenvatting: ['Eerste klas: in het achterste treinstel en in het voorste treinstel', 'Stiltecoupé: in het achterste treinstel'],
+			nauwkeurig: false
+		},
+		zitplaatsen: 480,
+		bron: ['Mockdata'],
+		opgehaaldOp: new Date().toISOString()
+	};
+}
+
 export function mockVertrektijden(naam = 'Utrecht Centraal'): VertrekAntwoord {
 	const nu = Date.now();
 	const vertrekken: Vertrek[] = [];
@@ -267,6 +298,7 @@ export function mockVertrektijden(naam = 'Utrecht Centraal'): VertrekAntwoord {
 
 export function mockTrein(ritnummer: string): TreinInfo {
 	const kort = Number(ritnummer) % 4 === 0;
+	if (Number(ritnummer) % 4 === 2) return mockIcm(ritnummer);
 	return {
 		ritnummer,
 		station: 'Utrecht Centraal',
