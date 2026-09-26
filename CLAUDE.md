@@ -19,7 +19,7 @@ Advertentievrije OV-webapp (PWA) voor een kleine kring (±20 mensen, alleen op u
 - Gedeelde logica (client, server én cron): `src/lib/types.ts`, `reis.ts` (overstappen, problemen, huidige stap), `tijd.ts` (altijd Europe/Amsterdam), `geo.ts`.
 - Server: `src/lib/server/` — `motis.ts` (Transitous v6, fallback v5), `ns.ts` (defensief parsen: NS-velden kunnen ontbreken), `planner.ts` (4 s timeout → NS-fallback), `reisstatus.ts`, `trein.ts`, `prijs.ts` + `src/lib/data/tarieven.json`.
 - Client: `src/lib/client/` — `sessie.svelte.ts` (login/allowlist), `data.svelte.ts` (Firestore of lokaal in demo-modus), `planner.svelte.ts`, `actief.svelte.ts` (actieve reis, 30 s verversen), `api.ts` (`metCache` voor slecht bereik).
-- Toegang: `ADMIN_EMAILS` (secret) + Firestore-collectie `allowlist`. Gmail-adressen worden genormaliseerd (puntjes/`+label` tellen niet) via `normaliseerEmail` in `src/lib/server/auth.ts`.
+- Toegang: `ADMIN_EMAILS` (secret) + Firestore-collectie `allowlist`. Uitnodigingslinks (`src/lib/server/uitnodiging.ts`, collectie `uitnodigingen`, alleen een SHA-256 van de code) zetten iemand na inloggen op de allowlist; eenmalig dankzij een voorwaarde op `updateTime`. Gmail-adressen worden genormaliseerd (puntjes/`+label` tellen niet) via `normaliseerEmail` in `src/lib/server/auth.ts`.
 - Firestore-regels: `firestore.rules` (handmatig in de Firebase-console geplakt — wijzigingen daar melden aan de gebruiker).
 
 ## Svelte 5-valkuil

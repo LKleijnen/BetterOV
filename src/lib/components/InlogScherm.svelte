@@ -1,5 +1,5 @@
 <script lang="ts">
-	import { LogIn, LogOut, RefreshCw, ShieldAlert } from '@lucide/svelte';
+	import { LogIn, LogOut, PartyPopper, RefreshCw, ShieldAlert } from '@lucide/svelte';
 	import { sessie } from '$lib/client/sessie.svelte';
 
 	let bezig = $state(false);
@@ -32,8 +32,18 @@
 			<RefreshCw size={18} /> {bezig ? 'Controleren…' : 'Opnieuw controleren'}
 		</button>
 		<button class="knop tweede vol" onclick={() => sessie.logout()}><LogOut size={18} /> Ander account kiezen</button>
+	{:else if sessie.uitnodiging}
+		<div class="melding ok">
+			<PartyPopper size={20} />
+			<div>
+				<strong>Je bent uitgenodigd</strong>
+				<p>Log in met je Google-account; daarna kun je BetterOV meteen gebruiken.</p>
+			</div>
+		</div>
 	{:else}
 		<p class="zwak">Een advertentievrije OV-planner die je reis bewaakt en alternatieven geeft als het misgaat. Alleen op uitnodiging.</p>
+	{/if}
+	{#if sessie.status !== 'geweigerd'}
 		<button class="knop vol" onclick={login} disabled={bezig}>
 			<LogIn size={20} /> {bezig ? 'Bezig met inloggen…' : 'Inloggen met Google'}
 		</button>

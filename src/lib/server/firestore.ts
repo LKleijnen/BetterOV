@@ -59,7 +59,11 @@ export interface FsDocument<T = Record<string, unknown>> {
 	id: string;
 	pad: string;
 	data: T;
+	/** Tijdstip van de laatste wijziging, voor 'alleen als niemand anders het intussen wijzigde' */
+	updateTime?: string;
 }
+
+type RuwDoc = { name: string; fields?: Record<string, FsWaarde>; updateTime?: string };
 
 export class Firestore {
 	constructor(
@@ -87,9 +91,9 @@ export class Firestore {
 		return (tekst ? JSON.parse(tekst) : {}) as T;
 	}
 
-	private doc<T>(ruw: { name: string; fields?: Record<string, FsWaarde> }): FsDocument<T> {
+	private doc<T>(ruw: RuwDoc): FsDocument<T> {
 		const pad = ruw.name.split('/documents/')[1] ?? ruw.name;
-		return { id: pad.split('/').pop()!, pad, data: vanVelden(ruw.fields ?? {}) as T };
+		return { id: pad.split('/').pop()!, pad, data: vanVelden(ruw.fields ?? {}) as T, updateTime: ruw.updateTime };
 	}
 
 	private url(pad: string) {
@@ -97,7 +101,7 @@ export class Firestore {
 	}
 
 	async get<T = Record<string, unknown>>(pad: string): Promise<FsDocument<T> | null> {
-		const r = await this.verzoek<{ name: string; fields?: Record<string, FsWaarde> }>(this.url(pad));
+		const r = await this.verzoek<RuwDoc>(this.url(pad));
 		return r ? this.doc<T>(r) : null;
 	}
 
@@ -108,9 +112,14 @@ export class Firestore {
 		return (r?.documents ?? []).map((d) => this.doc<T>(d));
 	}
 
-	/** Maakt of vervangt een document; met velden wordt alleen dat deel bijgewerkt */
-	async zet(pad: string, data: Record<string, unknown>, alleenVelden?: string[]): Promise<void> {
-		const masker = (alleenVelden ?? []).map((v) => `updateMask.fieldPaths=${encodeURIComponent(v)}`).join('&');
+	/**
+	 * Maakt of vervangt een document; met velden wordt alleen dat deel bijgewerkt.
+	 * Met `alsOngewijzigdSinds` (updateTime) mislukt het als iemand anders het document intussen wijzigde.
+	 */
+	async zet(pad: string, data: Record<string, unknown>, alleenVelden?: string[], alsOngewijzigdSinds?: string): Promise<void> {
+		const delen = (alleenVelden ?? []).map((v) => `updateMask.fieldPaths=${encodeURIComponent(v)}`);
+		if (alsOngewijzigdSinds) delen.push(`currentDocument.updateTime=${encodeURIComponent(alsOngewijzigdSinds)}`);
+		const masker = delen.join('&');
 		await this.verzoek(`${this.url(pad)}${masker ? `?${masker}` : ''}`, {
 			method: 'PATCH',
 			body: JSON.stringify({ fields: naarVelden(data) })
