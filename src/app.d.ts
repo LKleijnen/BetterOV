@@ -17,6 +17,7 @@ declare global {
 				admin: boolean;
 				toegestaan: boolean;
 				demo: boolean;
+				toegangsFout?: string;
 			};
 		}
 

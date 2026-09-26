@@ -1,5 +1,5 @@
 <script lang="ts">
-	import { LogIn, LogOut, ShieldAlert } from '@lucide/svelte';
+	import { LogIn, LogOut, RefreshCw, ShieldAlert } from '@lucide/svelte';
 	import { sessie } from '$lib/client/sessie.svelte';
 
 	let bezig = $state(false);
@@ -24,9 +24,13 @@
 				<p>
 					{sessie.email ?? 'Dit account'} staat niet op de uitnodigingslijst. Vraag de beheerder om je toe te voegen.
 					{#if sessie.fout}<br /><span class="zwak klein">{sessie.fout}</span>{/if}
+					{#if sessie.diagnose}<br /><span class="zwak klein">{sessie.diagnose}</span>{/if}
 				</p>
 			</div>
 		</div>
+		<button class="knop vol" onclick={async () => { bezig = true; await sessie.opnieuw(); bezig = false; }} disabled={bezig}>
+			<RefreshCw size={18} /> {bezig ? 'Controleren…' : 'Opnieuw controleren'}
+		</button>
 		<button class="knop tweede vol" onclick={() => sessie.logout()}><LogOut size={18} /> Ander account kiezen</button>
 	{:else}
 		<p class="zwak">Een advertentievrije OV-planner die je reis bewaakt en alternatieven geeft als het misgaat. Alleen op uitnodiging.</p>

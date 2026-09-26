@@ -7,13 +7,14 @@ import type { RequestHandler } from './$types';
 export const GET: RequestHandler = async ({ locals }) => {
 	const g = locals.gebruiker;
 	const c = config();
-	// Beheerders staan automatisch op de allowlist, zodat de Firestore-regels ze ook toelaten
-	if (g?.admin && !g.demo && c.serviceAccount) {
+	// Wie toegang heeft, krijgt een allowlist-regel op zijn exacte adres (zoals Google het doorgeeft),
+	// zodat de Firestore-regels hem ook toelaten, ook als hij als beheerder of met puntjes is uitgenodigd
+	if (g?.toegestaan && !g.demo && c.serviceAccount) {
 		const fs = new Firestore(c.serviceAccount);
 		const bestaat = await fs.get(`allowlist/${g.email}`).catch(() => null);
 		if (!bestaat) {
 			await fs
-				.zet(`allowlist/${g.email}`, { toegevoegdOp: new Date().toISOString(), toegevoegdDoor: 'beheerder' })
+				.zet(`allowlist/${g.email}`, { toegevoegdOp: new Date().toISOString(), toegevoegdDoor: g.admin ? 'beheerder' : 'automatisch' })
 				.catch((e) => console.error('Beheerder op allowlist zetten mislukt', e));
 		}
 	}
@@ -24,6 +25,10 @@ export const GET: RequestHandler = async ({ locals }) => {
 		demo: !!g?.demo,
 		nsIngesteld: !!c.nsKey,
 		pushIngesteld: !!c.serviceAccount,
-		mock: c.mock
+		mock: c.mock,
+		// Hulp bij het instellen: waarom iemand (nog) geen toegang heeft
+		diagnose: g?.toegestaan
+			? undefined
+			: { beheerders: c.beheerders.length, serviceAccount: !!c.serviceAccount, fout: g?.toegangsFout }
 	});
 };

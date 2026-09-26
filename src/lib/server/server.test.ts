@@ -309,3 +309,25 @@ describe('planner', () => {
 		expect(kiesLaatste([vroeg, laat], Date.parse(t('23:55')))).toBeUndefined();
 	});
 });
+
+describe('beheerders en Gmail-adressen', async () => {
+	const { beheerders, isBeheerder, normaliseerEmail } = await import('./auth');
+
+	it('negeert puntjes en +labels bij Gmail', () => {
+		expect(normaliseerEmail('Kleijnen.Lars@gmail.com')).toBe('kleijnenlars@gmail.com');
+		expect(normaliseerEmail('kleijnenlars+ov@googlemail.com')).toBe('kleijnenlars@gmail.com');
+		expect(normaliseerEmail('jan.de.vries@outlook.com')).toBe('jan.de.vries@outlook.com');
+	});
+
+	it('leest ADMIN_EMAILS tolerant', () => {
+		expect(beheerders('"Kleijnen.lars@gmail.com"')).toEqual(['kleijnenlars@gmail.com']);
+		expect(beheerders('ADMIN_EMAILS=a@b.nl, Lars <kleijnen.lars@gmail.com>')).toEqual(['a@b.nl', 'kleijnenlars@gmail.com']);
+		expect(beheerders(undefined)).toEqual([]);
+	});
+
+	it('herkent de beheerder ongeacht puntjes', () => {
+		const admins = beheerders('kleijnen.lars@gmail.com');
+		expect(isBeheerder('kleijnenlars@gmail.com', admins)).toBe(true);
+		expect(isBeheerder('iemand@gmail.com', admins)).toBe(false);
+	});
+});

@@ -1,7 +1,6 @@
 // Controle van Firebase ID-tokens en de allowlist.
 
 import { createRemoteJWKSet, jwtVerify } from 'jose';
-import { gecached } from './http';
 import { Firestore } from './firestore';
 import type { ServiceAccount } from './google';
 
@@ -33,19 +32,58 @@ export async function controleerIdToken(token: string, projectId: string): Promi
 	}
 }
 
-export function beheerders(lijst: string | undefined): string[] {
-	return (lijst ?? '')
-		.split(/[,;\s]+/)
-		.map((e) => e.trim().toLowerCase())
-		.filter(Boolean);
+/**
+ * Vergelijkbare vorm van een e-mailadres. Voor Gmail tellen puntjes en "+label" niet mee:
+ * kleijnen.lars@gmail.com en kleijnenlars@gmail.com zijn hetzelfde account.
+ */
+export function normaliseerEmail(email: string): string {
+	const schoon = email.trim().toLowerCase();
+	const [lokaal, domein] = schoon.split('@');
+	if (!lokaal || !domein) return schoon;
+	if (domein === 'gmail.com' || domein === 'googlemail.com') {
+		return `${lokaal.split('+')[0].replace(/\./g, '')}@gmail.com`;
+	}
+	return schoon;
 }
 
-/** Staat dit e-mailadres op de allowlist? Beheerders altijd wel. Resultaat 5 min gecachet. */
-export async function opAllowlist(email: string, sa: ServiceAccount | undefined, admins: string[]): Promise<boolean> {
-	if (admins.includes(email)) return true;
-	if (!sa) return false;
-	return gecached(`allowlist:${email}`, 300, async () => {
-		const doc = await new Firestore(sa).get(`allowlist/${email}`);
-		return !!doc;
-	});
+/**
+ * E-mailadressen uit ADMIN_EMAILS, genormaliseerd. Tolerant voor aanhalingstekens,
+ * spaties, komma's, "ADMIN_EMAILS=" ervoor of "Naam <adres>".
+ */
+export function beheerders(lijst: string | undefined): string[] {
+	const gevonden = (lijst ?? '').toLowerCase().match(/[a-z0-9._%+-]+@[a-z0-9.-]+\.[a-z]{2,}/g) ?? [];
+	return [...new Set(gevonden.map(normaliseerEmail))];
+}
+
+export function isBeheerder(email: string, admins: string[]): boolean {
+	return admins.includes(normaliseerEmail(email));
+}
+
+export interface AllowlistUitslag {
+	toegestaan: boolean;
+	/** Reden als de controle zelf misging (niet: "staat er niet op") */
+	fout?: string;
+}
+
+const allowlistCache = new Map<string, { tot: number; toegestaan: boolean }>();
+
+/**
+ * Staat dit e-mailadres op de allowlist? Beheerders altijd wel. Zoekt zowel op het exacte
+ * adres als op de genormaliseerde vorm. Een "ja" wordt 5 minuten onthouden, een "nee" 30 seconden.
+ */
+export async function controleerAllowlist(email: string, sa: ServiceAccount | undefined, admins: string[]): Promise<AllowlistUitslag> {
+	if (isBeheerder(email, admins)) return { toegestaan: true };
+	if (!sa) return { toegestaan: false, fout: 'FIREBASE_SERVICE_ACCOUNT ontbreekt of is ongeldig.' };
+	const hit = allowlistCache.get(email);
+	if (hit && hit.tot > Date.now()) return { toegestaan: hit.toegestaan };
+	try {
+		const fs = new Firestore(sa);
+		let toegestaan = !!(await fs.get(`allowlist/${email}`));
+		const genormaliseerd = normaliseerEmail(email);
+		if (!toegestaan && genormaliseerd !== email) toegestaan = !!(await fs.get(`allowlist/${genormaliseerd}`));
+		allowlistCache.set(email, { tot: Date.now() + (toegestaan ? 300 : 30) * 1000, toegestaan });
+		return { toegestaan };
+	} catch (e) {
+		return { toegestaan: false, fout: `Uitnodigingslijst lezen mislukt: ${(e as Error).message}` };
+	}
 }
