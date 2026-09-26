@@ -27,7 +27,7 @@ Advertentievrije OV-webapp (PWA) voor eigen gebruik en een kleine kring vrienden
 | M17–M19 | Instapadvies (eerste klas, stilte), waarschuwing kortere trein, voertuiginfo | Trein & instapadvies |
 | M20 | Laatste verbinding naar huis met resterende speling | Plannen |
 | M21 | Reis live delen via een link zonder login | Reis → Deel live |
-| M22 | Agenda-export (.ics) | Reisadvies, Reis |
+| M22 | Agenda-export (.ics): één afspraak per trein/bus, met spoor en uitstaptijd | Reisadvies, Reis |
 | C1, C2 | Eerdere reizen, weekplanning van vaste reizen | Meer |
 | — | Weergave automatisch (systeem), licht of donker | Meer → Instellingen |
 

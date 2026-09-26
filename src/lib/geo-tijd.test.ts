@@ -2,7 +2,7 @@ import { describe, expect, it } from 'vitest';
 import { codeerPolyline, decodeerPolyline, lijnLengte, puntOpLijn } from './geo';
 import { klok, nlDatumTijd, nlOnderdelen, vertragingMinuten } from './tijd';
 import { maakIcs } from './ics';
-import { maakAdvies, ovLeg } from './testdata';
+import { loopLeg, maakAdvies, ovLeg } from './testdata';
 import { nachtGrens } from './server/laatste';
 
 describe('polyline', () => {
@@ -55,11 +55,27 @@ describe('agenda-export', () => {
 			ovLeg('Amersfoort Centraal', 'Zwolle', '10:21', '10:50')
 		]);
 		const ics = maakIcs(advies, { naam: 'Utrecht Centraal', lat: 52, lon: 5 }, { naam: 'Zwolle', lat: 52.5, lon: 6 });
+		const plat = ics.replace(/\r\n /g, '');
 		expect(ics).toMatch(/^BEGIN:VCALENDAR\r\n/);
+		// Eén afspraak per trein
+		expect(ics.match(/BEGIN:VEVENT/g)).toHaveLength(2);
 		expect(ics).toContain('DTSTART:20260925T080000Z');
+		expect(ics).toContain('DTEND:20260925T081500Z');
+		expect(ics).toContain('DTSTART:20260925T082100Z');
 		expect(ics).toContain('DTEND:20260925T085000Z');
-		expect(ics).toContain('SUMMARY:Reis naar Zwolle');
-		expect(ics.replace(/\r\n /g, '')).toContain('Overstap 6 min in Amersfoort Centraal');
+		expect(plat).toContain('SUMMARY:Intercity naar Amersfoort Centraal (spoor 5)');
+		expect(plat).toContain('Daarna overstappen (6 min): Intercity om 10:21');
+		expect(plat).toContain('Uitstappen 10:50: Zwolle\\, spoor 7');
+		// Alleen bij de eerste rit een herinnering
+		expect(ics.match(/BEGIN:VALARM/g)).toHaveLength(1);
 		for (const regel of ics.split('\r\n')) expect(new TextEncoder().encode(regel).length).toBeLessThanOrEqual(75);
+	});
+
+	it('zet de herinnering eerder als je eerst moet lopen', () => {
+		const advies = maakAdvies([loopLeg('Thuis', 'Utrecht Centraal', '09:48', 12), ovLeg('Utrecht Centraal', 'Zwolle', '10:00', '10:50')]);
+		const ics = maakIcs(advies, { naam: 'Thuis', lat: 52, lon: 5 }, { naam: 'Zwolle', lat: 52.5, lon: 6 });
+		expect(ics.match(/BEGIN:VEVENT/g)).toHaveLength(1);
+		expect(ics).toContain('TRIGGER:-PT27M');
+		expect(ics.replace(/\r\n /g, '')).toContain('12 min lopen');
 	});
 });
