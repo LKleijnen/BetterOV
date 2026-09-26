@@ -28,36 +28,53 @@ function beschrijf(bereiken: Bereik[], rijrichting?: 'links' | 'rechts'): string
 	return uniek.join(' en ');
 }
 
+/** Welk treinstel, als je vanaf de kop telt (bij onbekende rijrichting zoals getekend) */
+function deelPositie(i: number, aantal: number, rijrichting?: 'links' | 'rechts'): string {
+	if (aantal === 1) return 'in de trein';
+	const index = rijrichting === 'rechts' ? aantal - 1 - i : i;
+	if (index === 0) return rijrichting ? 'in het voorste treinstel' : 'in het linker treinstel';
+	if (index === aantal - 1) return rijrichting ? 'in het achterste treinstel' : 'in het rechter treinstel';
+	return 'in het middelste treinstel';
+}
+
 export function berekenInstapadvies(s: NsSamenstelling): Instapadvies | undefined {
 	const totaal = s.delen.reduce((t, d) => t + Math.max(1, d.bakken), 0);
 	if (!totaal) return undefined;
 	const eersteKlas: Bereik[] = [];
 	const stilte: Bereik[] = [];
-	const nauwkeurig = s.delen.some((d) => d.indeling && d.indeling.length === Math.max(1, d.bakken));
+	// Alleen per bak tekenen als de NS-data per bak zegt waar het is; anders per treinstel benoemen
+	const perDeelStilte: number[] = [];
+	const perDeelEerste: number[] = [];
 	let positie = 0;
 	s.delen.forEach((d, i) => {
 		const n = Math.max(1, d.bakken);
-		if (d.indeling && d.indeling.length === n) {
-			d.indeling.forEach((b, j) => {
+		const heeftIndeling = !!d.indeling && d.indeling.length === n;
+		if (heeftIndeling) {
+			d.indeling!.forEach((b, j) => {
 				const r = { van: (positie + j) / totaal, tot: (positie + j + 1) / totaal };
 				if (b.eersteKlas) eersteKlas.push(r);
 				if (b.stilte) stilte.push(r);
 			});
-		} else {
-			const r = { van: positie / totaal, tot: (positie + n) / totaal };
-			if (d.faciliteiten.some((f) => f.includes('STILTE'))) stilte.push(r);
-			if (s.eersteKlasPerDeel[i]) eersteKlas.push(r);
+		}
+		if (!heeftIndeling || !d.indeling!.some((b) => b.stilte)) {
+			if (d.faciliteiten.some((f) => f.includes('STILTE'))) perDeelStilte.push(i);
+		}
+		if (!heeftIndeling || !d.indeling!.some((b) => b.eersteKlas)) {
+			if (s.eersteKlasPerDeel[i] || d.eersteKlas) perDeelEerste.push(i);
 		}
 		positie += n;
 	});
 	const ek = samenvoegen(eersteKlas);
 	const st = samenvoegen(stilte);
+	const nauwkeurig = ek.length > 0 || st.length > 0;
 	const samenvatting: string[] = [];
 	const plek = s.rijrichting ? '' : ' (zoals getekend)';
+	const perDeel = (delen: number[]) => [...new Set(delen.map((i) => deelPositie(i, s.delen.length, s.rijrichting)))].join(' en ');
 	if (ek.length) samenvatting.push(`Eerste klas: ${beschrijf(ek, s.rijrichting)}${plek}`);
+	else if (perDeelEerste.length) samenvatting.push(`Eerste klas: ${perDeel(perDeelEerste)}`);
 	if (st.length) samenvatting.push(`Stiltecoupé: ${beschrijf(st, s.rijrichting)}${plek}`);
-	if (!ek.length && !st.length) samenvatting.push('De NS-data bevat voor deze trein geen indeling per bak.');
-	else if (!nauwkeurig) samenvatting.push('Positie per treinstel; de precieze bak staat op de trein aangegeven.');
+	else if (perDeelStilte.length) samenvatting.push(`Stiltecoupé: ${perDeel(perDeelStilte)}`);
+	if (!samenvatting.length) samenvatting.push('De NS-data bevat voor deze trein geen indeling.');
 	return { eersteKlas: ek, stilte: st, rijrichting: s.rijrichting, samenvatting, nauwkeurig };
 }
 
