@@ -1,7 +1,9 @@
-// Planner: Transitous met NS-fallback na 4 s, plus drukte- en prijsverrijking en sortering op voorkeur.
+// Planner: Transitous met NS-fallback na 4 s, plus drukte- en prijsverrijking.
+// Adviezen staan op vertrektijd; de app zet er labels op (snelst, goedkoopst, …). Hebben alle
+// adviezen een overstap, dan zoeken we er een reis met minder overstappen bij.
 
 import type { Advies, Leg, PlanAntwoord, Plek, Voorkeur } from '../types';
-import { drukteScore, herbereken } from '../reis';
+import { herbereken } from '../reis';
 import { ApiFout } from './http';
 import { motisPlan } from './motis';
 import { nsPlan, nsRit, nsStations, ritHalteBij } from './ns';
@@ -73,22 +75,9 @@ export async function verrijkPrijzen(adviezen: Advies[], nsKey: string | undefin
 	);
 }
 
-export function sorteer(adviezen: Advies[], voorkeur: Voorkeur): Advies[] {
-	const lijst = [...adviezen];
-	const opVertrek = (a: Advies, b: Advies) => Date.parse(a.vertrek.verwacht) - Date.parse(b.vertrek.verwacht);
-	const opDuur = (a: Advies, b: Advies) => a.duur - b.duur || opVertrek(a, b);
-	switch (voorkeur) {
-		case 'snelst':
-			return lijst.sort(opDuur);
-		case 'overstappen':
-			return lijst.sort((a, b) => a.overstappen - b.overstappen || opDuur(a, b));
-		case 'goedkoopst':
-			return lijst.sort(
-				(a, b) => (a.prijs?.bedrag ?? Infinity) - (b.prijs?.bedrag ?? Infinity) || opDuur(a, b)
-			);
-		case 'drukte':
-			return lijst.sort((a, b) => drukteScore(a.drukte) - drukteScore(b.drukte) || opDuur(a, b));
-	}
+/** Op vertrektijd, zoals in de NS-app */
+export function opVertrek(adviezen: Advies[]): Advies[] {
+	return [...adviezen].sort((a, b) => Date.parse(a.vertrek.verwacht) - Date.parse(b.vertrek.verwacht) || a.duur - b.duur);
 }
 
 export function foutTekst(e: unknown): string {
@@ -117,7 +106,6 @@ export async function plan(v: PlanVraag, d: Diensten): Promise<PlanAntwoord> {
 					aankomst: v.aankomst,
 					cursor: v.cursor,
 					aantal: 6,
-					venster: v.voorkeur === 'overstappen' ? 5400 : undefined,
 					opties: v.opties
 				},
 				TRANSITOUS_TIMEOUT_MS
@@ -137,6 +125,18 @@ export async function plan(v: PlanVraag, d: Diensten): Promise<PlanAntwoord> {
 						else resultaat.volgende = meer.volgende;
 					}
 				}
+			}
+			// Alles met overstap? Zoek er een reis met minder overstappen bij (hooguit 2,5 s extra)
+			const minsteOverstappen = Math.min(...resultaat.adviezen.map((a) => a.overstappen));
+			if (!v.cursor && resultaat.adviezen.length > 0 && minsteOverstappen >= 1) {
+				const minder = await metBudget(
+					2500,
+					motisPlan(
+						{ van: v.van, naar: v.naar, via: v.via, tijd: v.tijd, aankomst: v.aankomst, aantal: 2, venster: 7200, maxOverstappen: minsteOverstappen - 1, opties: v.opties },
+						2500
+					)
+				);
+				if (minder) resultaat.adviezen = uniek([...resultaat.adviezen, ...filter(minder.adviezen)]);
 			}
 		} catch (e) {
 			const timeout = e instanceof ApiFout && e.status === 0 && /binnen/.test(e.message);
@@ -179,7 +179,7 @@ export async function plan(v: PlanVraag, d: Diensten): Promise<PlanAntwoord> {
 	const herberekend = adviezen.map(herbereken);
 
 	return {
-		adviezen: sorteer(herberekend, v.voorkeur),
+		adviezen: opVertrek(herberekend),
 		bron,
 		melding,
 		vorige: resultaat.vorige,
