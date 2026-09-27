@@ -2,7 +2,7 @@
 	import { onDestroy, untrack } from 'svelte';
 	import type { PageProps } from './$types';
 	import { goto } from '$app/navigation';
-	import { CalendarPlus, ChevronLeft, Footprints, Map as KaartIcoon, Play, Star, TriangleAlert, Info } from '@lucide/svelte';
+	import { CalendarPlus, ChevronDown, ChevronLeft, Footprints, Map as KaartIcoon, Play, Star, TriangleAlert, Info } from '@lucide/svelte';
 	import type { Advies, Leg, Plek, TreinInfo } from '$lib/types';
 	import { zoekAdvies } from '$lib/client/planner.svelte';
 	import { data } from '$lib/client/data.svelte';
@@ -10,7 +10,7 @@
 	import { volgPositie, type Positie } from '$lib/client/gps';
 	import { adviesStatus, isOV } from '$lib/reis';
 	import { looptijdSeconden } from '$lib/geo';
-	import { duurTekst, klok, langeDatum, ms } from '$lib/tijd';
+	import { duurTekst, klok, korteDatum, ms } from '$lib/tijd';
 	import { downloadIcs, maakIcs } from '$lib/ics';
 	import ReisTijdlijn from '$lib/components/ReisTijdlijn.svelte';
 	import StatusLabel from '$lib/components/StatusLabel.svelte';
@@ -58,6 +58,8 @@
 		kaartLeg = i;
 		kaartOpen = true;
 	}
+
+	let prijsOpen = $state(false);
 
 	// ---------- Nu vertrekken (M6) ----------
 	let nuVertrekken = $state(false);
@@ -122,18 +124,18 @@
 <svelte:head><title>Reisadvies · BetterOV</title></svelte:head>
 
 <main class="pagina stapel">
-	<div class="rij">
-		<button class="icoonknop" aria-label="Terug" onclick={() => history.length > 1 ? history.back() : goto('/')}><ChevronLeft size={22} /></button>
+	<header class="rij kop">
+		<button class="icoonknop" aria-label="Terug" onclick={() => (history.length > 1 ? history.back() : goto('/'))}><ChevronLeft size={22} /></button>
 		{#if advies}
 			<div class="titel">
-				<h1 class="klein-kop">{van?.naam} → {naar?.naam}</h1>
-				<span class="zwak klein">{langeDatum(advies.vertrek.verwacht)}</span>
+				<h1>{van?.naam} → {naar?.naam}</h1>
+				<span class="zwak klein">{korteDatum(advies.vertrek.verwacht)}{advies.bron === 'ns' ? ' · via NS-planner' : ''}</span>
 			</div>
 			<button class="icoonknop" aria-label={favoriet ? 'Verwijder uit favorieten' : 'Bewaar als favoriet'} aria-pressed={!!favoriet} onclick={wisselFavoriet}>
 				<Star size={20} fill={favoriet ? 'currentColor' : 'none'} />
 			</button>
 		{/if}
-	</div>
+	</header>
 
 	{#if !advies}
 		<div class="kaart stapel">
@@ -141,69 +143,61 @@
 			<a class="knop" href="/">Naar de planner</a>
 		</div>
 	{:else}
-		<section class="kaart stapel" aria-label="Samenvatting">
-			<div class="rij tussen tijden">
-				<div>
-					<span class="label">Vertrek</span><br />
+		{@const status = adviesStatus(advies)}
+		<section class="kaart samenvatting" aria-label="Samenvatting">
+			<div class="rij tussen">
+				<div class="rij tijden">
 					<Tijd tijd={advies.vertrek} groot />
-				</div>
-				<div class="rechts">
-					<span class="label">Aankomst</span><br />
+					<span class="zwak" aria-hidden="true">–</span>
 					<Tijd tijd={advies.aankomst} groot />
 				</div>
+				<strong class="getal">{duurTekst(advies.duur)}</strong>
 			</div>
-			<div class="rij info">
-				<StatusLabel status={adviesStatus(advies)} />
-				<span>{duurTekst(advies.duur)}</span>
-				<span class="zwak">{advies.overstappen === 0 ? 'Direct' : `${advies.overstappen}× overstappen`}</span>
-				{#if advies.legs.some((l) => l.isNS) && advies.drukte}<Drukte drukte={advies.drukte} />{/if}
-			</div>
-			{#if advies.prijs}
-				<details>
-					<summary class="rij"><span class="zwak">Prijs</span> <Prijs prijs={advies.prijs} /></summary>
-					<Prijs prijs={advies.prijs} uitleg />
-				</details>
+			{#if status !== 'optijd' || (advies.legs.some((l) => l.isNS) && advies.drukte) || advies.prijs}
+				<div class="rij info">
+					{#if status !== 'optijd'}<StatusLabel {status} />{/if}
+					{#if advies.legs.some((l) => l.isNS) && advies.drukte}<Drukte drukte={advies.drukte} tekst={false} />{/if}
+					{#if advies.prijs}
+						<button type="button" class="tekstknop prijsknop" aria-expanded={prijsOpen} onclick={() => (prijsOpen = !prijsOpen)}>
+							<Prijs prijs={advies.prijs} />
+							<ChevronDown size={14} style="transform: rotate({prijsOpen ? 180 : 0}deg)" />
+						</button>
+					{/if}
+				</div>
 			{/if}
-			{#if advies.bron === 'ns'}
-				<p class="klein zwak">Gepland via de NS-planner (fallback).</p>
-			{/if}
+			{#if prijsOpen && advies.prijs}<Prijs prijs={advies.prijs} uitleg />{/if}
 			{#each advies.meldingen ?? [] as m, i (i)}
 				<div class="melding {m.ernst === 'ernstig' ? 'fout' : 'waarschuwing'}"><TriangleAlert size={18} /> <span>{m.kop}</span></div>
 			{/each}
 		</section>
 
-		<section class="kaart stapel" aria-label="Nu vertrekken">
-			<label class="rij tussen schakelaar">
-				<span class="rij"><Footprints size={20} aria-hidden="true" /> <strong>Nu vertrekken</strong></span>
-				<input type="checkbox" role="switch" bind:checked={nuVertrekken} />
-			</label>
-			{#if nuVertrekken}
+		<div class="actiebalk">
+			<button aria-pressed={nuVertrekken} onclick={() => (nuVertrekken = !nuVertrekken)}><Footprints size={18} /> Nu vertrekken</button>
+			<button onclick={() => toonKaart(-1)}><KaartIcoon size={18} /> Kaart</button>
+			<button onclick={agenda}><CalendarPlus size={18} /> Agenda</button>
+		</div>
+
+		{#if nuVertrekken}
+			<section class="kaart nu" aria-label="Nu vertrekken" aria-live="polite">
 				{#if gpsFout}
 					<p class="status-fout klein">{gpsFout}</p>
 				{:else if !positie}
 					<p class="zwak klein">Locatie bepalen…</p>
 				{:else if eersteOV && vertrekMoment !== null && looptijd !== null}
 					{#if vertrekMoment > Date.now()}
-						<div class="aftel">
+						<div class="rij aftel">
 							<span class="zwak">Vertrek over</span>
 							<strong class="groot"><Aftelling doel={vertrekMoment} voorvoegsel="Vertrek" /></strong>
 						</div>
 						<p class="klein">
-							{Math.max(1, Math.round(looptijd / 60))} min lopen naar {eersteOV.van.naam}{eersteOV.van.spoor ? `, spoor ${eersteOV.van.spoor}` : ''}.
-							{eersteOV.productNaam ?? 'Rit'} vertrekt om <strong>{klok(eersteOV.vertrek.verwacht)}</strong>.
+							{Math.max(1, Math.round(looptijd / 60))} min lopen naar {eersteOV.van.naam}{eersteOV.van.spoor ? `, spoor ${eersteOV.van.spoor}` : ''} · vertrekt {klok(eersteOV.vertrek.verwacht)}
 						</p>
 					{:else}
 						<div class="melding fout"><TriangleAlert size={18} /> <span>Lopend haal je deze niet meer ({Math.round(looptijd / 60)} min lopen). Kies een latere reis.</span></div>
 					{/if}
 				{/if}
-				<p class="zwak klein">Het vertrekpunt van het advies blijft gelijk; je GPS bepaalt alleen de looptijd.</p>
-			{/if}
-		</section>
-
-		<div class="rij acties">
-			<button class="knop tweede klein" onclick={() => toonKaart(-1)}><KaartIcoon size={18} /> Kaart</button>
-			<button class="knop tweede klein" onclick={agenda}><CalendarPlus size={18} /> In agenda</button>
-		</div>
+			</section>
+		{/if}
 
 		<ReisTijdlijn {advies} {treinInfo} onVoertuig={toonVoertuig} onKaart={toonKaart} />
 
@@ -213,7 +207,7 @@
 				<Play size={20} /> {startBezig ? 'Starten…' : 'Start reis'}
 			</button>
 			{#if data.actieveReis}
-				<p class="zwak klein midden"><Info size={14} /> Je huidige actieve reis wordt dan afgesloten.</p>
+				<p class="zwak klein midden"><Info size={14} /> Je huidige reis wordt dan afgesloten.</p>
 			{/if}
 		</div>
 	{/if}
@@ -232,44 +226,51 @@
 </Onderblad>
 
 <style>
+	.kop {
+		align-items: center;
+	}
 	.titel {
 		flex: 1;
 		min-width: 0;
 	}
-	.klein-kop {
-		font-size: 1.1rem;
+	.titel h1 {
+		font-size: 1.05rem;
 		margin: 0;
 		overflow: hidden;
 		text-overflow: ellipsis;
 		white-space: nowrap;
 	}
-	.rechts {
-		text-align: right;
+	.samenvatting {
+		display: flex;
+		flex-direction: column;
+		gap: 6px;
+	}
+	.tijden {
+		gap: 6px;
+		flex-wrap: wrap;
 	}
 	.info {
 		flex-wrap: wrap;
-		gap: 6px 14px;
+		gap: 4px 12px;
 	}
-	.schakelaar {
-		min-height: 44px;
-		cursor: pointer;
+	.prijsknop {
+		color: var(--tekst);
 	}
-	.schakelaar input {
-		width: 48px;
-		height: 28px;
-		accent-color: var(--primair);
-	}
-	.aftel {
+	.nu {
 		display: flex;
 		flex-direction: column;
+		gap: 4px;
+	}
+	.nu p {
+		margin: 0;
+	}
+	.aftel {
+		align-items: baseline;
+		gap: 8px;
 	}
 	.groot {
-		font-size: 2.6rem;
+		font-size: 2.2rem;
 		line-height: 1.1;
-	}
-	.acties {
-		gap: 8px;
-		flex-wrap: wrap;
 	}
 	.startbalk {
 		position: sticky;
@@ -277,10 +278,10 @@
 		display: flex;
 		flex-direction: column;
 		gap: 6px;
-		padding-top: 8px;
+		padding-top: 4px;
 	}
 	.knop.groot {
-		min-height: 56px;
+		min-height: 52px;
 		font-size: 1.05rem;
 		box-shadow: 0 6px 20px rgb(0 0 0 / 20%);
 	}
@@ -291,11 +292,5 @@
 		align-items: center;
 		justify-content: center;
 		gap: 4px;
-	}
-	details summary {
-		cursor: pointer;
-		gap: 8px;
-		list-style: none;
-		min-height: 32px;
 	}
 </style>

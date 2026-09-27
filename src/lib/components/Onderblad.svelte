@@ -40,7 +40,7 @@
 		background: rgb(0 0 0 / 45%);
 	}
 	.inhoud {
-		padding: 16px 16px calc(env(safe-area-inset-bottom) + 20px);
+		padding: 12px 14px calc(env(safe-area-inset-bottom) + 16px);
 		overflow-y: auto;
 		max-height: 88dvh;
 	}
@@ -49,5 +49,6 @@
 	}
 	.kop h2 {
 		margin: 0;
+		font-size: 1.1rem;
 	}
 </style>

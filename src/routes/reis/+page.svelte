@@ -217,14 +217,13 @@
 	{#if !reis}
 		<h1>Reis</h1>
 		<div class="kaart stapel leeg">
-			<Navigation size={32} aria-hidden="true" />
-			<p>Je hebt geen actieve reis. Plan een reis en tik op <strong>Start reis</strong>; dan bewaakt de app je reis en waarschuwt als er iets misgaat.</p>
+			<Navigation size={28} aria-hidden="true" />
+			<p>Geen actieve reis. Start een reis vanuit een reisadvies; dan bewaakt de app hem en waarschuwt als er iets misgaat.</p>
 			<a class="knop" href="/"><Route size={18} /> Reis plannen</a>
 		</div>
 	{:else}
-		<header class="stapel kop">
-			<span class="zwak klein">Onderweg naar</span>
-			<h1>{reis.naar.naam}</h1>
+		<header class="kop">
+			<h1>Naar {reis.naar.naam}</h1>
 		</header>
 
 		{#if stap}
@@ -245,7 +244,7 @@
 
 		{#each problemen as p (p.sleutel)}
 			<div class="melding {p.ernstig ? 'fout' : 'waarschuwing'}" role="alert">
-				{#if p.soort === 'uitval'}<CircleX size={20} />{:else}<TriangleAlert size={20} />{/if}
+				{#if p.soort === 'uitval'}<CircleX size={18} />{:else}<TriangleAlert size={18} />{/if}
 				<span>{p.tekst}</span>
 			</div>
 		{/each}
@@ -274,13 +273,13 @@
 			</section>
 		{/if}
 
-		<div class="rij acties">
-			<button class="knop tweede klein" onclick={() => toonKaart(-1)}><KaartIcoon size={18} /> Live kaart</button>
-			<button class="knop tweede klein" onclick={deel} disabled={deelBezig}><Share2 size={18} /> {reis.gedeeldId ? 'Gedeeld' : 'Deel live'}</button>
+		<div class="actiebalk">
+			<button onclick={() => toonKaart(-1)}><KaartIcoon size={18} /> Live kaart</button>
+			<button onclick={deel} disabled={deelBezig}><Share2 size={18} /> {reis.gedeeldId ? 'Gedeeld' : 'Deel live'}</button>
 			{#if ernstig.length === 0 && !alternatieven}
-				<button class="knop tweede klein" onclick={() => laadAlternatieven(null)}><Route size={18} /> Andere opties</button>
+				<button onclick={() => laadAlternatieven(null)}><Route size={18} /> Andere opties</button>
 			{/if}
-			<button class="knop tweede klein" onclick={agenda}><CalendarPlus size={18} /> Agenda</button>
+			<button onclick={agenda}><CalendarPlus size={18} /> Agenda</button>
 		</div>
 
 		<ReisTijdlijn
@@ -300,20 +299,20 @@
 				{#if actief.opgehaaldOp}
 					Bijgewerkt {klok(actief.opgehaaldOp)} ({relatief(actief.opgehaaldOp, nu)})
 				{:else if reis.laatstBijgewerkt}
-					Laatst bijgewerkt {klok(reis.laatstBijgewerkt)}
+					Bijgewerkt {klok(reis.laatstBijgewerkt)}
 				{/if}
 			</span>
-			<button class="knop tweede klein" onclick={() => actief.ververs()} disabled={actief.bezig}>
-				<RefreshCw size={16} /> {actief.bezig ? 'Bezig…' : 'Ververs'}
+			<button class="icoonknop klein-knop" aria-label="Verversen" onclick={() => actief.ververs()} disabled={actief.bezig}>
+				<RefreshCw size={16} class={actief.bezig ? 'draai' : ''} />
 			</button>
 		</div>
 		{#if actief.fout && !actief.uitCache}<p class="status-fout klein">{actief.fout}</p>{/if}
 
 		{#if pushUit}
-			<a class="melding info klein" href="/instellingen"><Bell size={16} /> <span>Zet meldingen aan om ook gewaarschuwd te worden als de app dicht is.</span></a>
+			<a class="melding info klein" href="/instellingen"><Bell size={16} /> <span>Zet meldingen aan, dan waarschuwt de app ook als hij dicht is.</span></a>
 		{/if}
 
-		<button class="knop gevaar" onclick={() => (stopOpen = true)}><Square size={16} /> Reis beëindigen</button>
+		<button class="tekstknop stopknop" onclick={() => (stopOpen = true)}><Square size={14} /> Reis beëindigen</button>
 	{/if}
 </main>
 
@@ -355,52 +354,51 @@
 </Onderblad>
 
 <style>
-	.kop {
-		gap: 0;
-	}
 	.kop h1 {
 		margin: 0;
+		overflow: hidden;
+		text-overflow: ellipsis;
+		white-space: nowrap;
 	}
 	.volgende {
 		border: 2px solid var(--primair);
 		display: flex;
 		flex-direction: column;
-		gap: 4px;
+		gap: 2px;
 	}
 	.volgende.klaar {
 		border-color: var(--ok);
 	}
 	.stap-titel {
-		font-size: 1.3rem;
+		font-size: 1.2rem;
 		margin: 0;
 	}
 	.stap-detail {
 		margin: 0;
-		font-size: 1.05rem;
 	}
 	.aftel {
 		display: flex;
 		align-items: baseline;
 		gap: 8px;
-		margin-top: 4px;
+		margin-top: 2px;
 	}
 	.groot {
-		font-size: 2.8rem;
+		font-size: 2.4rem;
 		line-height: 1.05;
 		letter-spacing: -0.02em;
 	}
-	.acties {
-		gap: 8px;
-		flex-wrap: wrap;
-	}
 	.status {
 		gap: 8px;
-		flex-wrap: wrap;
+		color: var(--tekst-zwak);
 	}
 	.status span {
 		display: inline-flex;
 		align-items: center;
 		gap: 4px;
+	}
+	.klein-knop {
+		width: 36px;
+		height: 36px;
 	}
 	.alt {
 		gap: 6px;
@@ -419,5 +417,17 @@
 	}
 	a.melding {
 		text-decoration: none;
+	}
+	.stopknop {
+		align-self: center;
+		color: var(--fout);
+	}
+	:global(.draai) {
+		animation: draai 1s linear infinite;
+	}
+	@keyframes draai {
+		to {
+			transform: rotate(360deg);
+		}
 	}
 </style>
