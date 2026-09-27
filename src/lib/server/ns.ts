@@ -4,6 +4,7 @@
 
 import type { Advies, Drukte, Halte, Leg, Melding, Modus, Plek, Tijd, TreinDeel, BakInfo, Vertrek, VoertuigPositie } from '../types';
 import { adviesId, herbereken } from '../reis';
+import { nsUitgeschakeld, type Reisopties } from '../reisopties';
 import { afstandMeter, looptijdSeconden } from '../geo';
 import { ApiFout, gecached, gedeeldGecached, gedeeldGecachedTekst, haalJson, haalTekst, queryString } from './http';
 
@@ -313,6 +314,19 @@ export interface NsPlanVraag {
 	tijd?: string;
 	aankomst?: boolean;
 	context?: string;
+	opties?: Reisopties;
+}
+
+/** Reisopties als NS-parameters (niet officieel gedocumenteerd; de app filtert de uitkomst ook zelf) */
+function nsOptieParams(o: Reisopties | undefined): Record<string, unknown> {
+	if (!o) return {};
+	const uit = nsUitgeschakeld(o);
+	return {
+		addChangeTime: o.extraOverstaptijd || undefined,
+		excludeTrainsWithReservationRequired: o.zonderReservering ? 'true' : undefined,
+		disabledTransportModalities: uit.length ? uit : undefined,
+		searchForAccessibleTrip: o.toegankelijk ? 'true' : undefined
+	};
 }
 
 export async function nsPlan(
@@ -340,14 +354,26 @@ export async function nsPlan(
 
 	let r: Ruw;
 	let viaStations = false;
+	// Met opties; kent NS een optie niet (HTTP 400), dan zonder en filteren we zelf
+	const opties = nsOptieParams(v.opties);
+	const haalTrips = async (params: Record<string, unknown>) => {
+		try {
+			return await ns(key, '/reisinformatie-api/api/v3/trips', { ...params, ...opties }, timeoutMs);
+		} catch (e) {
+			if (e instanceof ApiFout && e.status === 400 && Object.values(opties).some((x) => x !== undefined)) {
+				return ns(key, '/reisinformatie-api/api/v3/trips', params, timeoutMs);
+			}
+			throw e;
+		}
+	};
 	try {
-		r = await ns(key, '/reisinformatie-api/api/v3/trips', deurTotDeur, timeoutMs);
+		r = await haalTrips(deurTotDeur);
 	} catch (e) {
 		if (vanStation && naarStation) throw e;
 		const van = vanStation ?? dichtstbijzijndStation(stations, v.van.lat, v.van.lon, 8000);
 		const naar = naarStation ?? dichtstbijzijndStation(stations, v.naar.lat, v.naar.lon, 8000);
 		if (!van || !naar) throw e;
-		r = await ns(key, '/reisinformatie-api/api/v3/trips', { ...basis, fromStation: van.code, toStation: naar.code }, timeoutMs);
+		r = await haalTrips({ ...basis, fromStation: van.code, toStation: naar.code });
 		viaStations = true;
 	}
 	const trips: Ruw[] = Array.isArray(r?.trips) ? r.trips : [];

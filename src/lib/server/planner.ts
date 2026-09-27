@@ -6,6 +6,7 @@ import { ApiFout } from './http';
 import { motisPlan } from './motis';
 import { nsPlan, nsRit, nsStations, ritHalteBij } from './ns';
 import { berekenPrijs } from './prijs';
+import { pastBij, type Reisopties } from '../reisopties';
 
 export const TRANSITOUS_TIMEOUT_MS = 4000;
 
@@ -19,6 +20,7 @@ export interface PlanVraag {
 	cursor?: string;
 	/** Bij doorbladeren: bij de bron blijven van de eerste zoekvraag */
 	bron?: 'transitous' | 'ns';
+	opties?: Reisopties;
 }
 
 export interface Diensten {
@@ -98,6 +100,8 @@ export function foutTekst(e: unknown): string {
 }
 
 export async function plan(v: PlanVraag, d: Diensten): Promise<PlanAntwoord> {
+	// Vangnet: wat de planner niet zelf kan uitsluiten (zoals treinen met reservering) filteren we hier
+	const filter = (lijst: Advies[]) => (v.opties ? lijst.filter((a) => pastBij(a, v.opties!)) : lijst);
 	let resultaat: { adviezen: Advies[]; vorige?: string; volgende?: string } | undefined;
 	let bron: 'transitous' | 'ns' = 'transitous';
 	let melding: string | undefined;
@@ -113,20 +117,22 @@ export async function plan(v: PlanVraag, d: Diensten): Promise<PlanAntwoord> {
 					aankomst: v.aankomst,
 					cursor: v.cursor,
 					aantal: 6,
-					venster: v.voorkeur === 'overstappen' ? 5400 : undefined
+					venster: v.voorkeur === 'overstappen' ? 5400 : undefined,
+					opties: v.opties
 				},
 				TRANSITOUS_TIMEOUT_MS
 			);
+			resultaat.adviezen = filter(resultaat.adviezen);
 			// Minstens 3 opties tonen
 			if (resultaat.adviezen.length < 3 && !v.cursor) {
 				const cursor = v.aankomst ? resultaat.vorige : resultaat.volgende;
 				if (cursor) {
 					const meer = await motisPlan(
-						{ van: v.van, naar: v.naar, via: v.via, cursor, aantal: 6 },
+						{ van: v.van, naar: v.naar, via: v.via, cursor, aantal: 6, opties: v.opties },
 						TRANSITOUS_TIMEOUT_MS
 					).catch(() => undefined);
 					if (meer) {
-						resultaat.adviezen = uniek([...resultaat.adviezen, ...meer.adviezen]);
+						resultaat.adviezen = uniek([...resultaat.adviezen, ...filter(meer.adviezen)]);
 						if (v.aankomst) resultaat.vorige = meer.vorige;
 						else resultaat.volgende = meer.volgende;
 					}
@@ -157,8 +163,10 @@ export async function plan(v: PlanVraag, d: Diensten): Promise<PlanAntwoord> {
 			via: v.via,
 			tijd: v.tijd,
 			aankomst: v.aankomst,
-			context: v.bron === 'ns' ? v.cursor : undefined
+			context: v.bron === 'ns' ? v.cursor : undefined,
+			opties: v.opties
 		});
+		resultaat.adviezen = filter(resultaat.adviezen);
 		bron = 'ns';
 	}
 

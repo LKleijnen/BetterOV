@@ -4,6 +4,7 @@ import { plan } from '$lib/server/planner';
 import { mockPlan } from '$lib/server/mock';
 import { foutAntwoord } from '$lib/server/antwoord';
 import { plekUitParams } from '$lib/plekparams';
+import { optiesUitParams, pastBij } from '$lib/reisopties';
 import type { Voorkeur } from '$lib/types';
 import type { RequestHandler } from './$types';
 
@@ -11,7 +12,8 @@ const VOORKEUREN: Voorkeur[] = ['snelst', 'overstappen', 'goedkoopst', 'drukte']
 
 /**
  * Plant een reis via Transitous; na 4 s zonder antwoord via NS.
- * Parameters: van, naar, via (lat,lon + Naam/Stop/Type), tijd (ISO), aankomst=1, voorkeur, cursor, bron
+ * Parameters: van, naar, via (lat,lon + Naam/Stop/Type), tijd (ISO), aankomst=1, voorkeur, cursor, bron,
+ * reisopties: extraOverstap (min), vervoer (trein,bus,…), zonderReservering=1, toegankelijk=1
  */
 export const GET: RequestHandler = async ({ url }) => {
 	const p = url.searchParams;
@@ -22,7 +24,11 @@ export const GET: RequestHandler = async ({ url }) => {
 	const tijd = p.get('tijd') || undefined;
 	if (tijd && Number.isNaN(Date.parse(tijd))) return json({ fout: 'Ongeldige tijd.' }, { status: 400 });
 	const c = config();
-	if (c.mock) return json(mockPlan({ van, naar, tijd, voorkeur, cursor: p.get('cursor') || undefined }));
+	const opties = optiesUitParams(p);
+	if (c.mock) {
+		const r = mockPlan({ van, naar, tijd, voorkeur, cursor: p.get('cursor') || undefined });
+		return json({ ...r, adviezen: r.adviezen.filter((a) => pastBij(a, opties)) });
+	}
 	try {
 		const antwoord = await plan(
 			{
@@ -33,7 +39,8 @@ export const GET: RequestHandler = async ({ url }) => {
 				aankomst: p.get('aankomst') === '1',
 				voorkeur,
 				cursor: p.get('cursor') || undefined,
-				bron: p.get('bron') === 'ns' ? 'ns' : p.get('bron') === 'transitous' ? 'transitous' : undefined
+				bron: p.get('bron') === 'ns' ? 'ns' : p.get('bron') === 'transitous' ? 'transitous' : undefined,
+				opties
 			},
 			{ nsKey: c.nsKey }
 		);

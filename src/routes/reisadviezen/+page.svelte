@@ -6,6 +6,7 @@
 	import { data } from '$lib/client/data.svelte';
 	import { klok } from '$lib/tijd';
 	import AdviesKaart from '$lib/components/AdviesKaart.svelte';
+	import { optiesTekst } from '$lib/reisopties';
 
 	const voorkeuren: Voorkeur[] = ['snelst', 'overstappen', 'goedkoopst', 'drukte'];
 
@@ -34,7 +35,7 @@
 		<a class="icoonknop" href="/" aria-label="Terug naar plannen"><ChevronLeft size={22} /></a>
 		<a class="titel" href="/" aria-label="Zoekopdracht aanpassen">
 			<h1>{van?.naam ?? '…'} → {naar?.naam ?? '…'}</h1>
-			<span class="zwak klein rij">{momentTekst(planner)}{planner.via ? ` · via ${planner.via.naam}` : ''} <Pencil size={12} aria-hidden="true" /></span>
+			<span class="zwak klein rij sub">{[momentTekst(planner), planner.via ? `via ${planner.via.naam}` : '', optiesTekst(planner.opties)].filter(Boolean).join(' · ')} <Pencil size={12} aria-hidden="true" /></span>
 		</a>
 		<button type="button" class="icoonknop" aria-label={favoriet ? 'Verwijder uit favorieten' : 'Bewaar als favoriet'} aria-pressed={!!favoriet} onclick={wisselFavoriet}>
 			<Star size={20} fill={favoriet ? 'currentColor' : 'none'} />
@@ -103,6 +104,12 @@
 	}
 	.titel .rij {
 		gap: 4px;
+	}
+	.sub {
+		overflow: hidden;
+		text-overflow: ellipsis;
+		white-space: nowrap;
+		display: block;
 	}
 	.meer {
 		align-self: center;

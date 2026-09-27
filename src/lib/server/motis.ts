@@ -3,6 +3,7 @@
 
 import type { Advies, Halte, Leg, Melding, Modus, Plek, Vertrek } from '../types';
 import { adviesId, herbereken } from '../reis';
+import { motisModi, type Reisopties } from '../reisopties';
 import { ApiFout, haalJson, queryString } from './http';
 
 export const TRANSITOUS = 'https://api.transitous.org';
@@ -347,6 +348,7 @@ export interface MotisPlanVraag {
 	/** Zoekvenster in seconden */
 	venster?: number;
 	maxOverstappen?: number;
+	opties?: Reisopties;
 }
 
 export async function motisPlan(
@@ -363,6 +365,9 @@ export async function motisPlan(
 		numItineraries: v.aantal ?? 6,
 		searchWindow: v.venster,
 		maxTransfers: v.maxOverstappen,
+		additionalTransferTime: v.opties?.extraOverstaptijd || undefined,
+		transitModes: v.opties ? motisModi(v.opties) : undefined,
+		pedestrianProfile: v.opties?.toegankelijk ? 'WHEELCHAIR' : undefined,
 		language: 'nl',
 		maxPreTransitTime: 1200,
 		maxPostTransitTime: 1200

@@ -2,6 +2,7 @@
 
 import type { Advies, PlanAntwoord, Plek, Voorkeur } from '$lib/types';
 import { plekNaarParams } from '$lib/plekparams';
+import { optiesNaarParams, STANDAARD_REISOPTIES, type Reisopties } from '$lib/reisopties';
 import { korteDatum, nlDatum, nlDatumTijd, nlTijd } from '$lib/tijd';
 import { api, metCache } from './api';
 import { lees, schrijf } from './opslag';
@@ -50,6 +51,8 @@ class Planner {
 	tijd = $state(nlTijd());
 	aankomst = $state(false);
 	voorkeur = $state<Voorkeur>('snelst');
+	/** Reisopties (per apparaat bewaard, zoals in de NS-app) */
+	opties = $state<Reisopties>({ ...STANDAARD_REISOPTIES, ...lees<Partial<Reisopties>>('reisopties', {}) });
 
 	adviezen = $state<Advies[]>([]);
 	bron = $state<'transitous' | 'ns'>('transitous');
@@ -112,6 +115,11 @@ class Planner {
 		});
 	}
 
+	zetOpties(o: Reisopties) {
+		this.opties = o;
+		schrijf('reisopties', o);
+	}
+
 	wissel() {
 		[this.van, this.naar] = [this.naar, this.van];
 	}
@@ -130,6 +138,7 @@ class Planner {
 		if (t) p.set('tijd', t);
 		if (this.aankomst && !this.nu) p.set('aankomst', '1');
 		p.set('voorkeur', this.voorkeur);
+		optiesNaarParams(this.opties, p);
 		if (cursor) {
 			p.set('cursor', cursor);
 			p.set('bron', this.bron);
