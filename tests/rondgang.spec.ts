@@ -30,7 +30,7 @@ test('plannen, details, reis starten en vertrekbord', async ({ page }) => {
 	await kiesPlek(page, /^Naar/, 'damrak', /Damrak 1/);
 	await page.getByRole('button', { name: 'Plan reis' }).click();
 
-	await expect(page.getByRole('heading', { name: 'Reisadviezen' })).toBeVisible();
+	await page.waitForURL('**/reisadviezen');
 	await expect(page.locator('a.advies')).toHaveCount(5);
 	await expect(page.getByRole('button', { name: 'Eerder' })).toBeVisible();
 	await expect(page.getByRole('button', { name: 'Later' })).toBeVisible();
@@ -76,6 +76,28 @@ test('plannen, details, reis starten en vertrekbord', async ({ page }) => {
 	await expect(page.getByText('Oudegracht 100 → Damrak 1')).toBeVisible();
 
 	expect(fouten).toEqual([]);
+});
+
+test('startscherm: tijd kiezen en recente zoekopdracht opnieuw plannen', async ({ page }) => {
+	await page.goto('/');
+	await kiesPlek(page, /^Van/, 'oudegr', /Oudegracht 100/);
+	await kiesPlek(page, /^Naar/, 'damrak', /Damrak 1/);
+	await page.getByRole('button', { name: 'Nu vertrekken' }).click();
+	await page.getByRole('button', { name: 'Aankomst', exact: true }).click();
+	await page.getByLabel('Tijd').fill('09:00');
+	await page.getByRole('button', { name: 'Klaar' }).click();
+	await expect(page.getByRole('button', { name: /Aankomst .* 09:00/ })).toBeVisible();
+	await page.getByRole('button', { name: 'Plan reis' }).click();
+	await page.waitForURL('**/reisadviezen');
+	await expect(page.locator('a.advies').first()).toBeVisible();
+	await expect(page.getByText(/Aankomst .* 09:00/)).toBeVisible();
+
+	await page.getByRole('link', { name: 'Terug naar plannen' }).click();
+	await page.waitForURL(/\/$/);
+	await expect(page.getByRole('heading', { name: /Recent gezocht/ })).toBeVisible();
+	await page.getByRole('button', { name: /Oudegracht 100 → Damrak 1/ }).click();
+	await page.waitForURL('**/reisadviezen');
+	await expect(page.locator('a.advies').first()).toBeVisible();
 });
 
 test('overstap klapt uit naar lopen en wachten', async ({ page }) => {

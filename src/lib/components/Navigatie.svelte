@@ -4,9 +4,9 @@
 	import { data } from '$lib/client/data.svelte';
 
 	const items = $derived([
-		{ href: '/', label: 'Plannen', icoon: Route, actief: page.url.pathname === '/' || page.url.pathname.startsWith('/advies') },
+		{ href: '/', label: 'Plannen', icoon: Route, actief: page.url.pathname === '/' || page.url.pathname.startsWith('/advies') || page.url.pathname.startsWith('/reisadviezen') },
 		{ href: '/vertrektijden', label: 'Vertrek', icoon: Signpost, actief: page.url.pathname.startsWith('/vertrektijden') || page.url.pathname.startsWith('/rit') },
-		{ href: '/reis', label: 'Reis', icoon: Navigation, actief: page.url.pathname.startsWith('/reis'), stip: !!data.actieveReis },
+		{ href: '/reis', label: 'Reis', icoon: Navigation, actief: page.url.pathname === '/reis' || page.url.pathname.startsWith('/reis/'), stip: !!data.actieveReis },
 		{ href: '/favorieten', label: 'Favorieten', icoon: Star, actief: page.url.pathname.startsWith('/favorieten') },
 		{ href: '/meer', label: 'Meer', icoon: Ellipsis, actief: ['/meer', '/instellingen', '/weekplanning', '/geschiedenis', '/beheer', '/over'].some((p) => page.url.pathname.startsWith(p)) }
 	]);

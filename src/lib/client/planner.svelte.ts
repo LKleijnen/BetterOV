@@ -2,7 +2,7 @@
 
 import type { Advies, PlanAntwoord, Plek, Voorkeur } from '$lib/types';
 import { plekNaarParams } from '$lib/plekparams';
-import { nlDatum, nlDatumTijd, nlTijd } from '$lib/tijd';
+import { korteDatum, nlDatum, nlDatumTijd, nlTijd } from '$lib/tijd';
 import { api, metCache } from './api';
 import { lees, schrijf } from './opslag';
 
@@ -222,6 +222,11 @@ class Planner {
 
 	private onthoudRecent() {
 		if (!this.van || !this.naar) return;
+		// Recente zoekopdrachten voor het startscherm (GPS-locatie telt als "huidige locatie")
+		const vorige = lees<RecenteZoekopdracht[]>('recente-zoekopdrachten', []);
+		const deze: RecenteZoekopdracht = { van: this.van, naar: this.naar, via: this.via ?? undefined };
+		const sleutel = (z: RecenteZoekopdracht) => `${z.van.type === 'gps' ? 'gps' : z.van.naam}|${z.naar.naam}|${z.via?.naam ?? ''}`;
+		schrijf('recente-zoekopdrachten', [deze, ...vorige.filter((z) => sleutel(z) !== sleutel(deze))].slice(0, 6));
 		const recent = lees<Plek[]>('recente-plekken', []);
 		const nieuw = [this.naar, this.van, ...recent].filter(
 			(p, i, lijst) => p.type !== 'gps' && lijst.findIndex((q) => q.naam === p.naam && q.lat === p.lat) === i
@@ -231,6 +236,23 @@ class Planner {
 }
 
 export const planner = new Planner();
+
+export interface RecenteZoekopdracht {
+	van: Plek;
+	naar: Plek;
+	via?: Plek;
+}
+
+export function recenteZoekopdrachten(): RecenteZoekopdracht[] {
+	return lees<RecenteZoekopdracht[]>('recente-zoekopdrachten', []);
+}
+
+/** Omschrijving van het gekozen moment, bijvoorbeeld "Nu" of "Aankomst za 3 okt 09:00" */
+export function momentTekst(p: { nu: boolean; aankomst: boolean; datum: string; tijd: string }): string {
+	if (p.nu) return 'Nu vertrekken';
+	const dag = p.datum === nlDatum() ? 'vandaag' : korteDatum(nlDatumTijd(p.datum, '12:00').toISOString());
+	return `${p.aankomst ? 'Aankomst' : 'Vertrek'} ${dag} ${p.tijd}`;
+}
 
 /** Adviezen per ID bewaren, zodat detail- en deelpagina's ze na herladen nog kennen */
 export function onthoudAdvies(advies: Advies, van: Plek, naar: Plek) {

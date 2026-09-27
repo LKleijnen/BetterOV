@@ -14,8 +14,8 @@
 		const f = data.favorieten.find((x) => x.id === id);
 		if (!f) return;
 		planner.zetReis(f.van, f.naar, f.via ?? null, f.voorkeur);
-		goto('/');
-		await planner.zoek();
+		void planner.zoek();
+		goto('/reisadviezen');
 	}
 
 	async function bewaarPlek() {
