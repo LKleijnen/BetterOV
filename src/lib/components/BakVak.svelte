@@ -1,75 +1,59 @@
 <script lang="ts">
-	// Eén bak van de trein, rechtop getekend (voorkant boven). Met een afbeelding van NS als die er is:
-	// per bak, of een uitsnede uit de afbeelding van het hele treinstel. Anders een eenvoudig blok.
+	// Eén bak van de trein, liggend zoals op het perron. Met de afbeelding van NS als die er is,
+	// anders een eenvoudig blok (geel bij eerste klas, afgeronde kop aan de uiteinden van een treinstel).
 	let {
 		afbeelding,
-		deelAfbeelding,
-		index = 0,
-		aantal = 1,
-		omgekeerd = false,
 		eersteKlas = false,
-		hoogte = 88
+		kop,
+		hoogte = 34,
+		onload
 	}: {
 		afbeelding?: string;
-		deelAfbeelding?: string;
-		index?: number;
-		aantal?: number;
-		/** Kop van de afbeelding rechts in plaats van links: andersom draaien */
-		omgekeerd?: boolean;
 		eersteKlas?: boolean;
+		/** Uiteinde van een treinstel: die kant afronden */
+		kop?: 'links' | 'rechts' | 'beide';
 		hoogte?: number;
+		onload?: () => void;
 	} = $props();
 
 	let mislukt = $state(false);
-	const breedte = $derived(Math.round(hoogte / 3.2));
-	const draai = $derived(omgekeerd ? -90 : 90);
 </script>
 
-<div class="bak" class:eerste={eersteKlas} class:schets={mislukt || (!afbeelding && !deelAfbeelding)} style:width="{breedte}px" style:height="{hoogte}px">
-	{#if afbeelding && !mislukt}
-		<img
-			src={afbeelding}
-			alt=""
-			loading="lazy"
-			style:width="{hoogte}px"
-			style:height="{breedte}px"
-			style:transform="translate(-50%, -50%) rotate({draai}deg)"
-			onerror={() => (mislukt = true)}
-		/>
-	{:else if deelAfbeelding && !mislukt}
-		<div
-			class="uitsnede"
-			style:width="{hoogte}px"
-			style:height="{breedte}px"
-			style:background-image="url('{deelAfbeelding}')"
-			style:background-size="{aantal * 100}% 100%"
-			style:background-position-x="{aantal > 1 ? (index / (aantal - 1)) * 100 : 0}%"
-			style:transform="translate(-50%, -50%) rotate({draai}deg)"
-		></div>
-	{/if}
-</div>
+{#if afbeelding && !mislukt}
+	<img class="bak" src={afbeelding} alt="" style:height="{hoogte}px" {onload} onerror={() => (mislukt = true)} />
+{:else}
+	<div
+		class="bak schets"
+		class:eerste={eersteKlas}
+		class:links={kop === 'links' || kop === 'beide'}
+		class:rechts={kop === 'rechts' || kop === 'beide'}
+		style:height="{Math.round(hoogte * 0.8)}px"
+		style:width="{Math.round(hoogte * 1.15)}px"
+	></div>
+{/if}
 
 <style>
 	.bak {
-		position: relative;
+		display: block;
 		flex: 0 0 auto;
-		overflow: hidden;
-		border-radius: 6px;
 	}
-	.bak.schets {
+	img.bak {
+		width: auto;
+		min-width: 40px;
+	}
+	.schets {
+		border-radius: 4px;
 		background: var(--kaart-2);
 		border: 2px solid var(--rand);
 	}
-	.bak.schets.eerste {
+	.schets.eerste {
 		background: #ffc917;
 		border-color: #e6b200;
 	}
-	img,
-	.uitsnede {
-		position: absolute;
-		left: 50%;
-		top: 50%;
-		object-fit: contain;
-		background-repeat: no-repeat;
+	.schets.links {
+		border-top-left-radius: 14px;
+	}
+	.schets.rechts {
+		border-top-right-radius: 14px;
 	}
 </style>

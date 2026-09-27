@@ -9,7 +9,7 @@
 	import { LEEFTIJD_NAMEN, materieelSoort, type MaterieelSoort } from '$lib/materieel';
 	import Drukte from './Drukte.svelte';
 	import LijnLabel from './LijnLabel.svelte';
-	import TreinVerticaal from './TreinVerticaal.svelte';
+	import TreinSchema from './TreinSchema.svelte';
 	import Kaart from './Kaart.svelte';
 
 	let { leg, info: voorgeladen }: { leg: Leg; info?: TreinInfo | null } = $props();
@@ -152,7 +152,7 @@
 							{#each info.instapadvies.samenvatting as regel, i (i)}<li>{regel}</li>{/each}
 						</ul>
 					{/if}
-					<TreinVerticaal {info} />
+					<TreinSchema {info} />
 				</section>
 			{/if}
 
