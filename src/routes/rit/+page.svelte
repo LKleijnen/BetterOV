@@ -6,8 +6,8 @@
 	import { api } from '$lib/client/api';
 	import { legNaam } from '$lib/reis';
 	import { klok } from '$lib/tijd';
-	import { geschattePositie } from '$lib/voertuig';
-	import { legLijnOverSpoor } from '$lib/client/spoorkaart';
+	import { voertuigPositie } from '$lib/client/voertuigpositie';
+	import { heeftVoertuiginfo } from '$lib/voertuig';
 	import Tijd from '$lib/components/Tijd.svelte';
 	import LijnLabel from '$lib/components/LijnLabel.svelte';
 	import Onderblad from '$lib/components/Onderblad.svelte';
@@ -44,15 +44,7 @@
 	}
 
 	async function werkPositieBij() {
-		if (!leg) return;
-		if (leg.isNS && leg.ritnummer) {
-			const gps = await api<VoertuigPositie | null>(`/api/voertuig?ritnummer=${leg.ritnummer}`).catch(() => null);
-			if (gps) {
-				positie = gps;
-				return;
-			}
-		}
-		positie = geschattePositie(leg, Date.now(), await legLijnOverSpoor(leg));
+		if (leg) positie = await voertuigPositie(leg);
 	}
 
 	onMount(() => {
@@ -94,7 +86,7 @@
 		{/each}
 
 		<div class="rij acties">
-			<button class="knop tweede klein" onclick={() => (voertuigOpen = true)}><TrainFront size={18} /> {leg.isNS ? 'Trein & instapadvies' : 'Voertuiginfo'}</button>
+			{#if heeftVoertuiginfo(leg)}<button class="knop tweede klein" onclick={() => (voertuigOpen = true)}><TrainFront size={18} /> Voertuiginfo</button>{/if}
 			<button class="knop tweede klein" onclick={() => { void werkPositieBij(); kaartOpen = true; }}><KaartIcoon size={18} /> Live positie</button>
 		</div>
 

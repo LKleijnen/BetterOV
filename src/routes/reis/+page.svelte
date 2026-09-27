@@ -27,8 +27,7 @@
 	import { pushStatus } from '$lib/client/push';
 	import { huidigeStap, isOV } from '$lib/reis';
 	import { klok, ms, relatief } from '$lib/tijd';
-	import { geschattePositie } from '$lib/voertuig';
-	import { legLijnOverSpoor } from '$lib/client/spoorkaart';
+	import { voertuigPositie } from '$lib/client/voertuigpositie';
 	import { downloadIcs, maakIcs } from '$lib/ics';
 	import ReisTijdlijn from '$lib/components/ReisTijdlijn.svelte';
 	import Aftelling from '$lib/components/Aftelling.svelte';
@@ -116,19 +115,7 @@
 	async function werkVoertuigBij() {
 		if (!reis || !stap) return;
 		const legIndex = kaartLeg >= 0 ? kaartLeg : stap.legIndex;
-		const leg = reis.advies.legs[legIndex];
-		if (!leg || !isOV(leg)) {
-			voertuig = null;
-			return;
-		}
-		if (leg.isNS && leg.ritnummer) {
-			const gps = await api<VoertuigPositie | null>(`/api/voertuig?ritnummer=${leg.ritnummer}`).catch(() => null);
-			if (gps) {
-				voertuig = gps;
-				return;
-			}
-		}
-		voertuig = geschattePositie(leg, Date.now(), await legLijnOverSpoor(leg));
+		voertuig = await voertuigPositie(reis.advies.legs[legIndex]);
 	}
 
 	$effect(() => {

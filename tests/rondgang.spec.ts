@@ -50,7 +50,7 @@ test('plannen, details, reis starten en vertrekbord', async ({ page }) => {
 	await expect(page.locator('li.rit').first()).toBeVisible();
 
 	// Voertuiginfo en instapadvies
-	await page.getByRole('button', { name: /Trein & instapadvies/ }).first().click();
+	await page.getByRole('button', { name: 'Voertuiginfo' }).first().click();
 	await expect(page.getByRole('heading', { name: 'Instapadvies' })).toBeVisible();
 	await page.getByRole('button', { name: 'Sluiten' }).click();
 

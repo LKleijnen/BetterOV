@@ -1,6 +1,6 @@
 // Nepdata voor ontwikkeling en tests (MOCK_API=1). Nooit gebruikt in productie.
 
-import type { Advies, Halte, Leg, PlanAntwoord, Plek, TreinInfo, Vertrek, VertrekAntwoord, Voorkeur } from '../types';
+import type { Advies, Halte, Leg, PlanAntwoord, Plek, RitHistorie, TreinInfo, Vertrek, VertrekAntwoord, Voorkeur } from '../types';
 import { adviesId, herbereken } from '../reis';
 import { afstandMeter, codeerPolyline, looptijdSeconden } from '../geo';
 import { opVertrek } from './planner';
@@ -296,9 +296,36 @@ export function mockVertrektijden(naam = 'Utrecht Centraal'): VertrekAntwoord {
 	return { halte: { naam }, vertrekken, bron: 'transitous', opgehaaldOp: new Date().toISOString() };
 }
 
+/** Zijaanzicht van een bak als SVG, zodat de nepdata ook afbeeldingen heeft */
+function mockBak(eersteKlas: boolean, kop: 'voor' | 'achter' | null): string {
+	// Voorkant links, zoals NS de trein tekent bij rijrichting links
+	const neus = kop === 'voor' ? 'M30 10 L392 10 L392 80 L2 80 L2 40 Q2 10 30 10 Z' : kop === 'achter' ? 'M8 10 L370 10 Q398 10 398 40 L398 80 L8 80 Z' : 'M8 10 L392 10 L392 80 L8 80 Z';
+	const ramen = Array.from({ length: 6 }, (_, i) => `<rect x="${40 + i * 55}" y="24" width="38" height="18" rx="3" fill="#1d2a44"/>`).join('');
+	const svg = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 90"><path d="${neus}" fill="#ffc917" stroke="#0b1a4a" stroke-width="3"/>${ramen}<rect x="8" y="52" width="384" height="8" fill="#0b1a4a"/>${eersteKlas ? '<rect x="40" y="62" width="320" height="6" fill="#e6b200"/><text x="200" y="78" font-size="12" text-anchor="middle" fill="#0b1a4a" font-family="sans-serif">1</text>' : ''}<circle cx="60" cy="86" r="4" fill="#333"/><circle cx="340" cy="86" r="4" fill="#333"/></svg>`;
+	return `data:image/svg+xml;utf8,${encodeURIComponent(svg)}`;
+}
+
 export function mockTrein(ritnummer: string): TreinInfo {
 	const kort = Number(ritnummer) % 4 === 0;
 	if (Number(ritnummer) % 4 === 2) return mockIcm(ritnummer);
+	// Oneven ritten: lange trein die onderweg splitst (voorste deel naar Den Haag, achterste naar Rotterdam)
+	const splitst = !kort;
+	const eerste = [
+		{ eersteKlas: false, stilte: true, drukte: 'hoog' as const },
+		{ eersteKlas: false, stilte: false, drukte: 'hoog' as const },
+		{ eersteKlas: true, stilte: false, drukte: 'gemiddeld' as const },
+		{ eersteKlas: true, stilte: true, drukte: 'laag' as const },
+		{ eersteKlas: false, stilte: false, drukte: 'gemiddeld' as const },
+		{ eersteKlas: false, stilte: false, drukte: 'gemiddeld' as const }
+	];
+	const tweede = [
+		{ eersteKlas: false, stilte: false, drukte: 'laag' as const },
+		{ eersteKlas: true, stilte: false, drukte: 'laag' as const },
+		{ eersteKlas: false, stilte: false, drukte: 'laag' as const },
+		{ eersteKlas: false, stilte: true, drukte: 'gemiddeld' as const }
+	];
+	const afbeeldingen = (indeling: { eersteKlas: boolean }[], kopVoor: boolean, staartAchter: boolean) =>
+		indeling.map((b, i) => mockBak(b.eersteKlas, i === 0 && kopVoor ? 'voor' : i === indeling.length - 1 && staartAchter ? 'achter' : null));
 	return {
 		ritnummer,
 		station: 'Utrecht Centraal',
@@ -306,13 +333,10 @@ export function mockTrein(ritnummer: string): TreinInfo {
 		vervoerder: 'NS',
 		spoor: '5',
 		delen: [
-			{ nummer: '9401', type: 'VIRM-6', faciliteiten: ['TOILET', 'STILTE', 'STROOM', 'WIFI', 'TOEGANKELIJK'], bakken: 6, indeling: [
-				{ eersteKlas: false, stilte: true }, { eersteKlas: false, stilte: false }, { eersteKlas: true, stilte: false },
-				{ eersteKlas: true, stilte: true }, { eersteKlas: false, stilte: false }, { eersteKlas: false, stilte: false }
-			] },
-			...(kort ? [] : [{ nummer: '8702', type: 'VIRM-4', faciliteiten: ['TOILET', 'STROOM', 'WIFI'], bakken: 4, indeling: [
-				{ eersteKlas: false, stilte: false }, { eersteKlas: true, stilte: false }, { eersteKlas: false, stilte: false }, { eersteKlas: false, stilte: true }
-			] }])
+			{ nummer: '9401', type: 'VIRM-6', faciliteiten: ['TOILET', 'STILTE', 'STROOM', 'WIFI', 'TOEGANKELIJK'], bakken: 6, indeling: eerste, bakAfbeeldingen: afbeeldingen(eerste, true, true), eindbestemming: splitst ? 'Den Haag Centraal' : undefined },
+			...(kort
+				? []
+				: [{ nummer: '8702', type: 'VIRM-4', faciliteiten: ['TOILET', 'STROOM', 'WIFI'], bakken: 4, indeling: tweede, bakAfbeeldingen: afbeeldingen(tweede, true, true), eindbestemming: 'Rotterdam Centraal' }])
 		],
 		aantalBakken: kort ? 6 : 10,
 		normaalBakken: 10,
@@ -321,10 +345,39 @@ export function mockTrein(ritnummer: string): TreinInfo {
 		drukte: kort ? 'hoog' : 'gemiddeld',
 		faciliteiten: ['TOILET', 'STILTE', 'STROOM', 'WIFI', 'TOEGANKELIJK'],
 		instapadvies: kort
-			? { eersteKlas: [{ van: 2 / 6, tot: 4 / 6 }], stilte: [{ van: 0, tot: 1 / 6 }, { van: 3 / 6, tot: 4 / 6 }], rijrichting: 'links', samenvatting: ['Eerste klas: midden', 'Stiltecoupé: voorin en midden'], nauwkeurig: true }
-			: { eersteKlas: [{ van: 0.2, tot: 0.4 }, { van: 0.7, tot: 0.8 }], stilte: [{ van: 0, tot: 0.1 }, { van: 0.3, tot: 0.4 }, { van: 0.9, tot: 1 }], rijrichting: 'links', samenvatting: ['Eerste klas: voorin en achterin', 'Stiltecoupé: voorin, midden en achterin'], nauwkeurig: true },
+			? { eersteKlas: [{ van: 2 / 6, tot: 4 / 6 }], stilte: [{ van: 0, tot: 1 / 6 }, { van: 3 / 6, tot: 4 / 6 }], rijrichting: 'links', samenvatting: ['Eerste klas: midden', 'Stiltecoupé: voorin en midden', 'Waarschijnlijk het drukst: voorin'], nauwkeurig: true }
+			: { eersteKlas: [{ van: 0.2, tot: 0.4 }, { van: 0.7, tot: 0.8 }], stilte: [{ van: 0, tot: 0.1 }, { van: 0.3, tot: 0.4 }, { van: 0.9, tot: 1 }], rijrichting: 'links', samenvatting: ['Eerste klas: voorin en achterin', 'Stiltecoupé: voorin, midden en achterin', 'Waarschijnlijk het drukst: voorin', 'Rustiger: achterin'], nauwkeurig: true },
 		zitplaatsen: kort ? 570 : 950,
+		splitsing: splitst
+			? {
+					station: 'Leiden Centraal',
+					jouwDelen: [1],
+					bestemmingen: [
+						{ deel: 0, naar: 'Den Haag Centraal' },
+						{ deel: 1, naar: 'Rotterdam Centraal' }
+					],
+					voorUitstappen: true
+				}
+			: undefined,
+		ritVan: 'Amersfoort Centraal',
+		ritNaar: splitst ? 'Rotterdam Centraal' : 'Amsterdam Centraal',
 		bron: ['Mockdata'],
 		opgehaaldOp: new Date().toISOString()
 	};
+}
+
+/** Nep-geschiedenis: een paar ritten per treinstel */
+export function mockHistorie(nummers: string[]): Record<string, RitHistorie[]> {
+	const vandaag = new Date().toISOString().slice(0, 10);
+	const gisteren = new Date(Date.now() - 86400000).toISOString().slice(0, 10);
+	return Object.fromEntries(
+		nummers.map((n) => [
+			n,
+			[
+				{ datum: vandaag, ritnummer: '3537', van: 'Den Helder', naar: 'Nijmegen', vertrek: new Date(Date.now() - 3 * 3600000).toISOString() },
+				{ datum: vandaag, ritnummer: '3520', van: 'Nijmegen', naar: 'Den Helder', vertrek: new Date(Date.now() - 6 * 3600000).toISOString() },
+				{ datum: gisteren, ritnummer: '2140', van: 'Rotterdam Centraal', naar: 'Groningen', vertrek: new Date(Date.now() - 26 * 3600000).toISOString() }
+			]
+		])
+	);
 }

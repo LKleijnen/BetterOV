@@ -42,3 +42,9 @@ export function geschattePositie(leg: Leg, nu = Date.now(), lijn: [number, numbe
 	}
 	return null;
 }
+
+/** Is er over dit voertuig iets te laten zien? Anders hoeft de knop Voertuiginfo er niet te staan. */
+export function heeftVoertuiginfo(leg: Leg): boolean {
+	if (leg.modus === 'lopen' || leg.modus === 'fiets' || leg.modus === 'auto') return false;
+	return (leg.modus === 'trein' && !!leg.ritnummer) || leg.rolstoel !== undefined || !!leg.fietsen;
+}
