@@ -124,6 +124,28 @@ test('reisopties: zonder bus plannen', async ({ page }) => {
 	await expect(page.locator('a.advies .lijnlabel', { hasText: '12' })).toHaveCount(0);
 });
 
+test("laatste trein naar huis verschijnt 's avonds ver van huis", async ({ page }) => {
+	await page.clock.setFixedTime(new Date('2026-09-26T22:00:00+02:00'));
+	await page.addInitScript(() => {
+		if (!localStorage.getItem('lokaal:profiel'))
+			localStorage.setItem('lokaal:profiel', JSON.stringify({ thuislocatie: { naam: 'Kerkstraat 12', lat: 52.1561, lon: 5.3878, type: 'adres' } }));
+	});
+	await page.goto('/');
+	const kaart = page.getByRole('region', { name: 'Laatste trein naar huis' });
+	await expect(kaart).toBeVisible();
+	await expect(kaart).toContainText('Vertrek uiterlijk');
+	await kaart.getByRole('button', { name: 'Waarschuw mij' }).click();
+	await expect(kaart.getByRole('button', { name: 'Waarschuwing staat aan' })).toBeVisible();
+
+	// Uit te zetten in Instellingen
+	await page.goto('/instellingen');
+	await page.getByRole('group', { name: 'Laatste trein naar huis' }).getByRole('button', { name: 'Uit' }).click();
+	await page.getByRole('button', { name: 'Opslaan' }).click();
+	await page.goto('/');
+	await expect(page.getByRole('button', { name: 'Plan reis' })).toBeVisible();
+	await expect(page.getByRole('region', { name: 'Laatste trein naar huis' })).toHaveCount(0);
+});
+
 test('overstap klapt uit naar lopen en wachten', async ({ page }) => {
 	await page.goto('/');
 	await kiesPlek(page, /^Van/, 'amersfoort', /Amersfoort Centraal/);

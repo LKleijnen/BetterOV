@@ -1,18 +1,20 @@
 <script lang="ts">
 	import { goto } from '$app/navigation';
-	import { ArrowUpDown, CalendarDays, ChevronRight, Clock, History, House, Info, MapPin, Navigation, Play, Search, SlidersHorizontal, Star, TriangleAlert } from '@lucide/svelte';
+	import { ArrowUpDown, Bell, CalendarDays, ChevronRight, Clock, History, House, Info, MapPin, Navigation, Play, Search, SlidersHorizontal, Star, TriangleAlert } from '@lucide/svelte';
 	import type { Plek, WeekItem } from '$lib/types';
 	import { momentTekst, onthoudAdvies, planner, recenteZoekopdrachten, type RecenteZoekopdracht } from '$lib/client/planner.svelte';
 	import { data } from '$lib/client/data.svelte';
 	import { sessie } from '$lib/client/sessie.svelte';
 	import { huidigePositie } from '$lib/client/gps';
-	import { laatsteNaarHuis, startVasteReis, type LaatsteAntwoord } from '$lib/client/reisacties';
+	import { laatsteNaarHuis, startVasteReis, zetWekker, type LaatsteAntwoord } from '$lib/client/reisacties';
+	import { pushStatus } from '$lib/client/push';
 	import { klok, nlDatum, nlOnderdelen, duurTekst } from '$lib/tijd';
 	import PlekInvoer from '$lib/components/PlekInvoer.svelte';
 	import AdviesKaart from '$lib/components/AdviesKaart.svelte';
 	import Onderblad from '$lib/components/Onderblad.svelte';
 	import MomentKiezer from '$lib/components/MomentKiezer.svelte';
 	import Reisopties from '$lib/components/Reisopties.svelte';
+	import LaatsteTreinKaart from '$lib/components/LaatsteTreinKaart.svelte';
 	import { aantalAfwijkend, optiesTekst } from '$lib/reisopties';
 
 	let momentOpen = $state(false);
@@ -74,8 +76,24 @@
 	let huis = $state<LaatsteAntwoord | null>(null);
 	let huisFout = $state<string | null>(null);
 
+	let huisWekker = $state<string | null>(null);
+	async function wekkerVoorHuis() {
+		if (!huis?.advies) return;
+		try {
+			const push = await zetWekker({ advies: huis.advies, van: huis.van, naar: huis.naar });
+			huisWekker = !push
+				? 'Meldingen op de achtergrond zijn nog niet ingesteld.'
+				: pushStatus() !== 'aan'
+					? 'Zet meldingen aan in Instellingen, anders krijg je de waarschuwing niet.'
+					: 'Je krijgt een melding 30 en 10 minuten voordat je moet vertrekken.';
+		} catch (e) {
+			huisFout = (e as Error).message;
+		}
+	}
+
 	async function naarHuis() {
 		huisOpen = true;
+		huisWekker = null;
 		huisBezig = true;
 		huisFout = null;
 		huis = null;
@@ -177,6 +195,8 @@
 			<ChevronRight size={20} aria-hidden="true" />
 		</a>
 	{/if}
+
+	<LaatsteTreinKaart />
 
 	{#if planner.adviezen.length > 0 && planner.gezocht}
 		<a class="kaart rij snelrij" href="/reisadviezen">
@@ -289,6 +309,10 @@
 			<button class="knop vol" onclick={async () => { if (huis?.advies) { await data.startReis(huis.van, huis.naar, huis.advies); huisOpen = false; goto('/reis'); } }}>
 				<Play size={18} /> Start deze reis
 			</button>
+			<button class="knop tweede vol" onclick={wekkerVoorHuis} disabled={huisWekker !== null}>
+				<Bell size={18} /> {huisWekker ? 'Waarschuwing staat aan' : 'Waarschuw mij voor vertrek'}
+			</button>
+			{#if huisWekker}<p class="zwak klein">{huisWekker}</p>{/if}
 		</div>
 	{:else if huis}
 		<div class="melding waarschuwing"><Info size={18} /> <span>{huis.melding}</span></div>
