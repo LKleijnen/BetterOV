@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import type { NsRitHalte } from './ns';
 import { bepaalSplitsing, berekenInstapadvies } from './trein';
-import { materieelSoort, bakkenUitType } from '../materieel';
+import { alleSoorten, materieelSoort, bakkenUitType } from '../materieel';
 import { heeftVoertuiginfo } from '../voertuig';
 import { ovLeg } from '../testdata';
 
@@ -84,6 +84,36 @@ describe('materieel', () => {
 		expect(materieelSoort('SNG 4')?.code).toBe('SNG');
 		expect(materieelSoort('onbekend')).toBeUndefined();
 		expect(bakkenUitType('VIRM-6')).toBe(6);
+	});
+
+	it('herkent ook regionale en internationale treinen', () => {
+		expect(materieelSoort('FLIRT 3 FFF')?.code).toBe('FLIRT');
+		expect(materieelSoort('Arriva GTW 2/8')?.code).toBe('GTW');
+		expect(materieelSoort('Spurt')?.code).toBe('GTW');
+		expect(materieelSoort('VIRMm1')?.code).toBe('VIRM');
+		expect(materieelSoort('Eurostar e320')?.code).toBe('E320');
+		expect(materieelSoort('Thalys')?.code).toBe('PBKA');
+		expect(materieelSoort('ICE International')?.code).toBe('ICE');
+		expect(materieelSoort('European Sleeper')?.code).toBe('EUROPEANSLEEPER');
+		expect(materieelSoort('Nightjet')?.code).toBe('NIGHTJET');
+	});
+
+	it('verwart productnamen van NS niet met een treintype', () => {
+		for (const naam of ['Intercity', 'Intercity direct', 'IC', 'Sprinter', 'SPR', 'Stoptrein', 'Sneltrein', 'Eurocity', 'EC', 'R-net', 'Blauwnet']) {
+			expect(materieelSoort(naam), naam).toBeUndefined();
+		}
+	});
+
+	it('elk type is met zijn eigen code terug te vinden', () => {
+		const codes = new Set<string>();
+		for (const s of alleSoorten()) {
+			expect(s.code).toMatch(/^[A-Z0-9]+$/);
+			expect(codes.has(s.code)).toBe(false);
+			codes.add(s.code);
+			expect(s.naam && s.omschrijving).toBeTruthy();
+			// Een eerder type mag een later type niet 'opeten' (volgorde in SOORTEN)
+			for (const c of [s.code, ...(s.ook ?? [])]) expect(materieelSoort(c)?.code, c).toBe(s.code);
+		}
 	});
 
 	it('toont de knop Voertuiginfo alleen als er iets te zien is', () => {

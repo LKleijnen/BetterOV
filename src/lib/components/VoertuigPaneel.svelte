@@ -67,6 +67,7 @@
 	});
 
 	// ---------- Achtergrond per treintype ----------
+	// Uit de samenstelling van NS; anders uit de productnaam van de planner (ICE, Eurostar, Nightjet, …)
 	const soorten = $derived.by(() => {
 		const gezien = new Map<string, { soort: MaterieelSoort; nummers: string[] }>();
 		for (const d of info?.delen ?? []) {
@@ -76,8 +77,23 @@
 			if (d.nummer) bestaand.nummers.push(d.nummer);
 			gezien.set(soort.code, bestaand);
 		}
+		if (!gezien.size) {
+			const soort = materieelSoort(info?.type) ?? materieelSoort(leg.productNaam) ?? materieelSoort(leg.lijn);
+			if (soort) gezien.set(soort.code, { soort, nummers: [] });
+		}
 		return [...gezien.values()];
 	});
+
+	function feitjes(s: MaterieelSoort): [string, string][] {
+		const uit: [string, string][] = [];
+		if (s.vervoerders) uit.push(['Rijdt bij', s.vervoerders]);
+		if (s.bouwer) uit.push(['Bouwer', s.bouwer]);
+		if (s.gebouwd) uit.push(['Gebouwd', s.gebouwd]);
+		if (s.inDienst) uit.push(['In dienst', s.inDienst]);
+		if (s.gemoderniseerd) uit.push(['Gemoderniseerd', s.gemoderniseerd]);
+		if (s.snelheid) uit.push(['Snelheid', `tot ${s.snelheid} km/u${s.snelheidNoot ? ` (${s.snelheidNoot})` : ''}`]);
+		return uit;
+	}
 
 	const faciliteitNamen: Record<string, string> = {
 		TOILET: 'Toilet',
@@ -156,25 +172,6 @@
 				</section>
 			{/if}
 
-			{#if soorten.length}
-				<section class="stapel sectie">
-					<h3>Over deze trein</h3>
-					{#each soorten as { soort, nummers } (soort.code)}
-						<div class="soort">
-							<div class="rij tussen">
-								<strong>{soort.naam}</strong>
-								<span class="leeftijd {soort.leeftijd}">{LEEFTIJD_NAMEN[soort.leeftijd]}</span>
-							</div>
-							<p class="klein zwak">
-								Gebouwd {soort.gebouwd}{soort.gemoderniseerd ? `, gemoderniseerd ${soort.gemoderniseerd}` : ''}{soort.snelheid ? ` · tot ${soort.snelheid} km/u` : ''}{soort.bouwer ? ` · ${soort.bouwer}` : ''}
-							</p>
-							<p class="klein">{soort.omschrijving}</p>
-							{#if nummers.length}<p class="klein zwak">Treinstel {nummers.join(', ')}</p>{/if}
-						</div>
-					{/each}
-				</section>
-			{/if}
-
 			{#if info.faciliteiten.length}
 				<ul class="lijst faciliteiten klein" aria-label="Faciliteiten">
 					{#each info.faciliteiten as f (f)}
@@ -185,6 +182,31 @@
 					{/each}
 				</ul>
 			{/if}
+		{/if}
+
+		{#if soorten.length && !laden}
+			<section class="stapel sectie">
+				<h3>Over deze trein</h3>
+				{#each soorten as { soort, nummers } (soort.code)}
+					<div class="soort">
+						<div class="rij tussen">
+							<strong>{soort.naam}</strong>
+							{#if soort.leeftijd}<span class="leeftijd {soort.leeftijd}">{LEEFTIJD_NAMEN[soort.leeftijd]}</span>{/if}
+						</div>
+						<p class="klein">{soort.omschrijving}</p>
+						<dl class="feitjes klein">
+							{#each feitjes(soort) as [label, waarde] (label)}
+								<dt class="zwak">{label}</dt>
+								<dd>{waarde}</dd>
+							{/each}
+							{#if nummers.length}
+								<dt class="zwak">{nummers.length > 1 ? 'Treinstellen' : 'Treinstel'}</dt>
+								<dd>{nummers.join(', ')}</dd>
+							{/if}
+						</dl>
+					</div>
+				{/each}
+			</section>
 		{/if}
 	{:else}
 		<div class="rij feiten klein">
@@ -274,6 +296,15 @@
 	.leeftijd.gemoderniseerd {
 		background: var(--info-zacht);
 		color: var(--info);
+	}
+	.feitjes {
+		display: grid;
+		grid-template-columns: auto 1fr;
+		gap: 2px 12px;
+		margin: 4px 0 0;
+	}
+	.feitjes dd {
+		margin: 0;
 	}
 	.faciliteiten {
 		display: flex;
