@@ -1,6 +1,6 @@
 // Nepdata voor ontwikkeling en tests (MOCK_API=1). Nooit gebruikt in productie.
 
-import type { Advies, Halte, Leg, PlanAntwoord, Plek, RitHistorie, TreinInfo, Vertrek, VertrekAntwoord, Voorkeur } from '../types';
+import type { Advies, Halte, Leg, PlanAntwoord, Plek, TreinInfo, Vertrek, VertrekAntwoord, Voorkeur } from '../types';
 import { adviesId, herbereken } from '../reis';
 import { afstandMeter, codeerPolyline, looptijdSeconden } from '../geo';
 import { opVertrek } from './planner';
@@ -359,25 +359,7 @@ export function mockTrein(ritnummer: string): TreinInfo {
 					voorUitstappen: true
 				}
 			: undefined,
-		ritVan: 'Amersfoort Centraal',
-		ritNaar: splitst ? 'Rotterdam Centraal' : 'Amsterdam Centraal',
 		bron: ['Mockdata'],
 		opgehaaldOp: new Date().toISOString()
 	};
-}
-
-/** Nep-geschiedenis: een paar ritten per treinstel */
-export function mockHistorie(nummers: string[]): Record<string, RitHistorie[]> {
-	const vandaag = new Date().toISOString().slice(0, 10);
-	const gisteren = new Date(Date.now() - 86400000).toISOString().slice(0, 10);
-	return Object.fromEntries(
-		nummers.map((n) => [
-			n,
-			[
-				{ datum: vandaag, ritnummer: '3537', van: 'Den Helder', naar: 'Nijmegen', vertrek: new Date(Date.now() - 3 * 3600000).toISOString() },
-				{ datum: vandaag, ritnummer: '3520', van: 'Nijmegen', naar: 'Den Helder', vertrek: new Date(Date.now() - 6 * 3600000).toISOString() },
-				{ datum: gisteren, ritnummer: '2140', van: 'Rotterdam Centraal', naar: 'Groningen', vertrek: new Date(Date.now() - 26 * 3600000).toISOString() }
-			]
-		])
-	);
 }

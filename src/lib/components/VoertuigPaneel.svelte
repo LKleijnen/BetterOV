@@ -1,11 +1,11 @@
 <script lang="ts">
 	import { onDestroy, untrack } from 'svelte';
-	import { Accessibility, Armchair, Bike, History, MapPin, Plug, Split, Toilet, TriangleAlert, VolumeX, Wifi } from '@lucide/svelte';
-	import type { Advies, Leg, RitHistorie, TreinInfo, VoertuigPositie } from '$lib/types';
+	import { Accessibility, Armchair, Bike, MapPin, Plug, Split, Toilet, TriangleAlert, VolumeX, Wifi } from '@lucide/svelte';
+	import type { Advies, Leg, TreinInfo, VoertuigPositie } from '$lib/types';
 	import { api } from '$lib/client/api';
 	import { haalTreinInfo, treinParams } from '$lib/client/trein';
 	import { voertuigPositie } from '$lib/client/voertuigpositie';
-	import { korteDatum, klok } from '$lib/tijd';
+	import { klok } from '$lib/tijd';
 	import { LEEFTIJD_NAMEN, materieelSoort, type MaterieelSoort } from '$lib/materieel';
 	import Drukte from './Drukte.svelte';
 	import LijnLabel from './LijnLabel.svelte';
@@ -20,7 +20,6 @@
 	let fout = $state<string | null>(null);
 	let laden = $state(false);
 	let ruw = $state<string | null>(null);
-	let historie = $state<Record<string, RitHistorie[]>>({});
 
 	$effect(() => {
 		const l = leg;
@@ -28,29 +27,15 @@
 		untrack(() => {
 			info = vooraf ?? null;
 			fout = null;
-			historie = {};
-			if (vooraf) {
-				void laadHistorie(vooraf);
-				return;
-			}
+			if (vooraf) return;
 			if (l.modus !== 'trein' || !l.ritnummer) return;
 			laden = true;
 			haalTreinInfo(l)
-				.then((r) => {
-					info = r;
-					void laadHistorie(r);
-				})
+				.then((r) => (info = r))
 				.catch((e) => (fout = (e as Error).message))
 				.finally(() => (laden = false));
 		});
 	});
-
-	async function laadHistorie(i: TreinInfo) {
-		const nummers = [...new Set(i.delen.map((d) => d.nummer).filter((n): n is string => !!n))];
-		if (!nummers.length) return;
-		const r = await api<{ historie: Record<string, RitHistorie[]> }>(`/api/voertuig/historie?nummers=${nummers.join(',')}`).catch(() => null);
-		if (r) historie = r.historie;
-	}
 
 	async function toonRuw() {
 		try {
@@ -120,8 +105,6 @@
 		return () => clearInterval(timer);
 	});
 	onDestroy(() => clearInterval(timer));
-
-	const heeftHistorie = $derived(Object.values(historie).some((r) => r.length > 0));
 </script>
 
 <div class="stapel paneel">
@@ -220,28 +203,6 @@
 		{/if}
 	</details>
 
-	{#if heeftHistorie}
-		<section class="stapel sectie">
-			<h3 class="rij"><History size={16} aria-hidden="true" /> Eerder gereden</h3>
-			{#each Object.entries(historie) as [nummer, ritten] (nummer)}
-				{#if ritten.length}
-					<div>
-						{#if Object.keys(historie).length > 1}<p class="klein zwak">Treinstel {nummer}</p>{/if}
-						<ul class="lijst historie klein">
-							{#each ritten.slice(0, 6) as r (r.datum + r.ritnummer)}
-								<li class="rij">
-									<span class="zwak getal datum">{korteDatum(`${r.datum}T12:00:00Z`)}{r.vertrek ? ` ${klok(r.vertrek)}` : ''}</span>
-									<span class="flex">{r.van && r.naar ? `${r.van} → ${r.naar}` : `rit ${r.ritnummer}`}</span>
-								</li>
-							{/each}
-						</ul>
-					</div>
-				{/if}
-			{/each}
-			<p class="klein zwak">Ritten die dit treinstel reed toen iemand in BetterOV deze trein bekeek.</p>
-		</section>
-	{/if}
-
 	{#if trein && info}
 		<details class="sectie">
 			<summary class="klein zwak" onclick={() => !ruw && toonRuw()}>Ruwe NS-data (voor controle)</summary>
@@ -330,18 +291,6 @@
 	}
 	.kaartje {
 		margin-top: 6px;
-	}
-	.historie {
-		display: flex;
-		flex-direction: column;
-		gap: 4px;
-	}
-	.datum {
-		min-width: 96px;
-	}
-	.flex {
-		flex: 1;
-		min-width: 0;
 	}
 	.ruw {
 		max-height: 260px;

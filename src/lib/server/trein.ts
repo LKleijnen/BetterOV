@@ -216,8 +216,6 @@ export async function treinInfo(key: string | undefined, ritnummer: string, v: T
 		instapadvies: samenstelling ? berekenInstapadvies(samenstelling) : undefined,
 		zitplaatsen: samenstelling?.zitplaatsen ?? materieel?.zitplaatsen,
 		splitsing: bepaalSplitsing(delen, rit, { stationNaam: halte?.naam ?? v.stationNaam, naar: v.naar, richting: v.richting }),
-		ritVan: rit.find((h) => h.status !== 'PASSING')?.naam,
-		ritNaar: [...rit].reverse().find((h) => h.status !== 'PASSING')?.naam,
 		bron,
 		opgehaaldOp: new Date().toISOString(),
 		ruw: v.ruw ? { samenstelling: samenstelling?.ruw, halte } : undefined

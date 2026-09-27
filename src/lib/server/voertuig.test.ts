@@ -1,9 +1,6 @@
 import { describe, expect, it } from 'vitest';
-import type { FsDocument } from './firestore';
 import type { NsRitHalte } from './ns';
-import type { TreinInfo } from '../types';
 import { bepaalSplitsing, berekenInstapadvies } from './trein';
-import { logRit, ritHistorie } from './materieel';
 import { materieelSoort, bakkenUitType } from '../materieel';
 import { heeftVoertuiginfo } from '../voertuig';
 import { ovLeg } from '../testdata';
@@ -93,28 +90,5 @@ describe('materieel', () => {
 		expect(heeftVoertuiginfo(ovLeg('A', 'B', '10:00', '10:30'))).toBe(true);
 		expect(heeftVoertuiginfo(ovLeg('A', 'B', '10:00', '10:30', { modus: 'bus', ritnummer: undefined }))).toBe(false);
 		expect(heeftVoertuiginfo(ovLeg('A', 'B', '10:00', '10:30', { modus: 'bus', ritnummer: undefined, rolstoel: true }))).toBe(true);
-	});
-});
-
-describe('eerder gereden ritten', () => {
-	it('houdt per treinstel de laatste ritten bij, zonder dubbelen', async () => {
-		const docs = new Map<string, Record<string, unknown>>();
-		const fs = {
-			async get<T>(pad: string): Promise<FsDocument<T> | null> {
-				const d = docs.get(pad);
-				return d ? { id: pad, pad, data: structuredClone(d) as T } : null;
-			},
-			async zet(pad: string, data: Record<string, unknown>) {
-				docs.set(pad, data);
-			}
-		};
-		const info = { ritnummer: '3531', ritVan: 'Den Helder', ritNaar: 'Nijmegen', delen: [{ nummer: '9401', faciliteiten: [], bakken: 6 }] } as unknown as TreinInfo;
-		await logRit(fs, info, '2026-09-26T08:00:00+02:00');
-		await logRit(fs, { ...info, ritnummer: '3536' } as TreinInfo, '2026-09-26T10:00:00+02:00');
-		await logRit(fs, info, '2026-09-26T08:00:00+02:00');
-		const h = await ritHistorie(fs, ['9401', 'x']);
-		expect(h['9401'].map((r) => r.ritnummer)).toEqual(['3536', '3531']);
-		expect(h['9401'][0]).toMatchObject({ datum: '2026-09-26', van: 'Den Helder', naar: 'Nijmegen' });
-		expect(h.x).toBeUndefined();
 	});
 });

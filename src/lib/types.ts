@@ -181,16 +181,6 @@ export interface Splitsing {
 	voorUitstappen: boolean;
 }
 
-export interface RitHistorie {
-	/** "2026-09-26" */
-	datum: string;
-	ritnummer: string;
-	van?: string;
-	naar?: string;
-	/** Geplande vertrektijd vanaf het beginstation */
-	vertrek?: string;
-}
-
 export interface BakInfo {
 	eersteKlas: boolean;
 	stilte: boolean;
@@ -225,9 +215,6 @@ export interface TreinInfo {
 	instapadvies?: Instapadvies;
 	zitplaatsen?: number;
 	splitsing?: Splitsing;
-	/** Begin- en eindstation van de hele rit */
-	ritVan?: string;
-	ritNaar?: string;
 	bron: string[];
 	opgehaaldOp: string;
 }

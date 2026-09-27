@@ -25,7 +25,7 @@ Advertentievrije OV-webapp (PWA) voor eigen gebruik en een kleine kring vrienden
 | M12 | Laatste data blijft zichtbaar bij slecht bereik, met tijdstip van ophalen | Overal |
 | M13 | Favoriete reizen en plekken | Favorieten |
 | M14 | Google-login alleen voor de allowlist, uitnodigen met een eenmalige link, sync tussen apparaten | Login, Meer → Beheer |
-| M17–M19 | Voertuiginfo: trein rechtop met afbeelding per bak, eerste klas, stilte en drukte, welk deel bij splitsen, kortere trein, treintype (bouwjaar, nieuw/ouder), live positie en eerder gereden ritten | Voertuiginfo (per rit) |
+| M17–M19 | Voertuiginfo: trein rechtop met afbeelding per bak, eerste klas, stilte en drukte, welk deel bij splitsen, kortere trein, treintype (bouwjaar, nieuw/ouder), live positie | Voertuiginfo (per rit) |
 | M20 | Laatste verbinding naar huis met resterende speling | Plannen |
 | M21 | Reis live delen via een link zonder login | Reis → Deel live |
 | M22 | Agenda-export (.ics): één afspraak per trein/bus, met spoor en uitstaptijd | Reisadvies, Reis |
@@ -124,7 +124,6 @@ Open de app, log in met Google en nodig mensen uit via *Meer* → *Beheer: uitno
 | `POST /api/uitnodiging` | Uitnodigingslink inwisselen (ingelogd, nog zonder toegang) |
 | `GET/POST/DELETE /api/beheer/uitnodigingen` | Uitnodigingslinks maken, tonen en intrekken (beheerder) |
 | `POST /api/reisstatus` | Ververst een lopende reis en geeft de problemen |
-| `GET /api/voertuig/historie` | Eerder gereden ritten per treinstel (zelf bijgehouden in Firestore `materieel`) |
 | `GET /api/spoorkaart` | Spoorlijnen (NS SpoorKaart); de app rekent zelf de route over het spoor uit |
 | `GET /api/rit`, `/api/voertuig`, `/api/zoek`, `/api/omgekeerd` | Rit met alle haltes, treinpositie, zoeken, adres bij GPS |
 | Cron (elke minuut) | Controleert actieve reizen, stuurt push, rondt reizen af, ruimt gedeelde reizen op |
