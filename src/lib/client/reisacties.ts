@@ -4,7 +4,7 @@ import type { Advies, Plek, Probleem, Reis, WeekItem } from '$lib/types';
 import { plekNaarParams } from '$lib/plekparams';
 import { optiesNaarParams } from '$lib/reisopties';
 import { adviesId, herbereken, isOV } from '$lib/reis';
-import { ms, nlDatum } from '$lib/tijd';
+import { ms, nlDatum, nlOnderdelen } from '$lib/tijd';
 import { api } from './api';
 import { data } from './data.svelte';
 import { huidigePositie } from './gps';
@@ -57,6 +57,33 @@ export async function laatsteNaarHuis(): Promise<LaatsteAntwoord> {
 	plekNaarParams('naar', thuis, p);
 	const r = await api<Omit<LaatsteAntwoord, 'van' | 'naar'>>(`/api/laatste-verbinding?${p}`, { timeoutMs: 20000 });
 	return { ...r, van, naar: thuis };
+}
+
+// ---------- Waarschuwing voor de laatste trein naar huis ----------
+
+export interface Wekker {
+	advies: Advies;
+	van: Plek;
+	naar: Plek;
+}
+
+export async function haalWekker(): Promise<Wekker | null> {
+	return (await api<{ wekker: Wekker | null }>('/api/wekker')).wekker;
+}
+
+/** Zet de waarschuwing aan; geeft terug of er echt pushmeldingen komen (Firebase ingesteld) */
+export async function zetWekker(w: Wekker): Promise<boolean> {
+	return (await api<{ ok: boolean; push: boolean }>('/api/wekker', { body: w })).push;
+}
+
+export async function wisWekker(): Promise<void> {
+	await api('/api/wekker', { methode: 'DELETE' });
+}
+
+/** 's Avonds (19:00 tot 03:30): dan is de laatste trein naar huis interessant */
+export function isAvond(nu = new Date()): boolean {
+	const o = nlOnderdelen(nu);
+	return o.uur >= 19 || o.uur < 3 || (o.uur === 3 && o.minuut < 30);
 }
 
 /** Waar en wanneer een alternatief moet beginnen bij een probleem in de actieve reis */

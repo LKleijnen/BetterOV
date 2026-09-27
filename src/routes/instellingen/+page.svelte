@@ -15,6 +15,7 @@
 
 	let naam = $state(data.profiel.naam ?? sessie.naam ?? '');
 	let thuis = $state<Plek | null>(data.profiel.thuislocatie ?? null);
+	let laatsteTrein = $state<'automatisch' | 'uit'>(data.profiel.laatsteTrein ?? 'automatisch');
 	let opgeslagen = $state(false);
 	let fout = $state<string | null>(null);
 
@@ -29,12 +30,13 @@
 		geladen = true;
 		naam = data.profiel.naam ?? sessie.naam ?? '';
 		thuis = data.profiel.thuislocatie ?? null;
+		laatsteTrein = data.profiel.laatsteTrein ?? 'automatisch';
 	});
 
 	async function bewaar() {
 		fout = null;
 		try {
-			await data.slaProfielOp({ naam: naam.trim() || undefined, thuislocatie: thuis ?? undefined });
+			await data.slaProfielOp({ naam: naam.trim() || undefined, thuislocatie: thuis ?? undefined, laatsteTrein });
 			opgeslagen = true;
 			setTimeout(() => (opgeslagen = false), 2000);
 		} catch (e) {
@@ -70,7 +72,14 @@
 			<span class="zwak klein">Zichtbaar voor mensen met wie je een reis deelt.</span>
 		</label>
 		<PlekInvoer label="Thuis" bind:waarde={thuis} wisbaar />
-		<span class="zwak klein">Voor "Laatste verbinding naar huis".</span>
+		<div class="stapel veld-groep">
+			<span class="label" id="laatste-label">Laatste trein naar huis</span>
+			<div class="chips" role="group" aria-labelledby="laatste-label">
+				<button type="button" class="chip" aria-pressed={laatsteTrein === 'automatisch'} onclick={() => (laatsteTrein = 'automatisch')}>Automatisch</button>
+				<button type="button" class="chip" aria-pressed={laatsteTrein === 'uit'} onclick={() => (laatsteTrein = 'uit')}>Uit</button>
+			</div>
+			<span class="zwak klein">Automatisch: 's avonds zie je op het startscherm wanneer je uiterlijk moet vertrekken, als je meer dan 3 km van huis bent.</span>
+		</div>
 		<button class="knop" type="submit">{#if opgeslagen}<Check size={18} /> Opgeslagen{:else}Opslaan{/if}</button>
 		{#if fout}<p class="status-fout klein">{fout}</p>{/if}
 	</form>

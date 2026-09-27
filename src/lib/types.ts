@@ -289,6 +289,8 @@ export interface WeekItem {
 export interface Profiel {
 	naam?: string;
 	thuislocatie?: Plek;
+	/** Laatste trein naar huis 's avonds vanzelf tonen als je ver van huis bent (standaard aan) */
+	laatsteTrein?: 'automatisch' | 'uit';
 	/** Niet meer in gebruik: snelst/goedkoopst/… zijn nu labels in de lijst */
 	standaardvoorkeur?: Voorkeur;
 	installatieUitlegGezien?: boolean;
@@ -309,6 +311,17 @@ export interface GedeeldeReis {
 	laatsteLocatie?: { lat: number; lng: number; tijd: string };
 	/** ISO-tijdstip; in Firestore opgeslagen als Timestamp */
 	verlooptOp: string;
+}
+
+/** Waarschuwing voor de laatste trein naar huis; de cron-worker stuurt de meldingen */
+export interface LaatsteTreinWekker {
+	uid: string;
+	van: Plek;
+	naar: Plek;
+	advies: Advies;
+	/** Sleutels van meldingen die al verstuurd zijn */
+	gemeld: string[];
+	aangemaaktOp: string;
 }
 
 /** Compacte kopie van een actieve reis die de cron-worker leest */
