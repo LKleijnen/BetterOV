@@ -2,8 +2,9 @@
 // rondt afgelopen reizen af en ruimt verlopen gedeelde reizen op.
 // Gebruikt alleen gedeelde modules zonder SvelteKit-imports.
 
-import type { ActieveReisPointer, Leg } from '../../src/lib/types';
+import type { ActieveReisPointer, LaatsteTreinWekker, Leg } from '../../src/lib/types';
 import { probleemTitel, vindProblemen } from '../../src/lib/reis';
+import { wekkerMelding, wekkerVerlopen } from '../../src/lib/wekker';
 import { verversAdvies } from '../../src/lib/server/reisstatus';
 import { Firestore, Tijdstempel, type FsDocument } from '../../src/lib/server/firestore';
 import { leesServiceAccount, type ServiceAccount } from '../../src/lib/server/google';
@@ -61,6 +62,15 @@ export async function controleer(env: CronEnv, nu = Date.now()): Promise<{ gecon
 		}
 	}
 
+	// Waarschuwingen voor de laatste trein naar huis
+	if (teller.aantal < teller.max - 4) {
+		try {
+			meldingen += await controleerWekkers(ctx);
+		} catch (e) {
+			console.error(`Wekkers: ${(e as Error).message}`);
+		}
+	}
+
 	// Verlopen gedeelde reizen (en daarmee de locatie) elke 10 minuten opruimen
 	if (Math.floor(nu / 60000) % 10 === 0 && teller.aantal < teller.max - 3) {
 		try {
@@ -74,6 +84,40 @@ export async function controleer(env: CronEnv, nu = Date.now()): Promise<{ gecon
 		}
 	}
 	return { gecontroleerd, meldingen };
+}
+
+/** Stuurt de meldingen voor de laatste trein naar huis (30 en 10 min vooraf, en bij uitval) */
+async function controleerWekkers(ctx: Context): Promise<number> {
+	const { fs, nu } = ctx;
+	const wekkers = await fs.lijst<LaatsteTreinWekker>('laatsteTreinWekkers', 50);
+	let verstuurd = 0;
+	for (const doc of wekkers) {
+		if (ctx.teller.aantal >= ctx.teller.max - 3) break;
+		const w = doc.data;
+		if (!w?.uid || !w.advies?.legs?.length || wekkerVerlopen(w.advies, nu)) {
+			await fs.verwijder(doc.pad);
+			continue;
+		}
+		const minuten = (Date.parse(w.advies.vertrek.verwacht) - nu) / 60000;
+		if (minuten > 45) continue;
+		// Vlak voor vertrek: realtime bijwerken (vertraging, uitval)
+		const { advies, gewijzigd } = await verversAdvies(w.advies, { nsKey: ctx.env.NS_API_KEY, ritCache: ctx.ritCache, teller: ctx.teller });
+		const melding = wekkerMelding(advies, w.gemeld ?? [], nu);
+		if (melding) {
+			const tokens = await fs.lijst(`users/${w.uid}/pushTokens`, 10);
+			for (const t of tokens) {
+				if (ctx.teller.aantal >= ctx.teller.max - 1) break;
+				ctx.teller.aantal++;
+				const r = await stuurPush(ctx.sa, t.id, { titel: melding.titel, tekst: melding.tekst, url: '/', tag: 'laatste-trein' }, ctx.env.APP_URL);
+				if (r === 'ok') verstuurd++;
+				if (r === 'ongeldig') await fs.verwijder(t.pad).catch(() => {});
+			}
+		}
+		if (melding || gewijzigd) {
+			await fs.zet(doc.pad, { advies, gemeld: [...(w.gemeld ?? []), ...(melding ? [melding.sleutel] : [])] }, ['advies', 'gemeld']);
+		}
+	}
+	return verstuurd;
 }
 
 async function controleerReis(ctx: Context, doc: FsDocument<ActieveReisPointer>): Promise<number> {
