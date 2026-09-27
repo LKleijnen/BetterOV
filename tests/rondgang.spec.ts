@@ -146,6 +146,28 @@ test("laatste trein naar huis verschijnt 's avonds ver van huis", async ({ page 
 	await expect(page.getByRole('region', { name: 'Laatste trein naar huis' })).toHaveCount(0);
 });
 
+test('voertuiginfo: splitsende trein met haakjes per bestemming', async ({ page }) => {
+	// Nepdata: oneven ritnummers splitsen onderweg (voorste deel naar Den Haag, achterste naar Rotterdam)
+	await page.route('**/api/trein/**', async (route) => {
+		const r = await route.fetch({ url: route.request().url().replace(/trein\/\d+/, 'trein/3885') });
+		await route.fulfill({ response: r });
+	});
+	await page.goto('/');
+	await kiesPlek(page, /^Van/, 'utrecht c', /Utrecht Centraal/);
+	await kiesPlek(page, /^Naar/, 'amsterdam c', /Amsterdam Centraal/);
+	await page.getByRole('button', { name: 'Plan reis' }).click();
+	await page.locator('a.advies').first().click();
+	await page.getByRole('button', { name: 'Voertuiginfo' }).first().click();
+	await expect(page.getByText(/Deze trein splitst in Leiden Centraal/)).toBeVisible();
+	const trein = page.locator('figure.trein');
+	await expect(trein.locator('.bestemming', { hasText: 'Den Haag Centraal' })).toBeVisible();
+	await expect(trein.locator('.bestemming.jouw', { hasText: 'Rotterdam Centraal' })).toContainText('Jouw deel');
+	// Bakken met kenmerken, liggend naast elkaar
+	await expect(trein.getByRole('img', { name: /eerste klas/ }).first()).toBeAttached();
+	await expect(page.getByRole('heading', { name: 'Over deze trein' })).toBeVisible();
+	await expect(page.getByText('Talbot en De Dietrich')).toBeVisible();
+});
+
 test('overstap klapt uit naar lopen en wachten', async ({ page }) => {
 	await page.goto('/');
 	await kiesPlek(page, /^Van/, 'amersfoort', /Amersfoort Centraal/);

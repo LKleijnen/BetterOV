@@ -1,10 +1,7 @@
 import { describe, expect, it } from 'vitest';
-import type { FsDocument } from './firestore';
 import type { NsRitHalte } from './ns';
-import type { TreinInfo } from '../types';
 import { bepaalSplitsing, berekenInstapadvies } from './trein';
-import { logRit, ritHistorie } from './materieel';
-import { materieelSoort, bakkenUitType } from '../materieel';
+import { alleSoorten, materieelSoort, bakkenUitType } from '../materieel';
 import { heeftVoertuiginfo } from '../voertuig';
 import { ovLeg } from '../testdata';
 
@@ -89,32 +86,39 @@ describe('materieel', () => {
 		expect(bakkenUitType('VIRM-6')).toBe(6);
 	});
 
+	it('herkent ook regionale en internationale treinen', () => {
+		expect(materieelSoort('FLIRT 3 FFF')?.code).toBe('FLIRT');
+		expect(materieelSoort('Arriva GTW 2/8')?.code).toBe('GTW');
+		expect(materieelSoort('Spurt')?.code).toBe('GTW');
+		expect(materieelSoort('VIRMm1')?.code).toBe('VIRM');
+		expect(materieelSoort('Eurostar e320')?.code).toBe('E320');
+		expect(materieelSoort('Thalys')?.code).toBe('PBKA');
+		expect(materieelSoort('ICE International')?.code).toBe('ICE');
+		expect(materieelSoort('European Sleeper')?.code).toBe('EUROPEANSLEEPER');
+		expect(materieelSoort('Nightjet')?.code).toBe('NIGHTJET');
+	});
+
+	it('verwart productnamen van NS niet met een treintype', () => {
+		for (const naam of ['Intercity', 'Intercity direct', 'IC', 'Sprinter', 'SPR', 'Stoptrein', 'Sneltrein', 'Eurocity', 'EC', 'R-net', 'Blauwnet']) {
+			expect(materieelSoort(naam), naam).toBeUndefined();
+		}
+	});
+
+	it('elk type is met zijn eigen code terug te vinden', () => {
+		const codes = new Set<string>();
+		for (const s of alleSoorten()) {
+			expect(s.code).toMatch(/^[A-Z0-9]+$/);
+			expect(codes.has(s.code)).toBe(false);
+			codes.add(s.code);
+			expect(s.naam && s.omschrijving).toBeTruthy();
+			// Een eerder type mag een later type niet 'opeten' (volgorde in SOORTEN)
+			for (const c of [s.code, ...(s.ook ?? [])]) expect(materieelSoort(c)?.code, c).toBe(s.code);
+		}
+	});
+
 	it('toont de knop Voertuiginfo alleen als er iets te zien is', () => {
 		expect(heeftVoertuiginfo(ovLeg('A', 'B', '10:00', '10:30'))).toBe(true);
 		expect(heeftVoertuiginfo(ovLeg('A', 'B', '10:00', '10:30', { modus: 'bus', ritnummer: undefined }))).toBe(false);
 		expect(heeftVoertuiginfo(ovLeg('A', 'B', '10:00', '10:30', { modus: 'bus', ritnummer: undefined, rolstoel: true }))).toBe(true);
-	});
-});
-
-describe('eerder gereden ritten', () => {
-	it('houdt per treinstel de laatste ritten bij, zonder dubbelen', async () => {
-		const docs = new Map<string, Record<string, unknown>>();
-		const fs = {
-			async get<T>(pad: string): Promise<FsDocument<T> | null> {
-				const d = docs.get(pad);
-				return d ? { id: pad, pad, data: structuredClone(d) as T } : null;
-			},
-			async zet(pad: string, data: Record<string, unknown>) {
-				docs.set(pad, data);
-			}
-		};
-		const info = { ritnummer: '3531', ritVan: 'Den Helder', ritNaar: 'Nijmegen', delen: [{ nummer: '9401', faciliteiten: [], bakken: 6 }] } as unknown as TreinInfo;
-		await logRit(fs, info, '2026-09-26T08:00:00+02:00');
-		await logRit(fs, { ...info, ritnummer: '3536' } as TreinInfo, '2026-09-26T10:00:00+02:00');
-		await logRit(fs, info, '2026-09-26T08:00:00+02:00');
-		const h = await ritHistorie(fs, ['9401', 'x']);
-		expect(h['9401'].map((r) => r.ritnummer)).toEqual(['3536', '3531']);
-		expect(h['9401'][0]).toMatchObject({ datum: '2026-09-26', van: 'Den Helder', naar: 'Nijmegen' });
-		expect(h.x).toBeUndefined();
 	});
 });

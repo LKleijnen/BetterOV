@@ -1,15 +1,15 @@
 <script lang="ts">
 	import { onDestroy, untrack } from 'svelte';
-	import { Accessibility, Armchair, Bike, History, MapPin, Plug, Split, Toilet, TriangleAlert, VolumeX, Wifi } from '@lucide/svelte';
-	import type { Advies, Leg, RitHistorie, TreinInfo, VoertuigPositie } from '$lib/types';
+	import { Accessibility, Armchair, Bike, MapPin, Plug, Split, Toilet, TriangleAlert, VolumeX, Wifi } from '@lucide/svelte';
+	import type { Advies, Leg, TreinInfo, VoertuigPositie } from '$lib/types';
 	import { api } from '$lib/client/api';
 	import { haalTreinInfo, treinParams } from '$lib/client/trein';
 	import { voertuigPositie } from '$lib/client/voertuigpositie';
-	import { korteDatum, klok } from '$lib/tijd';
+	import { klok } from '$lib/tijd';
 	import { LEEFTIJD_NAMEN, materieelSoort, type MaterieelSoort } from '$lib/materieel';
 	import Drukte from './Drukte.svelte';
 	import LijnLabel from './LijnLabel.svelte';
-	import TreinVerticaal from './TreinVerticaal.svelte';
+	import TreinSchema from './TreinSchema.svelte';
 	import Kaart from './Kaart.svelte';
 
 	let { leg, info: voorgeladen }: { leg: Leg; info?: TreinInfo | null } = $props();
@@ -20,7 +20,6 @@
 	let fout = $state<string | null>(null);
 	let laden = $state(false);
 	let ruw = $state<string | null>(null);
-	let historie = $state<Record<string, RitHistorie[]>>({});
 
 	$effect(() => {
 		const l = leg;
@@ -28,29 +27,15 @@
 		untrack(() => {
 			info = vooraf ?? null;
 			fout = null;
-			historie = {};
-			if (vooraf) {
-				void laadHistorie(vooraf);
-				return;
-			}
+			if (vooraf) return;
 			if (l.modus !== 'trein' || !l.ritnummer) return;
 			laden = true;
 			haalTreinInfo(l)
-				.then((r) => {
-					info = r;
-					void laadHistorie(r);
-				})
+				.then((r) => (info = r))
 				.catch((e) => (fout = (e as Error).message))
 				.finally(() => (laden = false));
 		});
 	});
-
-	async function laadHistorie(i: TreinInfo) {
-		const nummers = [...new Set(i.delen.map((d) => d.nummer).filter((n): n is string => !!n))];
-		if (!nummers.length) return;
-		const r = await api<{ historie: Record<string, RitHistorie[]> }>(`/api/voertuig/historie?nummers=${nummers.join(',')}`).catch(() => null);
-		if (r) historie = r.historie;
-	}
 
 	async function toonRuw() {
 		try {
@@ -82,6 +67,7 @@
 	});
 
 	// ---------- Achtergrond per treintype ----------
+	// Uit de samenstelling van NS; anders uit de productnaam van de planner (ICE, Eurostar, Nightjet, …)
 	const soorten = $derived.by(() => {
 		const gezien = new Map<string, { soort: MaterieelSoort; nummers: string[] }>();
 		for (const d of info?.delen ?? []) {
@@ -91,8 +77,23 @@
 			if (d.nummer) bestaand.nummers.push(d.nummer);
 			gezien.set(soort.code, bestaand);
 		}
+		if (!gezien.size) {
+			const soort = materieelSoort(info?.type) ?? materieelSoort(leg.productNaam) ?? materieelSoort(leg.lijn);
+			if (soort) gezien.set(soort.code, { soort, nummers: [] });
+		}
 		return [...gezien.values()];
 	});
+
+	function feitjes(s: MaterieelSoort): [string, string][] {
+		const uit: [string, string][] = [];
+		if (s.vervoerders) uit.push(['Rijdt bij', s.vervoerders]);
+		if (s.bouwer) uit.push(['Bouwer', s.bouwer]);
+		if (s.gebouwd) uit.push(['Gebouwd', s.gebouwd]);
+		if (s.inDienst) uit.push(['In dienst', s.inDienst]);
+		if (s.gemoderniseerd) uit.push(['Gemoderniseerd', s.gemoderniseerd]);
+		if (s.snelheid) uit.push(['Snelheid', `tot ${s.snelheid} km/u${s.snelheidNoot ? ` (${s.snelheidNoot})` : ''}`]);
+		return uit;
+	}
 
 	const faciliteitNamen: Record<string, string> = {
 		TOILET: 'Toilet',
@@ -120,8 +121,6 @@
 		return () => clearInterval(timer);
 	});
 	onDestroy(() => clearInterval(timer));
-
-	const heeftHistorie = $derived(Object.values(historie).some((r) => r.length > 0));
 </script>
 
 <div class="stapel paneel">
@@ -169,26 +168,7 @@
 							{#each info.instapadvies.samenvatting as regel, i (i)}<li>{regel}</li>{/each}
 						</ul>
 					{/if}
-					<TreinVerticaal {info} />
-				</section>
-			{/if}
-
-			{#if soorten.length}
-				<section class="stapel sectie">
-					<h3>Over deze trein</h3>
-					{#each soorten as { soort, nummers } (soort.code)}
-						<div class="soort">
-							<div class="rij tussen">
-								<strong>{soort.naam}</strong>
-								<span class="leeftijd {soort.leeftijd}">{LEEFTIJD_NAMEN[soort.leeftijd]}</span>
-							</div>
-							<p class="klein zwak">
-								Gebouwd {soort.gebouwd}{soort.gemoderniseerd ? `, gemoderniseerd ${soort.gemoderniseerd}` : ''}{soort.snelheid ? ` · tot ${soort.snelheid} km/u` : ''}{soort.bouwer ? ` · ${soort.bouwer}` : ''}
-							</p>
-							<p class="klein">{soort.omschrijving}</p>
-							{#if nummers.length}<p class="klein zwak">Treinstel {nummers.join(', ')}</p>{/if}
-						</div>
-					{/each}
+					<TreinSchema {info} />
 				</section>
 			{/if}
 
@@ -202,6 +182,31 @@
 					{/each}
 				</ul>
 			{/if}
+		{/if}
+
+		{#if soorten.length && !laden}
+			<section class="stapel sectie">
+				<h3>Over deze trein</h3>
+				{#each soorten as { soort, nummers } (soort.code)}
+					<div class="soort">
+						<div class="rij tussen">
+							<strong>{soort.naam}</strong>
+							{#if soort.leeftijd}<span class="leeftijd {soort.leeftijd}">{LEEFTIJD_NAMEN[soort.leeftijd]}</span>{/if}
+						</div>
+						<p class="klein">{soort.omschrijving}</p>
+						<dl class="feitjes klein">
+							{#each feitjes(soort) as [label, waarde] (label)}
+								<dt class="zwak">{label}</dt>
+								<dd>{waarde}</dd>
+							{/each}
+							{#if nummers.length}
+								<dt class="zwak">{nummers.length > 1 ? 'Treinstellen' : 'Treinstel'}</dt>
+								<dd>{nummers.join(', ')}</dd>
+							{/if}
+						</dl>
+					</div>
+				{/each}
+			</section>
 		{/if}
 	{:else}
 		<div class="rij feiten klein">
@@ -219,28 +224,6 @@
 			<p class="klein zwak">{positie?.soort === 'gps' ? 'GPS-positie van de trein (NS).' : 'Geschatte positie op basis van de actuele dienstregeling.'}</p>
 		{/if}
 	</details>
-
-	{#if heeftHistorie}
-		<section class="stapel sectie">
-			<h3 class="rij"><History size={16} aria-hidden="true" /> Eerder gereden</h3>
-			{#each Object.entries(historie) as [nummer, ritten] (nummer)}
-				{#if ritten.length}
-					<div>
-						{#if Object.keys(historie).length > 1}<p class="klein zwak">Treinstel {nummer}</p>{/if}
-						<ul class="lijst historie klein">
-							{#each ritten.slice(0, 6) as r (r.datum + r.ritnummer)}
-								<li class="rij">
-									<span class="zwak getal datum">{korteDatum(`${r.datum}T12:00:00Z`)}{r.vertrek ? ` ${klok(r.vertrek)}` : ''}</span>
-									<span class="flex">{r.van && r.naar ? `${r.van} → ${r.naar}` : `rit ${r.ritnummer}`}</span>
-								</li>
-							{/each}
-						</ul>
-					</div>
-				{/if}
-			{/each}
-			<p class="klein zwak">Ritten die dit treinstel reed toen iemand in BetterOV deze trein bekeek.</p>
-		</section>
-	{/if}
 
 	{#if trein && info}
 		<details class="sectie">
@@ -314,6 +297,15 @@
 		background: var(--info-zacht);
 		color: var(--info);
 	}
+	.feitjes {
+		display: grid;
+		grid-template-columns: auto 1fr;
+		gap: 2px 12px;
+		margin: 4px 0 0;
+	}
+	.feitjes dd {
+		margin: 0;
+	}
 	.faciliteiten {
 		display: flex;
 		flex-wrap: wrap;
@@ -330,18 +322,6 @@
 	}
 	.kaartje {
 		margin-top: 6px;
-	}
-	.historie {
-		display: flex;
-		flex-direction: column;
-		gap: 4px;
-	}
-	.datum {
-		min-width: 96px;
-	}
-	.flex {
-		flex: 1;
-		min-width: 0;
 	}
 	.ruw {
 		max-height: 260px;
