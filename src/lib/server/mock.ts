@@ -3,7 +3,7 @@
 import type { Advies, Halte, Leg, PlanAntwoord, Plek, TreinInfo, Vertrek, VertrekAntwoord, Voorkeur } from '../types';
 import { adviesId, herbereken } from '../reis';
 import { afstandMeter, codeerPolyline, looptijdSeconden } from '../geo';
-import { sorteer } from './planner';
+import { opVertrek } from './planner';
 import { schattingTrein } from './prijs';
 
 const STATIONS: Plek[] = [
@@ -200,7 +200,7 @@ export function mockPlan(v: { van: Plek; naar: Plek; tijd?: string; voorkeur: Vo
 		adviezen.push(advies);
 	}
 	return {
-		adviezen: sorteer(adviezen, v.voorkeur),
+		adviezen: opVertrek(adviezen),
 		bron: 'transitous',
 		vorige: String(basis - 75 * 60000),
 		volgende: String(basis + 75 * 60000),

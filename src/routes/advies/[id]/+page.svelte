@@ -96,7 +96,7 @@
 	async function wisselFavoriet() {
 		if (!van || !naar) return;
 		if (favoriet) await data.verwijderFavoriet(favoriet.id);
-		else await data.zetFavoriet({ van, naar, voorkeur: data.profiel.standaardvoorkeur ?? 'snelst' });
+		else await data.zetFavoriet({ van, naar, voorkeur: 'snelst' });
 	}
 
 	function agenda() {

@@ -12,7 +12,7 @@ import { planner } from './planner.svelte';
 
 /** Plant een vaste reis voor vandaag en kiest het advies dat het best bij de tijd past */
 export async function planVasteReis(w: WeekItem): Promise<Advies | null> {
-	planner.zetReis(w.van, w.naar, w.via ?? null, data.profiel.standaardvoorkeur);
+	planner.zetReis(w.van, w.naar, w.via ?? null);
 	planner.zetMoment(nlDatum(), w.tijd, w.soort === 'aankomst');
 	await planner.zoek();
 	const doel = ms(planner.tijdstip()!);

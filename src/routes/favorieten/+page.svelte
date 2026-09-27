@@ -3,7 +3,7 @@
 	import { ChevronRight, House, MapPin, Plus, Star, Trash2 } from '@lucide/svelte';
 	import type { Plek } from '$lib/types';
 	import { data } from '$lib/client/data.svelte';
-	import { planner, VOORKEUR_LABELS } from '$lib/client/planner.svelte';
+	import { planner } from '$lib/client/planner.svelte';
 	import PlekInvoer from '$lib/components/PlekInvoer.svelte';
 
 	let nieuwePlek = $state<Plek | null>(null);
@@ -51,7 +51,7 @@
 						<span>
 							<strong>{f.naam ?? `${f.van.naam} → ${f.naar.naam}`}</strong><br />
 							<span class="zwak klein">
-								{f.naam ? `${f.van.naam} → ${f.naar.naam} · ` : ''}{f.via ? `via ${f.via.naam} · ` : ''}{VOORKEUR_LABELS[f.voorkeur]}
+								{[f.naam ? `${f.van.naam} → ${f.naar.naam}` : '', f.via ? `via ${f.via.naam}` : ''].filter(Boolean).join(' · ')}
 							</span>
 						</span>
 						<ChevronRight size={20} aria-hidden="true" />

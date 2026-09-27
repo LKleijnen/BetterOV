@@ -4,7 +4,7 @@ import { nsTijd, nsTripNaarAdvies, stationVoorPlek, type NsStation } from './ns'
 import { snijLeg, herplanLooplegs } from './reisstatus';
 import { schattingTrein, berekenPrijs } from './prijs';
 import { naarVelden, vanVelden, Tijdstempel } from './firestore';
-import { plan, sorteer } from './planner';
+import { opVertrek, plan } from './planner';
 import { berekenInstapadvies } from './trein';
 import { bakIndeling } from './ns';
 import { kiesLaatste } from './laatste';
@@ -374,12 +374,32 @@ describe('planner', () => {
 		expect(r.adviezen[0].legs[1].productNaam).toBe('Intercity');
 	});
 
-	it('sorteert op voorkeur', () => {
-		const snel = maakAdvies([ovLeg('A', 'B', '10:10', '10:40')]);
-		const traagDirect = maakAdvies([ovLeg('A', 'B', '10:00', '10:50')]);
-		const metOverstap = maakAdvies([ovLeg('A', 'C', '10:05', '10:15'), ovLeg('C', 'B', '10:20', '10:35')]);
-		expect(sorteer([traagDirect, snel, metOverstap], 'snelst')[0]).toBe(metOverstap);
-		expect(sorteer([metOverstap, traagDirect, snel], 'overstappen')[0]).toBe(snel);
+	it('zet adviezen op vertrektijd', () => {
+		const laat = maakAdvies([ovLeg('A', 'B', '10:10', '10:40')]);
+		const vroeg = maakAdvies([ovLeg('A', 'B', '10:00', '10:50')]);
+		expect(opVertrek([laat, vroeg])).toEqual([vroeg, laat]);
+	});
+
+	it('zoekt er een reis met minder overstappen bij als alles een overstap heeft', async () => {
+		const urls: string[] = [];
+		// Twee treinen achter elkaar: één overstap
+		const metOverstap = structuredClone(motisItinerary);
+		const tweede = structuredClone(motisItinerary.legs[1]);
+		tweede.tripId = 'tweede';
+		tweede.startTime = tweede.scheduledStartTime = '2026-09-25T09:25:00Z';
+		tweede.endTime = tweede.scheduledEndTime = '2026-09-25T09:40:00Z';
+		metOverstap.legs.splice(2, 0, tweede as never);
+		const direct = structuredClone(motisItinerary);
+		direct.legs[1].tripId = 'direct-1';
+		direct.legs[1].tripShortName = '3055';
+		vi.stubGlobal('fetch', (url: string) => {
+			urls.push(url);
+			const antwoord = url.includes('maxTransfers=0') ? { itineraries: [direct] } : { itineraries: [metOverstap] };
+			return Promise.resolve(new Response(JSON.stringify(antwoord)));
+		});
+		const r = await plan({ van: { naam: 'A', lat: 52.09, lon: 5.12 }, naar: { naam: 'B', lat: 52.37, lon: 4.89 }, voorkeur: 'snelst' }, {});
+		expect(urls.some((u) => u.includes('maxTransfers=0'))).toBe(true);
+		expect(r.adviezen).toHaveLength(2);
 	});
 
 	it('kiest de laatste verbinding die nog niet vertrokken is', () => {

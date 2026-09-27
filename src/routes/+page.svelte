@@ -20,11 +20,6 @@
 	const aantalOpties = $derived(aantalAfwijkend(planner.opties) + (planner.via ? 1 : 0));
 	let fout = $state<string | null>(null);
 
-	$effect(() => {
-		// Standaardvoorkeur uit het profiel gebruiken zolang er nog niet gezocht is
-		if (!planner.gezocht && data.profiel.standaardvoorkeur) planner.voorkeur = data.profiel.standaardvoorkeur;
-	});
-
 	/** Zoeken en meteen naar de resultaten; die tonen zelf het laden */
 	function plan() {
 		fout = null;

@@ -1,9 +1,8 @@
 <script lang="ts">
 	import { Bell, BellOff, Check, ChevronLeft, TriangleAlert } from '@lucide/svelte';
-	import type { Plek, Voorkeur } from '$lib/types';
+	import type { Plek } from '$lib/types';
 	import { data } from '$lib/client/data.svelte';
 	import { sessie } from '$lib/client/sessie.svelte';
-	import { VOORKEUR_LABELS } from '$lib/client/planner.svelte';
 	import { isIOS, isStandalone, pushStatus, zetPushAan, lokaleMelding, type PushStatus } from '$lib/client/push';
 	import { weergave, type Thema } from '$lib/client/thema.svelte';
 	import PlekInvoer from '$lib/components/PlekInvoer.svelte';
@@ -16,7 +15,6 @@
 
 	let naam = $state(data.profiel.naam ?? sessie.naam ?? '');
 	let thuis = $state<Plek | null>(data.profiel.thuislocatie ?? null);
-	let voorkeur = $state<Voorkeur>(data.profiel.standaardvoorkeur ?? 'snelst');
 	let opgeslagen = $state(false);
 	let fout = $state<string | null>(null);
 
@@ -31,13 +29,12 @@
 		geladen = true;
 		naam = data.profiel.naam ?? sessie.naam ?? '';
 		thuis = data.profiel.thuislocatie ?? null;
-		voorkeur = data.profiel.standaardvoorkeur ?? 'snelst';
 	});
 
 	async function bewaar() {
 		fout = null;
 		try {
-			await data.slaProfielOp({ naam: naam.trim() || undefined, thuislocatie: thuis ?? undefined, standaardvoorkeur: voorkeur });
+			await data.slaProfielOp({ naam: naam.trim() || undefined, thuislocatie: thuis ?? undefined });
 			opgeslagen = true;
 			setTimeout(() => (opgeslagen = false), 2000);
 		} catch (e) {
@@ -74,14 +71,6 @@
 		</label>
 		<PlekInvoer label="Thuis" bind:waarde={thuis} wisbaar />
 		<span class="zwak klein">Voor "Laatste verbinding naar huis".</span>
-		<div class="stapel veld-groep">
-			<span class="label">Standaardvoorkeur</span>
-			<div class="chips" role="group" aria-label="Standaardvoorkeur">
-				{#each Object.entries(VOORKEUR_LABELS) as [v, label] (v)}
-					<button type="button" class="chip" aria-pressed={voorkeur === v} onclick={() => (voorkeur = v as Voorkeur)}>{label}</button>
-				{/each}
-			</div>
-		</div>
 		<button class="knop" type="submit">{#if opgeslagen}<Check size={18} /> Opgeslagen{:else}Opslaan{/if}</button>
 		{#if fout}<p class="status-fout klein">{fout}</p>{/if}
 	</form>

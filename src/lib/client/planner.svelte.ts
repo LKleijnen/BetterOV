@@ -35,13 +35,6 @@ function sessieSchrijf(k: string, v: unknown) {
 	}
 }
 
-export const VOORKEUR_LABELS: Record<Voorkeur, string> = {
-	snelst: 'Snelst',
-	overstappen: 'Minste overstappen',
-	goedkoopst: 'Goedkoopst',
-	drukte: 'Minst druk'
-};
-
 class Planner {
 	van = $state<Plek | null>(null);
 	naar = $state<Plek | null>(null);
@@ -204,13 +197,6 @@ class Planner {
 			this.laden = null;
 			this.bewaar();
 		}
-	}
-
-	/** Voorkeur wisselen herberekent zonder opnieuw in te voeren (M4) */
-	async kiesVoorkeur(v: Voorkeur) {
-		this.voorkeur = v;
-		if (this.gezocht) await this.zoek();
-		else this.bewaar();
 	}
 
 	zetReis(van: Plek, naar: Plek, via?: Plek | null, voorkeur?: Voorkeur) {
