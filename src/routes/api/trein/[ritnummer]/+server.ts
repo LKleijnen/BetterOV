@@ -7,7 +7,8 @@ import type { RequestHandler } from './$types';
 
 /**
  * Samenstelling, drukte, lengte t.o.v. normaal en materieel van een NS-trein.
- * Parameters: station (code), naam, lat, lon (instapstation), datum (ISO), ruw=1
+ * Parameters: station (code), naam, lat, lon (instapstation), datum (ISO), naar (uitstapstation),
+ * richting, ruw=1
  */
 export const GET: RequestHandler = async ({ params, url }) => {
 	const ritnummer = params.ritnummer;
@@ -24,6 +25,8 @@ export const GET: RequestHandler = async ({ params, url }) => {
 				lat: getal(p.get('lat')),
 				lon: getal(p.get('lon')),
 				datumTijd: p.get('datum') || undefined,
+				naar: p.get('naar') || undefined,
+				richting: p.get('richting') || undefined,
 				ruw: p.get('ruw') === '1'
 			})
 		);

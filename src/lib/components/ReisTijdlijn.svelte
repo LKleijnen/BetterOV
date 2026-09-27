@@ -8,6 +8,7 @@
 	import Drukte from './Drukte.svelte';
 	import ModusIcoon from './ModusIcoon.svelte';
 	import Spoor from './Spoor.svelte';
+	import { heeftVoertuiginfo } from '$lib/voertuig';
 
 	let {
 		advies,
@@ -160,9 +161,9 @@
 									<ChevronDown size={15} style="transform: rotate({tussenstopsOpen[i] ? 180 : 0}deg)" />
 								</button>
 							{/if}
-							{#if onVoertuig}
+							{#if onVoertuig && heeftVoertuiginfo(leg)}
 								<button type="button" class="tekstknop" onclick={() => onVoertuig(i)}>
-									<TrainFront size={15} /> {leg.isNS ? 'Trein & instapadvies' : 'Voertuiginfo'}
+									<TrainFront size={15} /> Voertuiginfo
 								</button>
 							{/if}
 							<span class="flex"></span>

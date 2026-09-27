@@ -7,6 +7,8 @@ export function treinParams(l: Leg, extra: Record<string, string> = {}): string 
 		lat: String(l.van.lat),
 		lon: String(l.van.lon),
 		datum: l.vertrek.gepland,
+		naar: l.naar.naam,
+		...(l.richting ? { richting: l.richting } : {}),
 		...extra
 	}).toString();
 }

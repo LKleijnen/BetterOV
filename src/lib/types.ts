@@ -163,6 +163,22 @@ export interface TreinDeel {
 	eersteKlas?: boolean;
 	/** Per bak: klasse en stilte, alleen als de NS-data dat per bak geeft */
 	indeling?: BakInfo[];
+	/** Zijaanzicht per bak (NS Virtual Train API), in volgorde van het treinstel */
+	bakAfbeeldingen?: string[];
+	/** Drukteverwachting voor dit treinstel, als NS die per treinstel geeft */
+	drukte?: Drukte;
+}
+
+/** De trein splitst onderweg: welk deel moet je hebben en waar gaan de andere delen heen */
+export interface Splitsing {
+	/** Station waar de trein splitst, als bekend */
+	station?: string;
+	/** Indexen in TreinInfo.delen die naar jouw uitstapstation rijden */
+	jouwDelen: number[];
+	/** Eindbestemming per deel-index */
+	bestemmingen: { deel: number; naar: string }[];
+	/** Splitst vóór je uitstapt (anders ter informatie) */
+	voorUitstappen: boolean;
 }
 
 export interface BakInfo {
@@ -198,6 +214,7 @@ export interface TreinInfo {
 	faciliteiten: string[];
 	instapadvies?: Instapadvies;
 	zitplaatsen?: number;
+	splitsing?: Splitsing;
 	bron: string[];
 	opgehaaldOp: string;
 }

@@ -25,7 +25,7 @@ Advertentievrije OV-webapp (PWA) voor eigen gebruik en een kleine kring vrienden
 | M12 | Laatste data blijft zichtbaar bij slecht bereik, met tijdstip van ophalen | Overal |
 | M13 | Favoriete reizen en plekken | Favorieten |
 | M14 | Google-login alleen voor de allowlist, uitnodigen met een eenmalige link, sync tussen apparaten | Login, Meer → Beheer |
-| M17–M19 | Instapadvies (eerste klas, stilte), waarschuwing kortere trein, voertuiginfo | Trein & instapadvies |
+| M17–M19 | Voertuiginfo: trein zoals op het perron met afbeelding per bak, eerste klas, stilte en drukte, haakjes per bestemming als de trein splitst, kortere trein, treintype (bouwer, bouwjaar, nieuw/ouder; ook regionale en internationale treinen), live positie | Voertuiginfo (per rit) |
 | M20 | Laatste verbinding naar huis met resterende speling | Plannen |
 | M21 | Reis live delen via een link zonder login | Reis → Deel live |
 | M22 | Agenda-export (.ics): één afspraak per trein/bus, met spoor en uitstaptijd | Reisadvies, Reis |

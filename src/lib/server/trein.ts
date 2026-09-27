@@ -1,7 +1,7 @@
 // Treininformatie voor één NS-rit: samenstelling, drukte, lengte t.o.v. normaal en instapadvies.
 
-import type { Instapadvies, TreinDeel, TreinInfo } from '../types';
-import { nsRit, nsSamenstelling, nsStations, ritHalteBij, stationVoorPlek, type NsSamenstelling } from './ns';
+import type { Instapadvies, Splitsing, TreinDeel, TreinInfo } from '../types';
+import { nsRit, nsSamenstelling, nsStations, ritHalteBij, stationVoorPlek, type NsRitHalte, type NsSamenstelling } from './ns';
 
 type Bereik = { van: number; tot: number };
 
@@ -66,6 +66,21 @@ export function berekenInstapadvies(s: NsSamenstelling): Instapadvies | undefine
 	});
 	const ek = samenvoegen(eersteKlas);
 	const st = samenvoegen(stilte);
+	// Drukte per bak, als NS die geeft: waar is het waarschijnlijk het drukst en waar rustiger
+	const druk: Bereik[] = [];
+	const rustig: Bereik[] = [];
+	let pos = 0;
+	s.delen.forEach((d) => {
+		const n = Math.max(1, d.bakken);
+		if (d.indeling?.length === n) {
+			d.indeling.forEach((b, j) => {
+				const r = { van: (pos + j) / totaal, tot: (pos + j + 1) / totaal };
+				if (b.drukte === 'hoog') druk.push(r);
+				if (b.drukte === 'laag') rustig.push(r);
+			});
+		}
+		pos += n;
+	});
 	const nauwkeurig = ek.length > 0 || st.length > 0;
 	const samenvatting: string[] = [];
 	const plek = s.rijrichting ? '' : ' (zoals getekend)';
@@ -74,6 +89,10 @@ export function berekenInstapadvies(s: NsSamenstelling): Instapadvies | undefine
 	else if (perDeelEerste.length) samenvatting.push(`Eerste klas: ${perDeel(perDeelEerste)}`);
 	if (st.length) samenvatting.push(`Stiltecoupé: ${beschrijf(st, s.rijrichting)}${plek}`);
 	else if (perDeelStilte.length) samenvatting.push(`Stiltecoupé: ${perDeel(perDeelStilte)}`);
+	if (druk.length && rustig.length) {
+		samenvatting.push(`Waarschijnlijk het drukst: ${beschrijf(samenvoegen(druk), s.rijrichting)}`);
+		samenvatting.push(`Rustiger: ${beschrijf(samenvoegen(rustig), s.rijrichting)}`);
+	}
 	if (!samenvatting.length) samenvatting.push('De NS-data bevat voor deze trein geen indeling.');
 	return { eersteKlas: ek, stilte: st, rijrichting: s.rijrichting, samenvatting, nauwkeurig };
 }
@@ -84,8 +103,55 @@ export interface TreinVraag {
 	lat?: number;
 	lon?: number;
 	datumTijd?: string;
+	/** Uitstapstation en richting van jouw rit, om te bepalen in welk deel je moet zitten */
+	naar?: string;
+	richting?: string;
 	/** Ruwe NS-data meesturen (voor controle en debuggen) */
 	ruw?: boolean;
+}
+
+function zelfdeNaam(a?: string, b?: string): boolean {
+	const n = (x: string) => x.toLowerCase().replace(/^station\s+/, '').replace(/[^a-z0-9]+/g, ' ').trim();
+	return !!a && !!b && (n(a) === n(b) || n(a).startsWith(`${n(b)} `) || n(b).startsWith(`${n(a)} `));
+}
+
+/**
+ * Splitst de trein onderweg? Dat zie je aan verschillende eindbestemmingen per treinstel. Het
+ * station vinden we in de ritdata: waar het aantal treinstellen na je instapstation afneemt.
+ * Jouw deel is het deel dat bij je uitstapstation nog meerijdt, of anders het deel dat naar de
+ * eindbestemming van deze rit gaat.
+ */
+export function bepaalSplitsing(delen: TreinDeel[], rit: NsRitHalte[], v: { stationNaam?: string; naar?: string; richting?: string }): Splitsing | undefined {
+	const bestemmingen = delen.map((d, deel) => ({ deel, naar: d.eindbestemming ?? '' })).filter((b) => b.naar);
+	if (new Set(bestemmingen.map((b) => b.naar.toLowerCase())).size < 2) return undefined;
+	const stoppend = rit.filter((h) => h.status !== 'PASSING');
+	const iVan = Math.max(0, stoppend.findIndex((h) => zelfdeNaam(h.naam, v.stationNaam)));
+	const iNaar = v.naar ? stoppend.findIndex((h, i) => i > iVan && zelfdeNaam(h.naam, v.naar)) : -1;
+	const aantal = (h: NsRitHalte) => h.materieel?.aantalDelen ?? h.materieel?.delen.length;
+	const begin = aantal(stoppend[iVan] ?? ({} as NsRitHalte));
+	let iSplits = -1;
+	for (let i = iVan + 1; i < stoppend.length && begin; i++) {
+		const n = aantal(stoppend[i]);
+		if (n !== undefined && n < begin) {
+			iSplits = i;
+			break;
+		}
+	}
+	// Welke treinstellen rijden bij je uitstapstation nog mee?
+	const nummersBijUitstap = new Set((iNaar >= 0 ? stoppend[iNaar].materieel?.delen ?? [] : []).map((d) => d.nummer).filter(Boolean));
+	let jouwDelen = delen.map((d, i) => (d.nummer && nummersBijUitstap.has(d.nummer) ? i : -1)).filter((i) => i >= 0);
+	if (jouwDelen.length === 0 || jouwDelen.length === delen.length) {
+		const doel = v.richting ?? stoppend[stoppend.length - 1]?.naam;
+		jouwDelen = delen.map((d, i) => (zelfdeNaam(d.eindbestemming, doel) ? i : -1)).filter((i) => i >= 0);
+	}
+	if (jouwDelen.length === 0) return undefined;
+	return {
+		station: iSplits >= 0 ? stoppend[iSplits].naam : undefined,
+		jouwDelen,
+		bestemmingen,
+		// Zonder station weten we het niet zeker; dan liever wel waarschuwen
+		voorUitstappen: iSplits < 0 || iNaar < 0 || iSplits <= iNaar
+	};
 }
 
 export async function treinInfo(key: string | undefined, ritnummer: string, v: TreinVraag): Promise<TreinInfo & { ruw?: unknown }> {
@@ -121,7 +187,7 @@ export async function treinInfo(key: string | undefined, ritnummer: string, v: T
 	const materieel = halte?.materieel;
 	const delen: TreinDeel[] =
 		samenstelling?.delen ??
-		(materieel?.delen ?? []).map((d) => ({ type: d.type, faciliteiten: d.faciliteiten.map((f) => f.toUpperCase()), bakken: 0, afbeelding: d.afbeelding }));
+		(materieel?.delen ?? []).map((d) => ({ nummer: d.nummer, type: d.type, faciliteiten: d.faciliteiten.map((f) => f.toUpperCase()), bakken: 0, afbeelding: d.afbeelding }));
 
 	let aantalBakken: number | undefined;
 	let normaalBakken: number | undefined;
@@ -149,6 +215,7 @@ export async function treinInfo(key: string | undefined, ritnummer: string, v: T
 		faciliteiten: [...new Set(delen.flatMap((d) => d.faciliteiten))],
 		instapadvies: samenstelling ? berekenInstapadvies(samenstelling) : undefined,
 		zitplaatsen: samenstelling?.zitplaatsen ?? materieel?.zitplaatsen,
+		splitsing: bepaalSplitsing(delen, rit, { stationNaam: halte?.naam ?? v.stationNaam, naar: v.naar, richting: v.richting }),
 		bron,
 		opgehaaldOp: new Date().toISOString(),
 		ruw: v.ruw ? { samenstelling: samenstelling?.ruw, halte } : undefined

@@ -434,7 +434,7 @@ export interface NsRitHalte {
 		normaalDelen?: number;
 		zitplaatsen?: number;
 		type?: string;
-		delen: { type?: string; faciliteiten: string[]; afbeelding?: string }[];
+		delen: { nummer?: string; type?: string; faciliteiten: string[]; afbeelding?: string }[];
 	};
 }
 
@@ -472,7 +472,8 @@ export async function nsRit(key: string | undefined, ritnummer: string, datumTij
 							zitplaatsen: stock.numberOfSeats,
 							type: stock.trainType,
 							delen: (stock.trainParts ?? []).map((p: Ruw) => ({
-								type: p?.stockIdentifier ?? p?.type,
+								nummer: p?.stockIdentifier != null ? String(p.stockIdentifier) : undefined,
+								type: p?.type ?? stock.trainType,
 								faciliteiten: Array.isArray(p?.facilities) ? p.facilities : [],
 								afbeelding: p?.image?.uri
 							}))
@@ -556,7 +557,7 @@ export function bakIndeling(bakken: Ruw[]): BakInfo[] | undefined {
 			b?.klasse === '1' ||
 			velden.some((s) => /EERSTE[_ ]?KLAS|FIRST[_ ]?CLASS|^1E[_ ]?KLAS/.test(s));
 		const stilte = velden.some((s) => /STILTE|SILENCE|QUIET/.test(s));
-		return { eersteKlas, stilte, drukte: nsDrukte(b?.drukte?.niveau ?? b?.drukte) };
+		return { eersteKlas, stilte, drukte: leesDrukte(b) };
 	});
 	const overal = (f: (b: BakInfo) => boolean) => indeling.length > 1 && indeling.every(f);
 	const stilteBruikbaar = !overal((b) => b.stilte);
@@ -566,7 +567,28 @@ export function bakIndeling(bakken: Ruw[]): BakInfo[] | undefined {
 		stilte: stilteBruikbaar && b.stilte,
 		eersteKlas: eersteBruikbaar && b.eersteKlas
 	}));
-	return schoon.some((b) => b.stilte || b.eersteKlas) ? schoon : undefined;
+	return schoon.some((b) => b.stilte || b.eersteKlas || b.drukte) ? schoon : undefined;
+}
+
+/** Drukte uit een bak of treinstel, onder welke naam NS die ook meegeeft */
+function leesDrukte(x: Ruw): Drukte | undefined {
+	for (const k of ['drukte', 'drukteVoorspelling', 'crowdForecast', 'bezetting', 'classification']) {
+		const v = x?.[k];
+		const d = nsDrukte(typeof v === 'object' ? (v?.niveau ?? v?.classification ?? v?.level) : v);
+		if (d && d !== 'onbekend') return d;
+	}
+	return undefined;
+}
+
+function afbeeldingUrl(a: Ruw): string | undefined {
+	const url = typeof a === 'string' ? a : (a?.url ?? a?.uri);
+	return typeof url === 'string' && /^https:\/\//.test(url) ? url : undefined;
+}
+
+function bakAfbeeldingen(bakken: Ruw[]): string[] | undefined {
+	if (!Array.isArray(bakken) || bakken.length === 0) return undefined;
+	const urls = bakken.map((b) => afbeeldingUrl(b?.afbeelding ?? b?.image));
+	return urls.every(Boolean) ? (urls as string[]) : undefined;
 }
 
 export async function nsSamenstelling(
@@ -592,9 +614,11 @@ export async function nsSamenstelling(
 			type: m?.type,
 			faciliteiten: Array.isArray(m?.faciliteiten) ? m.faciliteiten.map((f: string) => String(f).toUpperCase()) : [],
 			bakken: Array.isArray(m?.bakken) ? m.bakken.length : 0,
-			afbeelding: typeof m?.afbeelding === 'string' ? m.afbeelding : m?.afbeelding?.url,
+			afbeelding: afbeeldingUrl(m?.afbeelding),
 			eindbestemming: m?.eindbestemming,
-			indeling: bakIndeling(m?.bakken)
+			indeling: bakIndeling(m?.bakken),
+			bakAfbeeldingen: bakAfbeeldingen(m?.bakken),
+			drukte: leesDrukte(m)
 		}));
 		const zitplaatsen = delenRuw.reduce((som, m) => {
 			const z = m?.zitplaatsInfo ?? m?.zitplaatsen;
