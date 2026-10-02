@@ -2,6 +2,7 @@ import { json } from '@sveltejs/kit';
 import { config } from '$lib/server/config';
 import { motisRit } from '$lib/server/motis';
 import { nsRit, type NsRitHalte } from '$lib/server/ns';
+import { ritPad } from '$lib/server/trein';
 import { foutAntwoord } from '$lib/server/antwoord';
 import type { Halte, Leg } from '$lib/types';
 import type { RequestHandler } from './$types';
@@ -62,7 +63,8 @@ export const GET: RequestHandler = async ({ url }) => {
 	}
 	if (ritnummer && c.nsKey) {
 		try {
-			const leg = nsLegVanRit(ritnummer, await nsRit(c.nsKey, ritnummer, datum));
+			// Splitst de trein, dan alleen de tak van dit ritnummer
+			const leg = nsLegVanRit(ritnummer, ritPad(await nsRit(c.nsKey, ritnummer, datum), { ritnummer }));
 			if (leg) return json({ leg, bron: 'ns', opgehaaldOp: new Date().toISOString() });
 		} catch (e) {
 			fout = fout ?? e;

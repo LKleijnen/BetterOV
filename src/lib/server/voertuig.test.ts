@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import type { NsRitHalte } from './ns';
-import { bepaalSplitsing, berekenInstapadvies } from './trein';
+import { bepaalSplitsing, berekenInstapadvies, ritPad } from './trein';
 import { alleSoorten, materieelSoort, bakkenUitType } from '../materieel';
 import { heeftVoertuiginfo } from '../voertuig';
 import { ovLeg } from '../testdata';
@@ -48,6 +48,83 @@ describe('splitsen', () => {
 
 	it('geeft niets als alle delen naar dezelfde bestemming gaan', () => {
 		expect(bepaalSplitsing([{ ...delen[0] }, { ...delen[1], eindbestemming: 'Den Haag Centraal' }], rit, {})).toBeUndefined();
+	});
+});
+
+describe('splitsen zonder eindbestemming per treinstel (alleen ritdata)', () => {
+	// Treinstellen zonder bestemming, zoals uit de ritdata van NS
+	const delen = [
+		{ nummer: '9501', faciliteiten: [], bakken: 0 },
+		{ nummer: '9502', faciliteiten: [], bakken: 0 }
+	];
+	const tak = (id: string, naam: string, volgende: string[], nummers: string[], extra: Partial<NsRitHalte> = {}): NsRitHalte => ({
+		...halte(naam, nummers),
+		id,
+		volgende,
+		...extra
+	});
+
+	it('volgt de takken als NS beide takken geeft (meerdere volgende haltes)', () => {
+		const rit = [
+			tak('UT_0', 'Utrecht Centraal', ['EHV_0'], ['9501', '9502']),
+			tak('EHV_0', 'Eindhoven Centraal', ['STD_0'], ['9501', '9502']),
+			tak('STD_0', 'Sittard', ['MT_0', 'HRL_0'], ['9501', '9502']),
+			tak('MT_0', 'Maastricht', [], ['9501']),
+			tak('HRL_0', 'Heerlen', [], ['9502'])
+		];
+		expect(ritPad(rit, { naar: 'Heerlen' }).map((h) => h.naam)).toEqual(['Utrecht Centraal', 'Eindhoven Centraal', 'Sittard', 'Heerlen']);
+		const s = bepaalSplitsing(delen, rit, { stationNaam: 'Utrecht Centraal', naar: 'Maastricht' });
+		expect(s).toMatchObject({
+			station: 'Sittard',
+			jouwDelen: [0],
+			jouwBestemming: 'Maastricht',
+			andereBestemmingen: ['Heerlen'],
+			voorUitstappen: true,
+			bestemmingen: [
+				{ deel: 0, naar: 'Maastricht' },
+				{ deel: 1, naar: 'Heerlen' }
+			]
+		});
+	});
+
+	it('herkent meerdere vertrekken met een eigen bestemming', () => {
+		const rit = [
+			halte('Utrecht Centraal', ['9501', '9502']),
+			{
+				...halte('Sittard', ['9501', '9502']),
+				vertrekken: [
+					{ naar: 'Maastricht', nummers: ['9501'] },
+					{ naar: 'Heerlen', nummers: ['9502'] }
+				]
+			},
+			halte('Maastricht', ['9501'])
+		];
+		const s = bepaalSplitsing(delen, rit, { stationNaam: 'Utrecht Centraal', naar: 'Maastricht' });
+		expect(s?.station).toBe('Sittard');
+		expect(s?.jouwDelen).toEqual([0]);
+		expect(s?.andereBestemmingen).toEqual(['Heerlen']);
+	});
+
+	it('waarschuwt ook als alleen het aantal treinstellen afneemt', () => {
+		const rit = [halte('Utrecht Centraal', ['9501', '9502']), halte('Sittard', ['9501']), halte('Maastricht', ['9501'])];
+		// Zonder treinstelnummers in de samenstelling weten we niet welk deel van jou is
+		const s = bepaalSplitsing([{ faciliteiten: [], bakken: 4 }, { faciliteiten: [], bakken: 4 }], rit, { stationNaam: 'Utrecht Centraal', naar: 'Maastricht' });
+		expect(s).toMatchObject({ station: 'Sittard', jouwDelen: [], jouwBestemming: 'Maastricht', voorUitstappen: true });
+	});
+
+	it('zegt niets als je vóór de splitsing uitstapt', () => {
+		const rit = [
+			tak('UT_0', 'Utrecht Centraal', ['STD_0'], ['9501', '9502']),
+			tak('STD_0', 'Sittard', ['MT_0', 'HRL_0'], ['9501', '9502']),
+			tak('MT_0', 'Maastricht', [], ['9501']),
+			tak('HRL_0', 'Heerlen', [], ['9502'])
+		];
+		expect(bepaalSplitsing(delen, rit, { stationNaam: 'Utrecht Centraal', naar: 'Sittard' })?.voorUitstappen).toBe(false);
+	});
+
+	it('geeft niets bij een gewone rit', () => {
+		const rit = [halte('Utrecht Centraal', ['9501', '9502']), halte('Sittard', ['9501', '9502']), halte('Maastricht', ['9501', '9502'])];
+		expect(bepaalSplitsing(delen, rit, { stationNaam: 'Utrecht Centraal', naar: 'Maastricht' })).toBeUndefined();
 	});
 });
 
