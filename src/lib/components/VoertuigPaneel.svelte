@@ -1,12 +1,13 @@
 <script lang="ts">
 	import { onDestroy, untrack } from 'svelte';
-	import { Accessibility, Armchair, Bike, MapPin, Plug, Split, Toilet, TriangleAlert, VolumeX, Wifi } from '@lucide/svelte';
+	import { Accessibility, Armchair, Bike, Check, Copy, MapPin, Plug, Split, Toilet, TriangleAlert, VolumeX, Wifi } from '@lucide/svelte';
 	import type { Advies, Leg, TreinInfo, VoertuigPositie } from '$lib/types';
 	import { api } from '$lib/client/api';
 	import { haalTreinInfo, treinParams } from '$lib/client/trein';
 	import { voertuigPositie } from '$lib/client/voertuigpositie';
 	import { klok } from '$lib/tijd';
 	import { LEEFTIJD_NAMEN, materieelSoort, type MaterieelSoort } from '$lib/materieel';
+	import { splitsTekst } from '$lib/splitsen';
 	import Drukte from './Drukte.svelte';
 	import LijnLabel from './LijnLabel.svelte';
 	import TreinSchema from './TreinSchema.svelte';
@@ -37,6 +38,18 @@
 		});
 	});
 
+	let gekopieerd = $state(false);
+	async function kopieerRuw() {
+		if (!ruw) return;
+		try {
+			await navigator.clipboard.writeText(ruw);
+			gekopieerd = true;
+			setTimeout(() => (gekopieerd = false), 2500);
+		} catch {
+			gekopieerd = false;
+		}
+	}
+
 	async function toonRuw() {
 		try {
 			const r = await api<unknown>(`/api/trein/${leg.ritnummer}?${treinParams(leg, { ruw: '1' })}`);
@@ -47,24 +60,7 @@
 	}
 
 	// ---------- Splitsen: welk deel heb je nodig ----------
-	const splitsing = $derived(info?.splitsing?.voorUitstappen ? info.splitsing : undefined);
-	const splitsTekst = $derived.by(() => {
-		if (!info || !splitsing) return null;
-		const jouw = splitsing.jouwDelen;
-		const naarJouw = splitsing.bestemmingen.find((b) => jouw.includes(b.deel))?.naar;
-		const anderen = [...new Set(splitsing.bestemmingen.filter((b) => !jouw.includes(b.deel)).map((b) => b.naar))];
-		// Positie vanaf de voorkant (bij rijrichting rechts staat het laatste deel voorop)
-		const richting = info.instapadvies?.rijrichting;
-		const n = info.delen.length;
-		const vanVoren = (i: number) => (richting === 'rechts' ? n - 1 - i : i);
-		const posities = jouw.map(vanVoren);
-		const plek = !richting ? '' : posities.every((p) => p === 0) ? 'voorste' : posities.every((p) => p === n - 1) ? 'achterste' : 'middelste';
-		return {
-			kop: `Deze trein splitst${splitsing.station ? ` in ${splitsing.station}` : ' onderweg'}`,
-			jouw: `Zit in het ${plek ? `${plek} ` : ''}deel${naarJouw ? ` naar ${naarJouw}` : ''}.`,
-			anders: anderen.length ? `Het andere deel gaat naar ${anderen.join(' en ')}.` : ''
-		};
-	});
+	const splits = $derived(splitsTekst(info));
 
 	// ---------- Achtergrond per treintype ----------
 	// Uit de samenstelling van NS; anders uit de productnaam van de planner (ICE, Eurostar, Nightjet, …)
@@ -145,10 +141,10 @@
 				</div>
 			{/if}
 
-			{#if splitsTekst}
+			{#if splits}
 				<div class="melding info splits" role="note">
 					<Split size={18} />
-					<span><strong>{splitsTekst.kop}.</strong> {splitsTekst.jouw} {splitsTekst.anders}</span>
+					<span><strong>{splits.kop}.</strong> {splits.jouw} {splits.anders}</span>
 				</div>
 			{/if}
 
@@ -228,6 +224,11 @@
 	{#if trein && info}
 		<details class="sectie">
 			<summary class="klein zwak" onclick={() => !ruw && toonRuw()}>Ruwe NS-data (voor controle)</summary>
+			{#if ruw}
+				<button type="button" class="knop tweede klein kopieer" onclick={kopieerRuw}>
+					{#if gekopieerd}<Check size={16} /> Gekopieerd{:else}<Copy size={16} /> Kopieer alles{/if}
+				</button>
+			{/if}
 			<pre class="ruw">{ruw ?? 'Laden…'}</pre>
 		</details>
 		<p class="klein zwak">Bron: {info.bron.join(', ')} · {klok(info.opgehaaldOp)}</p>
@@ -322,6 +323,9 @@
 	}
 	.kaartje {
 		margin-top: 6px;
+	}
+	.kopieer {
+		margin: 8px 0;
 	}
 	.ruw {
 		max-height: 260px;

@@ -177,6 +177,10 @@ export interface Splitsing {
 	jouwDelen: number[];
 	/** Eindbestemming per deel-index */
 	bestemmingen: { deel: number; naar: string }[];
+	/** Waar jouw deel heen rijdt, als dat bekend is maar niet per treinstel */
+	jouwBestemming?: string;
+	/** Waar de andere delen heen rijden als dat niet per treinstel bekend is (het splitsstation zelf: ze blijven daar staan) */
+	andereBestemmingen?: string[];
 	/** Splitst vóór je uitstapt (anders ter informatie) */
 	voorUitstappen: boolean;
 }
