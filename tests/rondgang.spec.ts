@@ -219,3 +219,55 @@ test('kaart laadt (worker) en tekent de route over het spoor', async ({ page }) 
 	await expect(page.getByText('Kaart kon niet worden geladen.')).toHaveCount(0);
 	expect(fouten.filter((f) => !/GL Driver|WebGL/.test(f))).toEqual([]);
 });
+
+test('reis onderweg: samenvatting, kaartje, voortgang en alternatieven', async ({ page }) => {
+	const fouten: string[] = [];
+	page.on('pageerror', (e) => fouten.push(e.message));
+	await page.route('https://tiles.openfreemap.org/**', (route) =>
+		route.fulfill({
+			contentType: 'application/json',
+			body: JSON.stringify({ version: 8, sources: {}, layers: [{ id: 'achtergrond', type: 'background', paint: { 'background-color': '#dde' } }] })
+		})
+	);
+	await page.clock.install({ time: new Date() });
+	await page.goto('/');
+	await kiesPlek(page, /^Van/, 'oudegr', /Oudegracht 100/);
+	await kiesPlek(page, /^Naar/, 'damrak', /Damrak 1/);
+	await page.getByRole('button', { name: 'Plan reis' }).click();
+	await page.locator('a.advies').first().click();
+	await page.getByRole('button', { name: 'Start reis' }).click();
+	await page.waitForURL('**/reis');
+
+	// Bovenaan de ritten achter elkaar, zoals bij het zoeken
+	await expect(page.locator('header.kop .lijnlabel').first()).toBeVisible();
+	// Kaart staat klein in de pagina en kan schermvullend
+	await expect(page.getByRole('button', { name: 'Live kaart' })).toHaveCount(0);
+	await page.getByRole('button', { name: 'Kaart schermvullend' }).click();
+	await expect(page.getByRole('dialog', { name: 'Live kaart' })).toBeVisible();
+	await page.getByRole('button', { name: 'Kaart verkleinen' }).click();
+	await expect(page.getByRole('dialog', { name: 'Live kaart' })).toHaveCount(0);
+
+	// Halverwege de treinrit: bolletje op de lijn, gepasseerde haltes doorgestreept, snelheid
+	const legs = await page.evaluate(() => {
+		const r = JSON.parse(localStorage.getItem('lokaal:reizen') ?? '[]')[0];
+		return r.advies.legs.map((l: { modus: string; vertrek: { verwacht: string }; aankomst: { verwacht: string } }) => [l.modus, l.vertrek.verwacht, l.aankomst.verwacht]);
+	});
+	const trein = legs.find((l: string[]) => l[0] === 'trein');
+	await page.clock.fastForward(Math.round((Date.parse(trein[1]) + Date.parse(trein[2])) / 2 - Date.now()));
+	await expect(page.getByRole('img', { name: 'Hier ben je nu ongeveer' })).toBeVisible();
+	await expect(page.locator('li.rit.actief .halte-naam.voorbij').first()).toBeVisible();
+	await expect(page.getByText(/km\/u/)).toBeVisible();
+
+	// Andere opties: inklapbaar, zonder knoppen; kiezen gaat op de detailpagina
+	await page.getByRole('button', { name: 'Andere opties' }).click();
+	const kop = page.getByRole('button', { name: /^Alternatieven vanaf/ });
+	await expect(page.locator('#alt-lijst a.advies').first()).toBeVisible();
+	await expect(page.getByRole('button', { name: 'Kies dit alternatief' })).toHaveCount(0);
+	await kop.click();
+	await expect(page.locator('#alt-lijst')).toHaveCount(0);
+	await kop.click();
+	await page.locator('#alt-lijst a.advies').first().click();
+	await page.getByRole('button', { name: 'Kies dit alternatief' }).click();
+	await page.waitForURL('**/reis');
+	expect(fouten).toEqual([]);
+});

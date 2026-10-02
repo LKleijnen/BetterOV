@@ -21,6 +21,31 @@ export function looptijdSeconden(lat1: number, lon1: number, lat2: number, lon2:
 	return Math.round((afstandMeter(lat1, lon1, lat2, lon2) * OMWEGFACTOR) / LOOPSNELHEID);
 }
 
+export interface GpsMeting {
+	lat: number;
+	lon: number;
+	nauwkeurigheid: number;
+	/** Tijdstip in ms */
+	tijd: number;
+	/** Snelheid volgens het toestel in m/s, als het die geeft */
+	snelheid?: number;
+}
+
+/**
+ * Snelheid in km/u: die van het toestel als die er is, anders uit twee metingen. Geeft undefined
+ * als de metingen te onnauwkeurig of te dicht op elkaar zijn om iets zinnigs te zeggen.
+ */
+export function snelheidKmu(nieuw: GpsMeting, vorige?: GpsMeting | null): number | undefined {
+	if (nieuw.snelheid !== undefined && Number.isFinite(nieuw.snelheid) && nieuw.snelheid >= 0) return nieuw.snelheid * 3.6;
+	if (!vorige) return undefined;
+	const sec = (nieuw.tijd - vorige.tijd) / 1000;
+	if (sec < 3 || sec > 60) return undefined;
+	const meter = afstandMeter(vorige.lat, vorige.lon, nieuw.lat, nieuw.lon);
+	// De onnauwkeurigheid moet klein zijn ten opzichte van de afgelegde afstand
+	if (nieuw.nauwkeurigheid + vorige.nauwkeurigheid > Math.max(60, meter / 2)) return undefined;
+	return (meter / sec) * 3.6;
+}
+
 /** Decodeert een Google-polyline naar [lon, lat]-paren (GeoJSON-volgorde). */
 export function decodeerPolyline(punten: string, precisie = 5): [number, number][] {
 	const factor = 10 ** precisie;
