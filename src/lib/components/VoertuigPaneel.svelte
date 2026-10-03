@@ -5,6 +5,7 @@
 	import { api } from '$lib/client/api';
 	import { haalTreinInfo, treinParams } from '$lib/client/trein';
 	import { voertuigPositie } from '$lib/client/voertuigpositie';
+	import { volledigeRit } from '$lib/client/rit';
 	import { klok } from '$lib/tijd';
 	import { LEEFTIJD_NAMEN, materieelSoort, type MaterieelSoort } from '$lib/materieel';
 	import { laadVoertuigen, variantVoorNummer, voertuigVoorType, type Voertuig } from '$lib/voertuigen';
@@ -126,10 +127,16 @@
 	let timer: ReturnType<typeof setInterval> | undefined;
 	const ritAdvies = $derived<Advies>({ id: 'voertuig', bron: 'transitous', vertrek: leg.vertrek, aankomst: leg.aankomst, duur: leg.duur, overstappen: 0, legs: [leg] });
 
+	// De hele rit (ook vóór je instapt en na je uitstapt), zodat je ziet waar het voertuig nu is
+	let rit = $state.raw<Leg | null>(null);
 	$effect(() => {
 		if (!kaartOpen) return;
 		untrack(() => {
-			const werkBij = async () => (positie = await voertuigPositie(leg));
+			const werkBij = async () => {
+				// volledigeRit onthoudt de rit, dus dit is alleen de eerste keer een verzoek
+				rit = await volledigeRit(leg);
+				positie = await voertuigPositie(rit ?? leg);
+			};
 			void werkBij();
 			timer = setInterval(werkBij, 15000);
 		});
@@ -240,7 +247,7 @@
 		<summary class="rij"><MapPin size={16} /> Live positie</summary>
 		{#if kaartOpen}
 			<div class="kaartje">
-				<Kaart advies={ritAdvies} voertuig={positie} hoogte="240px" />
+				<Kaart advies={ritAdvies} ritten={[rit]} voertuig={positie} hoogte="240px" />
 			</div>
 			<p class="klein zwak">{positie?.soort === 'gps' ? 'GPS-positie van de trein (NS).' : 'Geschatte positie op basis van de actuele dienstregeling.'}</p>
 		{/if}

@@ -392,3 +392,43 @@ export function mockStation(naam = 'Utrecht Centraal'): StationInfo {
 		opgehaaldOp: new Date().toISOString()
 	};
 }
+
+/**
+ * Een volledige rit voor de nepdata: de rit van de reis, met twee haltes ervoor en twee erna
+ * (in dezelfde richting), zodat de kaart de hele rit en het voertuig buiten jouw deel kan tonen.
+ */
+export function mockRit(v: { ritnummer?: string; tripId?: string; van: Halte & { tijd: string }; naar: Halte & { tijd: string } }): Leg {
+	const t0 = Date.parse(v.van.tijd);
+	const t1 = Date.parse(v.naar.tijd);
+	const dLat = (v.naar.lat - v.van.lat) / 3;
+	const dLon = (v.naar.lon - v.van.lon) / 3;
+	const dT = Math.max(60000, (t1 - t0) / 3);
+	const halte = (k: number, naam: string): Halte => {
+		const t = t0 + k * dT;
+		return { naam, lat: v.van.lat + k * dLat, lon: v.van.lon + k * dLon, aankomst: { gepland: iso(t), verwacht: iso(t) }, vertrek: { gepland: iso(t + 60000), verwacht: iso(t + 60000) } };
+	};
+	const eerste = halte(-2, 'Beginstation');
+	const laatste = halte(5, 'Eindstation');
+	const tussen = [halte(-1, 'Voorlaatste halte ervoor'), { ...halte(0, v.van.naam), lat: v.van.lat, lon: v.van.lon }, halte(1, `${v.van.naam.split(' ')[0]}–${v.naar.naam.split(' ')[0]} 1`), halte(2, `${v.van.naam.split(' ')[0]}–${v.naar.naam.split(' ')[0]} 2`), { ...halte(3, v.naar.naam), lat: v.naar.lat, lon: v.naar.lon }, halte(4, 'Halte erna')];
+	const vertrek = eerste.vertrek!;
+	const aankomst = laatste.aankomst!;
+	return {
+		modus: 'trein',
+		van: eerste,
+		naar: laatste,
+		vertrek,
+		aankomst,
+		duur: Math.round((Date.parse(aankomst.verwacht) - Date.parse(vertrek.verwacht)) / 1000),
+		tussenstops: tussen,
+		lijn: 'IC',
+		productNaam: 'Intercity',
+		richting: laatste.naam,
+		vervoerder: 'NS',
+		ritnummer: v.ritnummer,
+		tripId: v.tripId,
+		realtime: true,
+		uitgevallen: false,
+		isNS: !!v.ritnummer,
+		meldingen: []
+	};
+}

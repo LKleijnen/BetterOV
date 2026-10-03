@@ -5,6 +5,7 @@ import type { Advies, Halte, Leg, Melding, Modus, Plek, Vertrek } from '../types
 import { adviesId, herbereken } from '../reis';
 import { motisModi, type Reisopties } from '../reisopties';
 import { ApiFout, haalJson, queryString } from './http';
+import { codeerPolyline, decodeerPolyline } from '../geo';
 
 export const TRANSITOUS = 'https://api.transitous.org';
 // Transitous vraagt om een User-Agent met appnaam, versie en contact.
@@ -392,14 +393,22 @@ function uniek(adviezen: Advies[]): Advies[] {
 /** Volledige rit (alle haltes) als één leg */
 export async function motisRit(tripId: string, timeoutMs = 8000): Promise<Leg | null> {
 	const it = await motis<MItinerary>('trip', { tripId, language: 'nl' }, timeoutMs);
-	const legs = (it.legs ?? []).map(normaliseerLeg).filter(isOVLeg);
+	return voegRitSamen((it.legs ?? []).map(normaliseerLeg).filter(isOVLeg));
+}
+
+/** Aaneengesloten legs van één rit (bijvoorbeeld bij een lijnwissel zonder overstap) samenvoegen, ook de vorm */
+export function voegRitSamen(legs: Leg[]): Leg | null {
 	if (legs.length === 0) return null;
 	if (legs.length === 1) return legs[0];
-	// Aaneengesloten legs (bijvoorbeeld bij lijnwissel zonder overstap) samenvoegen
 	const eerste = legs[0];
 	const laatste = legs[legs.length - 1];
+	const precisie = eerste.polyline?.precisie ?? 6;
+	const vorm = legs.every((l) => l.polyline?.punten)
+		? { punten: codeerPolyline(legs.flatMap((l) => decodeerPolyline(l.polyline!.punten, l.polyline!.precisie)), precisie), precisie }
+		: undefined;
 	return {
 		...eerste,
+		polyline: vorm,
 		naar: laatste.naar,
 		aankomst: laatste.aankomst,
 		duur: Math.round((Date.parse(laatste.aankomst.verwacht) - Date.parse(eerste.vertrek.verwacht)) / 1000),

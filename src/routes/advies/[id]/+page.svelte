@@ -10,6 +10,7 @@
 	import { actief } from '$lib/client/actief.svelte';
 	import { kiesAlternatief } from '$lib/client/reisacties';
 	import { haalTreinInfo } from '$lib/client/trein';
+	import { volledigeRitten } from '$lib/client/rit';
 	import { volgPositie, type Positie } from '$lib/client/gps';
 	import { adviesStatus, isOV } from '$lib/reis';
 	import { looptijdSeconden } from '$lib/geo';
@@ -61,6 +62,15 @@
 		kaartLeg = i;
 		kaartOpen = true;
 	}
+	// De volledige ritten erbij (in het zwart), zodra de kaart opengaat
+	let ritten = $state.raw<(Leg | null)[]>([]);
+	let rittenVoor = '';
+	$effect(() => {
+		const a = advies;
+		if (!kaartOpen || !a || a.id === rittenVoor) return;
+		rittenVoor = a.id;
+		untrack(() => volledigeRitten(a.legs).then((r) => (ritten = r)));
+	});
 
 	let prijsOpen = $state(false);
 
@@ -243,7 +253,7 @@
 
 <Onderblad bind:open={kaartOpen} titel="Kaart">
 	{#if advies}
-		<Kaart {advies} focusLeg={kaartLeg} eigenPositie={positie} hoogte="60dvh" />
+		<Kaart {advies} {ritten} focusLeg={kaartLeg} eigenPositie={positie} hoogte="60dvh" />
 	{/if}
 </Onderblad>
 

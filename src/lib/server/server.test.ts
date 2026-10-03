@@ -1,5 +1,6 @@
 import { afterEach, describe, expect, it, vi } from 'vitest';
-import { normaliseerItinerary, modusVan, treinProduct } from './motis';
+import { normaliseerItinerary, modusVan, treinProduct, voegRitSamen } from './motis';
+import { codeerPolyline, decodeerPolyline } from '../geo';
 import { nsTijd, nsTripNaarAdvies, stationVoorPlek, type NsStation } from './ns';
 import { snijLeg, herplanLooplegs } from './reisstatus';
 import { schattingTrein, berekenPrijs } from './prijs';
@@ -464,5 +465,22 @@ describe('voorzieningen op een station (Places API)', () => {
 	it('slaat voorzieningen zonder naam over en negeert onveilige links', () => {
 		expect(nsVoorziening({ lat: 52 }, {})).toBeNull();
 		expect(nsVoorziening({ name: 'Kiosk', link: { uri: 'javascript:alert(1)' } }, { type: 'shop' })?.link).toBeUndefined();
+	});
+});
+
+describe('volledige rit samenvoegen', () => {
+	it('plakt de vormen van aaneengesloten legs aan elkaar', () => {
+		const a = ovLeg('A', 'B', '10:00', '10:20');
+		const b = ovLeg('B', 'C', '10:20', '10:40');
+		a.polyline = { punten: codeerPolyline([[5, 52], [5.1, 52.1]], 6), precisie: 6 };
+		b.polyline = { punten: codeerPolyline([[5.1, 52.1], [5.2, 52.2]], 5), precisie: 5 };
+		const rit = voegRitSamen([a, b])!;
+		expect(rit.naar.naam).toBe('C');
+		expect(rit.tussenstops.map((h) => h.naam)).toEqual(['B']);
+		const vorm = decodeerPolyline(rit.polyline!.punten, rit.polyline!.precisie);
+		expect(vorm).toHaveLength(4);
+		expect(vorm[3][1]).toBeCloseTo(52.2, 4);
+		// Zonder vorm bij één van de legs: geen (halve) vorm
+		expect(voegRitSamen([a, { ...b, polyline: undefined }])!.polyline).toBeUndefined();
 	});
 });

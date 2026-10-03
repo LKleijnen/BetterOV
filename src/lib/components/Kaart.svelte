@@ -1,8 +1,8 @@
 <script lang="ts">
 	import { onDestroy, onMount, untrack } from 'svelte';
-	import type { Map as MLMap, GeoJSONSource, LngLatBoundsLike } from 'maplibre-gl';
+	import type { Map as MLMap, GeoJSONSource, LngLatBoundsLike, Marker } from 'maplibre-gl';
 	import { TrainTrack } from '@lucide/svelte';
-	import type { Advies, VoertuigPositie } from '$lib/types';
+	import type { Advies, Leg, VoertuigPositie } from '$lib/types';
 	import type { SpoorNetwerk } from '$lib/spoor';
 	import { isOV } from '$lib/reis';
 	import { lijnOverSpoor, spoorNetwerk, wilSpoor } from '$lib/client/spoorkaart';
@@ -21,7 +21,8 @@
 		compact = false,
 		onKlik,
 		punten = [],
-		midden = null
+		midden = null,
+		ritten = []
 	}: {
 		advies?: Advies | null;
 		focusLeg?: number;
@@ -37,6 +38,8 @@
 		punten?: { lat: number; lon: number; naam: string; kleur?: string }[];
 		/** Middelpunt en zoom als er geen route is om op in te zoomen */
 		midden?: { lat: number; lon: number; zoom?: number } | null;
+		/** Per rit van het advies de volledige rit (alle haltes): in het zwart, met jouw deel in geel erop */
+		ritten?: (Leg | null)[];
 	} = $props();
 
 	let container = $state<HTMLDivElement>();
@@ -48,9 +51,10 @@
 	let spoor = $state.raw<SpoorNetwerk | null>(null);
 	let spoorLaag = $state(lees('kaart-spoorlaag', false));
 	const lijnen = $derived((advies?.legs ?? []).map((leg) => lijnOverSpoor(leg, spoor)));
+	const ritLijnen = $derived(ritten.map((r) => (r ? lijnOverSpoor(r, spoor) : null)));
 
 	$effect(() => {
-		const nodig = spoorLaag || (advies?.legs ?? []).some(wilSpoor);
+		const nodig = spoorLaag || (advies?.legs ?? []).some(wilSpoor) || ritten.some((r) => !!r && wilSpoor(r));
 		if (!nodig || spoor) return;
 		void spoorNetwerk().then((n) => (spoor = n));
 	});
@@ -111,6 +115,87 @@
 		};
 	}
 
+	function rittenGeoJson() {
+		return {
+			type: 'FeatureCollection' as const,
+			features: ritLijnen
+				.map((lijn, i) => ({ lijn, i }))
+				.filter((x): x is { lijn: [number, number][]; i: number } => !!x.lijn && x.lijn.length > 1)
+				.map(({ lijn, i }) => ({
+					type: 'Feature' as const,
+					properties: { focus: focusLeg === -1 || focusLeg === i },
+					geometry: { type: 'LineString' as const, coordinates: lijn }
+				}))
+		};
+	}
+
+	// ---------- Haltes onderweg (ook van de rest van de rit), met naam bij tikken of inzoomen ----------
+	interface Halteje {
+		sleutel: string;
+		naam: string;
+		lat: number;
+		lon: number;
+		/** Treinstation: de naam linkt naar de stationspagina */
+		station: boolean;
+		/** Begin of eind van jouw rit (die heeft al een grote stip) */
+		eigen: boolean;
+	}
+	const LABEL_ZOOM = 12;
+	const haltejes = $derived.by((): Halteje[] => {
+		const uit = new Map<string, Halteje>();
+		(advies?.legs ?? []).forEach((leg, i) => {
+			if (!isOV(leg)) return;
+			const rit = ritten[i];
+			const eigen = new Set([leg.van.naam, leg.naar.naam]);
+			const lijst = rit ? [rit.van, ...rit.tussenstops, rit.naar] : [leg.van, ...leg.tussenstops, leg.naar];
+			for (const h of lijst) {
+				if (!h.naam || !Number.isFinite(h.lat) || !Number.isFinite(h.lon)) continue;
+				const sleutel = `${h.naam}|${h.lat.toFixed(3)}|${h.lon.toFixed(3)}`;
+				const bestaand = uit.get(sleutel);
+				const nieuw = { sleutel, naam: h.naam, lat: h.lat, lon: h.lon, station: leg.modus === 'trein', eigen: eigen.has(h.naam) };
+				uit.set(sleutel, bestaand ? { ...bestaand, eigen: bestaand.eigen || nieuw.eigen } : nieuw);
+			}
+		});
+		return [...uit.values()];
+	});
+
+	function haltejesGeoJson() {
+		return {
+			type: 'FeatureCollection' as const,
+			features: haltejes
+				.filter((h) => !h.eigen)
+				.map((h) => ({ type: 'Feature' as const, properties: { sleutel: h.sleutel }, geometry: { type: 'Point' as const, coordinates: [h.lon, h.lat] } }))
+		};
+	}
+
+	let ml: typeof import('maplibre-gl') | undefined;
+	let labels: { sleutel: string; el: HTMLElement; marker: Marker }[] = [];
+	let gekozen: string | null = null;
+
+	function toonLabels() {
+		if (!kaart) return;
+		const dichtbij = kaart.getZoom() >= LABEL_ZOOM;
+		for (const l of labels) l.el.hidden = !(dichtbij || l.sleutel === gekozen);
+	}
+
+	function tekenLabels(lijst: Halteje[]) {
+		for (const l of labels) l.marker.remove();
+		labels = [];
+		if (!kaart || !ml || compact) return;
+		for (const h of lijst) {
+			const el = document.createElement(h.station ? 'a' : 'span');
+			el.className = 'haltelabel';
+			el.textContent = h.naam;
+			if (el instanceof HTMLAnchorElement) {
+				el.href = `/station?${new URLSearchParams({ naam: h.naam, lat: String(h.lat), lon: String(h.lon) })}`;
+				el.setAttribute('aria-label', `Station ${h.naam}`);
+			}
+			const marker = new ml.Marker({ element: el, anchor: 'left', offset: [9, 0] }).setLngLat([h.lon, h.lat]).addTo(kaart);
+			labels.push({ sleutel: h.sleutel, el, marker });
+		}
+		toonLabels();
+	}
+
 	function puntenGeoJson() {
 		return {
 			type: 'FeatureCollection' as const,
@@ -145,6 +230,7 @@
 	onMount(async () => {
 		try {
 			const maplibre = await import('maplibre-gl');
+			ml = maplibre;
 			await import('maplibre-gl/dist/maplibre-gl.css');
 			if (!container) return;
 			maplibre.setWorkerUrl(workerUrl);
@@ -170,12 +256,22 @@
 				kaart.addSource('voertuig', { type: 'geojson', data: puntGeoJson(voertuig) });
 				kaart.addSource('extra', { type: 'geojson', data: puntGeoJson(extraPunt) });
 				kaart.addSource('punten', { type: 'geojson', data: puntenGeoJson() });
+				kaart.addSource('ritten', { type: 'geojson', data: rittenGeoJson() });
+				kaart.addSource('haltejes', { type: 'geojson', data: haltejesGeoJson() });
 				kaart.addLayer({
 					id: 'spoor',
 					type: 'line',
 					source: 'spoor',
 					layout: { 'line-cap': 'round', 'line-join': 'round' },
 					paint: { 'line-color': donker ? '#8b95a7' : '#5b6474', 'line-width': 1.6, 'line-opacity': 0.7 }
+				});
+				// De hele rit van het voertuig, onder jouw deel
+				kaart.addLayer({
+					id: 'ritten',
+					type: 'line',
+					source: 'ritten',
+					layout: { 'line-cap': 'round', 'line-join': 'round' },
+					paint: { 'line-color': donker ? '#d1d5db' : '#111827', 'line-width': 3.5, 'line-opacity': ['case', ['get', 'focus'], 0.75, 0.25] }
 				});
 				kaart.addLayer({
 					id: 'route-rand',
@@ -201,6 +297,22 @@
 					layout: { 'line-cap': 'round' },
 					paint: { 'line-color': donker ? '#cbd5e1' : '#4b5563', 'line-width': 4, 'line-dasharray': [0.5, 1.8] }
 				});
+				kaart.addLayer({
+					id: 'haltejes',
+					type: 'circle',
+					source: 'haltejes',
+					paint: { 'circle-radius': 4.5, 'circle-color': '#ffffff', 'circle-stroke-width': 2, 'circle-stroke-color': donker ? '#d1d5db' : '#111827' }
+				});
+				if (!compact) {
+					// Tik op een halte: naam tonen (en daarmee de link naar het station)
+					kaart.on('click', (e) => {
+						const f = kaart?.queryRenderedFeatures(e.point, { layers: ['haltejes', 'haltes'] })[0];
+						const p = f?.properties;
+						gekozen = p?.sleutel ?? (p?.naam ? (haltejes.find((h) => h.naam === p.naam)?.sleutel ?? null) : null);
+						toonLabels();
+					});
+					kaart.on('zoomend', toonLabels);
+				}
 				kaart.addLayer({
 					id: 'haltes',
 					type: 'circle',
@@ -247,6 +359,7 @@
 					paint: { 'circle-radius': 7, 'circle-color': '#2563eb', 'circle-stroke-width': 3, 'circle-stroke-color': '#ffffff' }
 				});
 				geladen = true;
+				tekenLabels(haltejes);
 			});
 		} catch (e) {
 			fout = 'Kaart kon niet worden geladen.';
@@ -254,7 +367,10 @@
 		}
 	});
 
-	onDestroy(() => kaart?.remove());
+	onDestroy(() => {
+		for (const l of labels) l.marker.remove();
+		kaart?.remove();
+	});
 
 	$effect(() => {
 		const r = routeGeoJson();
@@ -282,6 +398,15 @@
 	$effect(() => {
 		const d = puntenGeoJson();
 		if (geladen && kaart) (kaart.getSource('punten') as GeoJSONSource | undefined)?.setData(d);
+	});
+	$effect(() => {
+		const r = rittenGeoJson();
+		const h = haltejesGeoJson();
+		const lijst = haltejes;
+		if (!geladen || !kaart) return;
+		(kaart.getSource('ritten') as GeoJSONSource | undefined)?.setData(r);
+		(kaart.getSource('haltejes') as GeoJSONSource | undefined)?.setData(h);
+		untrack(() => tekenLabels(lijst));
 	});
 	// Alleen opnieuw inzoomen als de route of de gekozen rit verandert, niet bij elke GPS-update
 	const routeSleutel = $derived(`${focusLeg}|${lijnen.map((l) => `${l.length}:${l[0]?.join(',')}:${l[l.length - 1]?.join(',')}`).join('|')}`);
@@ -329,6 +454,24 @@
 	}
 	.klikbaar {
 		cursor: pointer;
+	}
+	.kaartvak :global(.haltelabel) {
+		padding: 2px 7px;
+		border-radius: 6px;
+		background: var(--kaart);
+		color: var(--tekst);
+		border: 1px solid var(--rand);
+		box-shadow: var(--schaduw);
+		font-size: 0.75rem;
+		font-weight: 650;
+		white-space: nowrap;
+		text-decoration: none;
+	}
+	.kaartvak :global(a.haltelabel) {
+		color: var(--primair);
+	}
+	.kaartvak :global(.haltelabel[hidden]) {
+		display: none;
 	}
 	.spoorknop {
 		position: absolute;
