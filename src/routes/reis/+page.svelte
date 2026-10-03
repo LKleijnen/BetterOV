@@ -14,7 +14,8 @@
 		TriangleAlert,
 		WifiOff,
 		Check,
-		Bell
+		Bell,
+		Split
 	} from '@lucide/svelte';
 	import type { Advies, Probleem, TreinInfo, VoertuigPositie } from '$lib/types';
 	import { data } from '$lib/client/data.svelte';
@@ -26,6 +27,7 @@
 	import { onthoudAdvies } from '$lib/client/planner.svelte';
 	import { pushStatus } from '$lib/client/push';
 	import { huidigeStap, isOV } from '$lib/reis';
+	import { splitsTekst } from '$lib/splitsen';
 	import { klok, ms, relatief } from '$lib/tijd';
 	import { voertuigPositie } from '$lib/client/voertuigpositie';
 	import { downloadIcs, maakIcs } from '$lib/ics';
@@ -64,6 +66,9 @@
 				.catch(() => {});
 		});
 	});
+
+	// Splitst de trein van deze stap onderweg? Dan meteen zeggen in welk deel je moet zitten
+	const stapSplits = $derived(stap && stap.fase !== 'klaar' ? splitsTekst(treinInfo[stap.legIndex]) : null);
 
 	// ---------- Alternatieven (M8) ----------
 	let alternatieven = $state<{ adviezen: Advies[]; vanafLeg: number; vanNaam: string; melding?: string } | null>(null);
@@ -218,6 +223,9 @@
 				<span class="label">{stap.fase === 'voor' ? 'Volgende stap' : stap.fase === 'tijdens' ? 'Nu' : 'Klaar'}</span>
 				<h2 class="stap-titel">{stap.titel}</h2>
 				<p class="stap-detail">{stap.detail}</p>
+				{#if stapSplits}
+					<p class="rij stap-splits"><Split size={16} aria-hidden="true" /> <span>{stapSplits.kort}</span></p>
+				{/if}
 				{#if stap.fase !== 'klaar'}
 					<div class="aftel">
 						<span class="zwak">{stap.fase === 'voor' ? 'Over' : 'Nog'}</span>
@@ -362,6 +370,11 @@
 	}
 	.stap-detail {
 		margin: 0;
+	}
+	.stap-splits {
+		margin: 0;
+		gap: 6px;
+		font-weight: 600;
 	}
 	.aftel {
 		display: flex;

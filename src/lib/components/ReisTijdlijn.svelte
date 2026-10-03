@@ -1,5 +1,5 @@
 <script lang="ts">
-	import { ArrowLeftRight, ChevronDown, CircleX, Hourglass, Info, Map as KaartIcoon, TrainFront, TriangleAlert } from '@lucide/svelte';
+	import { ArrowLeftRight, ChevronDown, CircleX, Hourglass, Info, Map as KaartIcoon, Split, TrainFront, TriangleAlert } from '@lucide/svelte';
 	import type { Advies, Leg, TreinInfo } from '$lib/types';
 	import { isOV, overstappen, type Overstap } from '$lib/reis';
 	import { duurTekst, klok } from '$lib/tijd';
@@ -9,6 +9,7 @@
 	import ModusIcoon from './ModusIcoon.svelte';
 	import Spoor from './Spoor.svelte';
 	import { heeftVoertuiginfo } from '$lib/voertuig';
+	import { splitsTekst } from '$lib/splitsen';
 
 	let {
 		advies,
@@ -116,6 +117,7 @@
 			{@const leg = item.leg}
 			{@const i = item.i}
 			{@const info = treinInfo[i]}
+			{@const splits = splitsTekst(info)}
 			{@const trein = leg.modus === 'trein'}
 			<li class="rit" class:actief={actieveLeg === i} class:uitgevallen={leg.uitgevallen} style:--lijnkleur={lijnKleur(leg)}>
 				<div class="halte">
@@ -145,6 +147,12 @@
 							<div class="melding waarschuwing klein" role="note">
 								<TriangleAlert size={16} />
 								<span><strong>Kortere trein</strong>{#if info.aantalBakken && info.normaalBakken}: {info.aantalBakken} i.p.v. {info.normaalBakken} bakken{/if}</span>
+							</div>
+						{/if}
+						{#if splits}
+							<div class="melding info klein" role="note">
+								<Split size={16} />
+								<span><strong>{splits.kop}.</strong> {splits.jouw}</span>
 							</div>
 						{/if}
 						{#each leg.meldingen.slice(leg.uitgevallen ? 1 : 0, 3) as m, j (j)}

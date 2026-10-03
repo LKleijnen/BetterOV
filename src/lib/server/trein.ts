@@ -1,7 +1,7 @@
 // Treininformatie voor één NS-rit: samenstelling, drukte, lengte t.o.v. normaal en instapadvies.
 
 import type { Instapadvies, Splitsing, TreinDeel, TreinInfo } from '../types';
-import { nsRit, nsSamenstelling, nsStations, ritHalteBij, stationVoorPlek, type NsRitHalte, type NsSamenstelling } from './ns';
+import { nsRitHaltes, nsRitRuw, nsSamenstelling, nsStations, ritHalteBij, stationVoorPlek, type NsRitHalte, type NsSamenstelling } from './ns';
 
 type Bereik = { van: number; tot: number };
 
@@ -116,41 +116,177 @@ function zelfdeNaam(a?: string, b?: string): boolean {
 }
 
 /**
- * Splitst de trein onderweg? Dat zie je aan verschillende eindbestemmingen per treinstel. Het
- * station vinden we in de ritdata: waar het aantal treinstellen na je instapstation afneemt.
- * Jouw deel is het deel dat bij je uitstapstation nog meerijdt, of anders het deel dat naar de
- * eindbestemming van deze rit gaat.
+ * De haltes van één tak van de rit, in volgorde. Splitst de trein onderweg, dan staan in de
+ * NS-ritdata soms de haltes van beide takken (met meerdere volgende haltes op het splitsstation);
+ * we volgen dan de tak naar je uitstapstation, anders die naar de richting, anders die met dit
+ * ritnummer. Zonder volgende-informatie is de lijst al één lijn.
  */
-export function bepaalSplitsing(delen: TreinDeel[], rit: NsRitHalte[], v: { stationNaam?: string; naar?: string; richting?: string }): Splitsing | undefined {
-	const bestemmingen = delen.map((d, deel) => ({ deel, naar: d.eindbestemming ?? '' })).filter((b) => b.naar);
-	if (new Set(bestemmingen.map((b) => b.naar.toLowerCase())).size < 2) return undefined;
-	const stoppend = rit.filter((h) => h.status !== 'PASSING');
+export function ritPad(rit: NsRitHalte[], v: { naar?: string; richting?: string; ritnummer?: string } = {}): NsRitHalte[] {
+	return ritPadMetZekerheid(rit, v).pad;
+}
+
+/** Zoals ritPad, en of de tak zeker de jouwe is (anders is bij een splitsing de eerste tak gekozen) */
+function ritPadMetZekerheid(rit: NsRitHalte[], v: { naar?: string; richting?: string; ritnummer?: string }): { pad: NsRitHalte[]; zeker: boolean } {
+	const opId = new Map(rit.filter((h) => h.id).map((h) => [h.id!, h]));
+	if (!rit.some((h) => (h.volgende?.length ?? 0) > 1) || opId.size < rit.length) return { pad: rit, zeker: true };
+	const takVanaf = (id: string): NsRitHalte[] => {
+		const uit: NsRitHalte[] = [];
+		const gezien = new Set<string>();
+		let h = opId.get(id);
+		while (h && !gezien.has(h.id!)) {
+			gezien.add(h.id!);
+			uit.push(h);
+			h = h.volgende?.length ? opId.get(h.volgende[0]) : undefined;
+		}
+		return uit;
+	};
+	const pad: NsRitHalte[] = [];
+	const gezien = new Set<string>();
+	let zeker = true;
+	let h: NsRitHalte | undefined = rit[0];
+	while (h && !gezien.has(h.id!)) {
+		gezien.add(h.id!);
+		pad.push(h);
+		const volgende: string[] = h.volgende ?? [];
+		if (volgende.length > 1) {
+			const takken = volgende.map((id) => ({ id, haltes: takVanaf(id) }));
+			const past = (f: (x: NsRitHalte) => boolean) => takken.find((t) => t.haltes.some(f));
+			const huidig: NsRitHalte = h;
+			const keuze =
+				(v.naar ? past((x) => zelfdeNaam(x.naam, v.naar)) : undefined) ??
+				(v.richting ? takken.find((t) => zelfdeNaam(t.haltes.at(-1)?.naam, v.richting)) : undefined) ??
+				(v.ritnummer
+					? takken.find((t) => huidig.vertrekken?.some((d) => d.ritnummer === v.ritnummer && zelfdeNaam(d.naar, t.haltes.at(-1)?.naam)))
+					: undefined);
+			// Stap je al vóór deze splitsing uit, dan maakt de tak niet uit
+			const alUitgestapt = !!v.naar && pad.some((x) => zelfdeNaam(x.naam, v.naar));
+			if (!keuze && !alUitgestapt) zeker = false;
+			h = opId.get((keuze ?? takken[0]).id);
+		} else h = volgende.length ? opId.get(volgende[0]) : undefined;
+	}
+	return { pad, zeker };
+}
+
+/** Eindhalte van elke andere tak die bij deze halte afsplitst */
+function andereTakken(rit: NsRitHalte[], halte: NsRitHalte, pad: NsRitHalte[]): string[] {
+	const opId = new Map(rit.filter((h) => h.id).map((h) => [h.id!, h]));
+	const inPad = new Set(pad.map((h) => h.id));
+	return (halte.volgende ?? [])
+		.filter((id) => !inPad.has(id))
+		.map((id) => {
+			let h = opId.get(id);
+			const gezien = new Set<string>();
+			while (h?.volgende?.length && !gezien.has(h.id!)) {
+				gezien.add(h.id!);
+				const volgende = opId.get(h.volgende[0]);
+				if (!volgende) break;
+				h = volgende;
+			}
+			return h?.naam;
+		})
+		.filter((n): n is string => !!n);
+}
+
+const aantalDelen = (h?: NsRitHalte) => h?.materieel?.aantalDelen ?? (h?.materieel?.delen.length || undefined);
+
+/**
+ * Splitst de trein onderweg (of blijft er een deel achter)? NS geeft dat op verschillende manieren,
+ * en nog niet bevestigd met echte data, dus we kijken naar alle signalen:
+ * - in de ritdata: een halte met meer dan één volgende halte, status SPLIT, of meerdere vertrekken
+ *   met verschillende bestemmingen;
+ * - minder treinstellen dan bij je instapstation;
+ * - verschillende eindbestemmingen per treinstel (Virtual Train API).
+ * Jouw deel is het deel dat bij je uitstapstation nog meerijdt, of anders het deel dat naar de
+ * eindbestemming van jouw tak gaat.
+ */
+export function bepaalSplitsing(
+	delen: TreinDeel[],
+	rit: NsRitHalte[],
+	v: { stationNaam?: string; naar?: string; richting?: string; ritnummer?: string }
+): Splitsing | undefined {
+	const { pad, zeker: takZeker } = ritPadMetZekerheid(rit, v);
+	const stoppend = pad.filter((h) => h.status !== 'PASSING');
 	const iVan = Math.max(0, stoppend.findIndex((h) => zelfdeNaam(h.naam, v.stationNaam)));
 	const iNaar = v.naar ? stoppend.findIndex((h, i) => i > iVan && zelfdeNaam(h.naam, v.naar)) : -1;
-	const aantal = (h: NsRitHalte) => h.materieel?.aantalDelen ?? h.materieel?.delen.length;
-	const begin = aantal(stoppend[iVan] ?? ({} as NsRitHalte));
+	const eind = stoppend.at(-1);
+
+	// ---------- Waar splitst hij? ----------
 	let iSplits = -1;
-	for (let i = iVan + 1; i < stoppend.length && begin; i++) {
-		const n = aantal(stoppend[i]);
-		if (n !== undefined && n < begin) {
+	let zeker = false;
+	let anderen: string[] = [];
+	let vertrekNummers: string[] | undefined;
+	for (let i = iVan + 1; i < stoppend.length - 1; i++) {
+		const h = stoppend[i];
+		const takken = andereTakken(rit, h, pad);
+		const bestemmingen = [...new Set((h.vertrekken ?? []).map((d) => d.naar).filter((n): n is string => !!n))];
+		if (takken.length || String(h.status).toUpperCase() === 'SPLIT' || bestemmingen.length > 1) {
 			iSplits = i;
+			zeker = true;
+			const jouw = (h.vertrekken ?? []).find((d) => zelfdeNaam(d.naar, eind?.naam) || (v.ritnummer && d.ritnummer === v.ritnummer));
+			vertrekNummers = jouw?.nummers.length ? jouw.nummers : undefined;
+			anderen = takken.length ? takken : bestemmingen.filter((b) => !zelfdeNaam(b, eind?.naam));
 			break;
 		}
 	}
-	// Welke treinstellen rijden bij je uitstapstation nog mee?
-	const nummersBijUitstap = new Set((iNaar >= 0 ? stoppend[iNaar].materieel?.delen ?? [] : []).map((d) => d.nummer).filter(Boolean));
-	let jouwDelen = delen.map((d, i) => (d.nummer && nummersBijUitstap.has(d.nummer) ? i : -1)).filter((i) => i >= 0);
-	if (jouwDelen.length === 0 || jouwDelen.length === delen.length) {
-		const doel = v.richting ?? stoppend[stoppend.length - 1]?.naam;
+	if (iSplits < 0) {
+		const begin = aantalDelen(stoppend[iVan]);
+		for (let i = iVan + 1; i < stoppend.length && begin; i++) {
+			const n = aantalDelen(stoppend[i]);
+			if (n !== undefined && n < begin) {
+				iSplits = i;
+				break;
+			}
+		}
+	}
+
+	// ---------- Per treinstel: eindbestemming uit de Virtual Train API ----------
+	const perDeel = delen.map((d, deel) => ({ deel, naar: d.eindbestemming ?? '' })).filter((b) => b.naar);
+	const perTreinstel = new Set(perDeel.map((b) => b.naar.toLowerCase())).size > 1;
+	// Zegt NS per treinstel dat alles naar dezelfde bestemming gaat, dan telt alleen een duidelijke splitsing in de rit
+	const allesZelfde = !perTreinstel && delen.length > 0 && perDeel.length === delen.length;
+	if ((!perTreinstel && iSplits < 0) || (allesZelfde && !zeker)) return undefined;
+
+	// ---------- Welke treinstellen zijn van jou? ----------
+	const nummersBij = (h?: NsRitHalte) => new Set((h?.materieel?.delen ?? []).map((d) => d.nummer).filter(Boolean));
+	// Treinstellen die na de splitsing nog in jouw tak rijden: bij je uitstapstation, of anders aan het eind
+	const naSplitsing = iNaar >= 0 && iNaar >= iSplits ? stoppend[iNaar] : eind;
+	const metNummer = (nummers: Set<string | undefined>) =>
+		delen.map((d, i) => (d.nummer && nummers.has(d.nummer) ? i : -1)).filter((i) => i >= 0);
+	let jouwDelen = vertrekNummers ? metNummer(new Set(vertrekNummers)) : [];
+	if (!jouwDelen.length || jouwDelen.length === delen.length) jouwDelen = metNummer(nummersBij(naSplitsing));
+	if ((!jouwDelen.length || jouwDelen.length === delen.length) && perTreinstel) {
+		const doel = v.richting ?? eind?.naam;
 		jouwDelen = delen.map((d, i) => (zelfdeNaam(d.eindbestemming, doel) ? i : -1)).filter((i) => i >= 0);
 	}
-	if (jouwDelen.length === 0) return undefined;
+	if (jouwDelen.length === delen.length) jouwDelen = [];
+
+	const jouwBestemming = perTreinstel ? undefined : eind?.naam;
+	// Zonder eindbestemming per treinstel: de bestemming per deel afleiden als we weten welke van jou zijn
+	const bestemmingen = perTreinstel
+		? perDeel
+		: jouwDelen.length && jouwBestemming
+			? delen.map((_, deel) => ({ deel, naar: jouwDelen.includes(deel) ? jouwBestemming : (anderen.length === 1 ? anderen[0] : '') })).filter((b) => b.naar)
+			: [];
+	if (perTreinstel && !jouwDelen.length) return undefined;
+
+	// Weten we niet welke tak de jouwe is, dan geen uitspraak over jouw deel of de bestemmingen
+	if (!takZeker && !perTreinstel) {
+		return {
+			station: iSplits >= 0 ? stoppend[iSplits].naam : undefined,
+			jouwDelen: [],
+			bestemmingen: [],
+			voorUitstappen: true
+		};
+	}
+
 	return {
 		station: iSplits >= 0 ? stoppend[iSplits].naam : undefined,
 		jouwDelen,
 		bestemmingen,
-		// Zonder station weten we het niet zeker; dan liever wel waarschuwen
-		voorUitstappen: iSplits < 0 || iNaar < 0 || iSplits <= iNaar
+		jouwBestemming: perTreinstel ? undefined : jouwBestemming,
+		andereBestemmingen: perTreinstel || !anderen.length ? undefined : anderen,
+		// Weten we het station zeker, dan alleen als het vóór je uitstapstation is; anders liever wel waarschuwen
+		voorUitstappen: iSplits < 0 || iNaar < 0 || (zeker ? iSplits < iNaar : iSplits <= iNaar)
 	};
 }
 
@@ -167,10 +303,11 @@ export async function treinInfo(key: string | undefined, ritnummer: string, v: T
 	}
 	const [samenstellingRes, ritRes] = await Promise.allSettled([
 		nsSamenstelling(key, ritnummer, stationCode, v.datumTijd),
-		nsRit(key, ritnummer, v.datumTijd)
+		nsRitRuw(key, ritnummer, v.datumTijd)
 	]);
 	const samenstelling = samenstellingRes.status === 'fulfilled' ? samenstellingRes.value : null;
-	const rit = ritRes.status === 'fulfilled' ? ritRes.value : [];
+	const ritRuw = ritRes.status === 'fulfilled' ? ritRes.value : null;
+	const rit = ritRuw ? nsRitHaltes(ritRuw) : [];
 	const halte =
 		ritHalteBij(rit, { code: stationCode, naam: v.stationNaam, lat: v.lat, lon: v.lon }) ??
 		rit.find((h) => h.materieel) ??
@@ -215,9 +352,10 @@ export async function treinInfo(key: string | undefined, ritnummer: string, v: T
 		faciliteiten: [...new Set(delen.flatMap((d) => d.faciliteiten))],
 		instapadvies: samenstelling ? berekenInstapadvies(samenstelling) : undefined,
 		zitplaatsen: samenstelling?.zitplaatsen ?? materieel?.zitplaatsen,
-		splitsing: bepaalSplitsing(delen, rit, { stationNaam: halte?.naam ?? v.stationNaam, naar: v.naar, richting: v.richting }),
+		splitsing: bepaalSplitsing(delen, rit, { stationNaam: halte?.naam ?? v.stationNaam, naar: v.naar, richting: v.richting, ritnummer }),
 		bron,
 		opgehaaldOp: new Date().toISOString(),
-		ruw: v.ruw ? { samenstelling: samenstelling?.ruw, halte } : undefined
+		// Alles wat NS gaf, zodat het echte formaat (bijvoorbeeld bij splitsen) te controleren is
+		ruw: v.ruw ? { samenstelling: samenstelling?.ruw ?? null, rit: ritRuw?.payload ?? ritRuw, halte } : undefined
 	};
 }
