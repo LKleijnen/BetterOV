@@ -311,18 +311,18 @@ export function mockTrein(ritnummer: string): TreinInfo {
 	// Oneven ritten: lange trein die onderweg splitst (voorste deel naar Den Haag, achterste naar Rotterdam)
 	const splitst = !kort;
 	const eerste = [
-		{ eersteKlas: false, stilte: true, drukte: 'hoog' as const },
 		{ eersteKlas: false, stilte: false, drukte: 'hoog' as const },
+		{ eersteKlas: true, stilte: true, drukte: 'hoog' as const },
 		{ eersteKlas: true, stilte: false, drukte: 'gemiddeld' as const },
-		{ eersteKlas: true, stilte: true, drukte: 'laag' as const },
-		{ eersteKlas: false, stilte: false, drukte: 'gemiddeld' as const },
+		{ eersteKlas: false, stilte: false, drukte: 'laag' as const },
+		{ eersteKlas: true, stilte: true, drukte: 'gemiddeld' as const },
 		{ eersteKlas: false, stilte: false, drukte: 'gemiddeld' as const }
 	];
 	const tweede = [
 		{ eersteKlas: false, stilte: false, drukte: 'laag' as const },
+		{ eersteKlas: true, stilte: true, drukte: 'laag' as const },
 		{ eersteKlas: true, stilte: false, drukte: 'laag' as const },
-		{ eersteKlas: false, stilte: false, drukte: 'laag' as const },
-		{ eersteKlas: false, stilte: true, drukte: 'gemiddeld' as const }
+		{ eersteKlas: false, stilte: false, drukte: 'gemiddeld' as const }
 	];
 	const afbeeldingen = (indeling: { eersteKlas: boolean }[], kopVoor: boolean, staartAchter: boolean) =>
 		indeling.map((b, i) => mockBak(b.eersteKlas, i === 0 && kopVoor ? 'voor' : i === indeling.length - 1 && staartAchter ? 'achter' : null));
@@ -333,10 +333,11 @@ export function mockTrein(ritnummer: string): TreinInfo {
 		vervoerder: 'NS',
 		spoor: '5',
 		delen: [
-			{ nummer: '9401', type: 'VIRM-6', faciliteiten: ['TOILET', 'STILTE', 'STROOM', 'WIFI', 'TOEGANKELIJK'], bakken: 6, indeling: eerste, bakAfbeeldingen: afbeeldingen(eerste, true, true), eindbestemming: splitst ? 'Den Haag Centraal' : undefined },
+			// Zoals NS het meegeeft: een VIRMm1 van 6 bakken zonder klasse per bak (de app gebruikt dan de vaste indeling)
+			{ nummer: '8641', type: 'VIRMm1 VI', faciliteiten: ['TOILET', 'STILTE', 'STROOM', 'WIFI', 'TOEGANKELIJK'], bakken: 6, indeling: eerste.map((b) => ({ eersteKlas: false, stilte: false, drukte: b.drukte })), bakAfbeeldingen: afbeeldingen(eerste, true, true), eindbestemming: splitst ? 'Den Haag Centraal' : undefined },
 			...(kort
 				? []
-				: [{ nummer: '8702', type: 'VIRM-4', faciliteiten: ['TOILET', 'STROOM', 'WIFI'], bakken: 4, indeling: tweede, bakAfbeeldingen: afbeeldingen(tweede, true, true), eindbestemming: 'Rotterdam Centraal' }])
+				: [{ nummer: '9572', type: 'VIRM IV', faciliteiten: ['TOILET', 'STROOM', 'WIFI'], bakken: 4, indeling: tweede, bakAfbeeldingen: afbeeldingen(tweede, true, true), eindbestemming: 'Rotterdam Centraal' }])
 		],
 		aantalBakken: kort ? 6 : 10,
 		normaalBakken: 10,

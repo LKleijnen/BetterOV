@@ -157,13 +157,7 @@
 			</div>
 
 			{#if info.delen.length}
-				<section class="stapel sectie">
-					<h3>Instapadvies</h3>
-					{#if info.instapadvies?.samenvatting.length}
-						<ul class="lijst advies klein">
-							{#each info.instapadvies.samenvatting as regel, i (i)}<li>{regel}</li>{/each}
-						</ul>
-					{/if}
+				<section class="sectie" aria-label="Opstelling van de trein">
 					<TreinSchema {info} />
 				</section>
 			{/if}
@@ -262,15 +256,6 @@
 	}
 	p {
 		margin: 0;
-	}
-	.advies {
-		display: flex;
-		flex-direction: column;
-		gap: 2px;
-	}
-	.advies li::before {
-		content: '• ';
-		color: var(--tekst-zwak);
 	}
 	.soort {
 		display: flex;

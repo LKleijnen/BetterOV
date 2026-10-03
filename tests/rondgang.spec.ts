@@ -49,9 +49,10 @@ test('plannen, details, reis starten en vertrekbord', async ({ page }) => {
 	await expect(page.getByRole('button', { name: 'Start reis' })).toBeVisible();
 	await expect(page.locator('li.rit').first()).toBeVisible();
 
-	// Voertuiginfo en instapadvies
+	// Voertuiginfo: de trein zoals op het perron, zonder losse instapadvies-tekst
 	await page.getByRole('button', { name: 'Voertuiginfo' }).first().click();
-	await expect(page.getByRole('heading', { name: 'Instapadvies' })).toBeVisible();
+	await expect(page.locator('figure.trein')).toBeVisible();
+	await expect(page.getByRole('heading', { name: 'Instapadvies' })).toHaveCount(0);
 	await page.getByRole('button', { name: 'Sluiten' }).click();
 
 	// Nu vertrekken: aftelling op basis van GPS
@@ -168,8 +169,13 @@ test('voertuiginfo: splitsende trein met haakjes per bestemming', async ({ page 
 	const trein = page.locator('figure.trein');
 	await expect(trein.locator('.bestemming', { hasText: 'Den Haag Centraal' })).toBeVisible();
 	await expect(trein.locator('.bestemming.jouw', { hasText: 'Rotterdam Centraal' })).toContainText('Jouw deel');
-	// Bakken met kenmerken, liggend naast elkaar
-	await expect(trein.getByRole('img', { name: /eerste klas/ }).first()).toBeAttached();
+	// Bakken met kenmerken, liggend naast elkaar: 1e klas boven de bak (zeker of "misschien" bij de vaste indeling)
+	await expect(trein.getByRole('img', { name: /Bak 2 van 6, eerste klas/ })).toBeAttached();
+	await expect(trein.getByRole('img', { name: /Bak 3 van 6, misschien eerste klas/ })).toBeAttached();
+	await expect(trein.getByText(/Licht: in één van deze bakken/)).toBeVisible();
+	// Welke van de twee gekoppelde treinstellen moderner is
+	await expect(trein.locator('.deel', { hasText: '8641' }).getByText('Moderner')).toBeVisible();
+	await expect(trein.locator('.deel', { hasText: '9572' }).getByText('Moderner')).toHaveCount(0);
 	await expect(page.getByRole('heading', { name: 'Over deze trein' })).toBeVisible();
 	await expect(page.getByText('Talbot en De Dietrich')).toBeVisible();
 });
