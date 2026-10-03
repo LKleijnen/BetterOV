@@ -1,11 +1,11 @@
 <script lang="ts">
-	import { ChevronRight, Footprints } from '@lucide/svelte';
+	import { ChevronRight } from '@lucide/svelte';
 	import type { Advies } from '$lib/types';
 	import { adviesStatus, isOV } from '$lib/reis';
 	import { duurTekst } from '$lib/tijd';
 	import Tijd from './Tijd.svelte';
 	import StatusLabel from './StatusLabel.svelte';
-	import LijnLabel from './LijnLabel.svelte';
+	import LegOverzicht from './LegOverzicht.svelte';
 	import Drukte from './Drukte.svelte';
 	import Prijs from './Prijs.svelte';
 	import Spoor from './Spoor.svelte';
@@ -22,9 +22,7 @@
 	// Alleen wat je nodig hebt om te kiezen: tijden, duur, ritten, spoor. Status alleen als er iets is.
 	const status = $derived(adviesStatus(advies));
 	const eersteOV = $derived(advies.legs.find(isOV));
-	const ritten = $derived(advies.legs.filter(isOV));
 	const heeftNS = $derived(advies.legs.some((l) => l.isNS));
-	const voorLopen = $derived(advies.legs[0] && !isOV(advies.legs[0]) ? Math.round(advies.legs[0].duur / 60) : 0);
 	const toonDruk = $derived(toonDrukte && heeftNS && !!advies.drukte && advies.drukte !== 'onbekend');
 	const toonGeld = $derived(toonPrijs && !!advies.prijs && advies.prijs.bedrag > 0);
 </script>
@@ -48,19 +46,7 @@
 	</div>
 
 	<div class="rij tussen">
-		<div class="rij legs">
-			{#if voorLopen > 0}
-				<span class="lopen zwak" aria-label="{voorLopen} min lopen"><Footprints size={15} aria-hidden="true" />{voorLopen}</span>
-				{#if ritten.length}<ChevronRight size={13} aria-hidden="true" class="zwak" />{/if}
-			{/if}
-			{#if ritten.length === 0 && voorLopen === 0}
-				<span class="lopen zwak"><Footprints size={15} aria-hidden="true" /> Lopend</span>
-			{/if}
-			{#each ritten as leg, i (i)}
-				{#if i > 0}<ChevronRight size={13} aria-hidden="true" class="zwak" />{/if}
-				<LijnLabel {leg} />
-			{/each}
-		</div>
+		<LegOverzicht {advies} />
 		{#if eersteOV}<Spoor halte={eersteOV.van} trein={eersteOV.modus === 'trein'} />{/if}
 	</div>
 
@@ -96,18 +82,6 @@
 		font-weight: 650;
 		color: var(--tekst-zwak);
 		white-space: nowrap;
-	}
-	.legs {
-		flex-wrap: wrap;
-		gap: 3px;
-		min-width: 0;
-	}
-	.lopen {
-		display: inline-flex;
-		align-items: center;
-		gap: 1px;
-		font-size: 0.82rem;
-		font-weight: 650;
 	}
 	.onder {
 		flex-wrap: wrap;

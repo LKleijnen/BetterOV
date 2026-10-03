@@ -1,5 +1,5 @@
 <script lang="ts">
-	import { ArrowLeftRight, ChevronDown, CircleX, Hourglass, Info, Map as KaartIcoon, Split, TrainFront, TriangleAlert } from '@lucide/svelte';
+	import { ArrowLeftRight, Building2, ChevronDown, CircleX, Hourglass, Info, Map as KaartIcoon, Split, TrainFront, TriangleAlert } from '@lucide/svelte';
 	import type { Advies, Leg, TreinInfo } from '$lib/types';
 	import { isOV, overstappen, type Overstap } from '$lib/reis';
 	import { duurTekst, klok } from '$lib/tijd';
@@ -9,18 +9,22 @@
 	import ModusIcoon from './ModusIcoon.svelte';
 	import Spoor from './Spoor.svelte';
 	import { heeftVoertuiginfo } from '$lib/voertuig';
+	import { ritVoortgang, stopTijden, voorbij } from '$lib/voortgang';
 	import { splitsTekst } from '$lib/splitsen';
 
 	let {
 		advies,
 		treinInfo = {},
 		actieveLeg = -1,
+		nu,
 		onVoertuig,
 		onKaart
 	}: {
 		advies: Advies;
 		treinInfo?: Record<number, TreinInfo | undefined>;
 		actieveLeg?: number;
+		/** Tijdens de reis: tijdstip in ms, voor het bolletje op de lijn en het doorstrepen van haltes */
+		nu?: number;
 		onVoertuig?: (index: number) => void;
 		onKaart?: (index: number) => void;
 	} = $props();
@@ -51,10 +55,57 @@
 	});
 
 	let tussenstopsOpen = $state<Record<number, boolean>>({});
+	// Tijdens de reis staan de tussenstops van de rit waarin je zit open, tenzij je ze dichtklapt
+	const stopsOpen = (i: number) => tussenstopsOpen[i] ?? (nu !== undefined && i === actieveLeg);
+
+	// ---------- Voortgang: bolletje op de lijn van de rit waarin je zit ----------
+	/** Hoogte (px, vanaf de bovenkant van de rit) van vertrek, de zichtbare tussenstops en aankomst */
+	let stopHoogtes = $state<number[]>([]);
+
+	/** Meet waar de haltes van de actieve rit staan, en opnieuw als de rit groter of kleiner wordt */
+	function meetHaltes(anker: HTMLElement) {
+		const rit = anker.parentElement;
+		if (!rit) return;
+		const meet = () => {
+			const basis = anker.getBoundingClientRect().top;
+			stopHoogtes = [...rit.querySelectorAll('[data-stop]')].map((el) => {
+				const r = el.getBoundingClientRect();
+				return r.top + r.height / 2 - basis;
+			});
+		};
+		const ro = new ResizeObserver(meet);
+		ro.observe(rit);
+		meet();
+		return () => {
+			ro.disconnect();
+			stopHoogtes = [];
+		};
+	}
+
+	const voortgang = $derived.by(() => {
+		if (nu === undefined || actieveLeg < 0) return null;
+		const leg = advies.legs[actieveLeg];
+		if (!leg || !isOV(leg)) return null;
+		const tijden = stopTijden(leg, stopsOpen(actieveLeg));
+		if (stopHoogtes.length !== tijden.length) return null;
+		const plek = ritVoortgang(tijden, nu);
+		if (!plek) return null;
+		const van = stopHoogtes[plek.index];
+		const naar = stopHoogtes[Math.min(plek.index + 1, stopHoogtes.length - 1)];
+		return { y: van + (naar - van) * plek.fractie, tussen: stopHoogtes.slice(1, -1), voorbijIndex: plek.index };
+	});
 	let overstapOpen = $state<Record<number, boolean>>({});
 
 	function afstand(m: number) {
 		return m >= 1000 ? `${(m / 1000).toFixed(1).replace('.', ',')} km` : `${Math.round(m / 10) * 10} m`;
+	}
+
+	/** Link naar de stationspagina; bij een overstap met de sporen erbij */
+	function stationLink(h: { naam: string; lat: number; lon: number }, sporen: { aankomst?: string; vertrek?: string } = {}): string {
+		const q = new URLSearchParams({ naam: h.naam, lat: String(h.lat), lon: String(h.lon) });
+		if (sporen.aankomst) q.set('aankomst', sporen.aankomst);
+		if (sporen.vertrek) q.set('vertrek', sporen.vertrek);
+		return `/station?${q}`;
 	}
 
 	function lijnKleur(leg: Leg): string {
@@ -98,7 +149,17 @@
 					<ChevronDown size={16} aria-hidden="true" style="transform: rotate({open ? 180 : 0}deg)" />
 				</button>
 				{#if open}
+					{@const aankomst = advies.legs[o.vanLeg]}
+					{@const vertrek = advies.legs[o.naarLeg]}
 					<div class="opbouw">
+						{#if aankomst?.modus === 'trein' && vertrek?.modus === 'trein'}
+							<a class="rij looprij stationrij" href={stationLink(vertrek.van, { aankomst: aankomst.naar.spoor, vertrek: vertrek.van.spoor })}>
+								<Building2 size={16} aria-hidden="true" />
+								<span class="flex">
+									Station {vertrek.van.naam}{#if aankomst.naar.spoor && vertrek.van.spoor}: spoor {aankomst.naar.spoor} → {vertrek.van.spoor}{/if}
+								</span>
+							</a>
+						{/if}
 						{#each item.lopen as l (l.i)}{@render looprij(l.leg, l.i)}{/each}
 						<div class="rij looprij" class:status-fout={o.marge < 0}>
 							<Hourglass size={16} aria-hidden="true" />
@@ -119,12 +180,26 @@
 			{@const info = treinInfo[i]}
 			{@const splits = splitsTekst(info)}
 			{@const trein = leg.modus === 'trein'}
+			{@const vertrokken = nu !== undefined && voorbij(leg.vertrek, nu)}
+			{@const aangekomen = nu !== undefined && voorbij(leg.aankomst, nu)}
 			<li class="rit" class:actief={actieveLeg === i} class:uitgevallen={leg.uitgevallen} style:--lijnkleur={lijnKleur(leg)}>
+				{#if actieveLeg === i && nu !== undefined}
+					<div class="meetanker" {@attach meetHaltes} aria-hidden="true"></div>
+					{#if voortgang}
+						{#each voortgang.tussen as y, k (k)}
+							<span class="stopje" class:voorbij={k < voortgang.voorbijIndex} style:top="{y}px" aria-hidden="true"></span>
+						{/each}
+						<span class="bolletje" style:top="{voortgang.y}px" role="img" aria-label="Hier ben je nu ongeveer"></span>
+					{/if}
+				{/if}
 				<div class="halte">
 					<span class="tijdkolom"><Tijd tijd={leg.vertrek} uitgevallen={leg.uitgevallen || leg.van.uitgevallen} stapel /></span>
-					<span class="lijnkolom"><span class="punt"></span></span>
+					<span class="lijnkolom"><span class="punt" data-stop={actieveLeg === i ? 'van' : undefined}></span></span>
 					<span class="naamkolom">
-						<strong class="halte-naam">{leg.van.naam}</strong>
+						<span class="naamlink">
+							<strong class="halte-naam" class:voorbij={vertrokken}>{leg.van.naam}</strong>
+							{#if trein}<a class="stationlink" href={stationLink(leg.van)} aria-label="Station {leg.van.naam}"><Building2 size={15} /></a>{/if}
+						</span>
 						<Spoor halte={leg.van} {trein} />
 					</span>
 				</div>
@@ -164,9 +239,9 @@
 
 						<div class="rij acties">
 							{#if leg.tussenstops.length > 0}
-								<button type="button" class="tekstknop" aria-expanded={!!tussenstopsOpen[i]} onclick={() => (tussenstopsOpen[i] = !tussenstopsOpen[i])}>
+								<button type="button" class="tekstknop" aria-expanded={stopsOpen(i)} onclick={() => (tussenstopsOpen[i] = !stopsOpen(i))}>
 									{leg.tussenstops.length} {leg.tussenstops.length === 1 ? 'tussenstop' : 'tussenstops'}
-									<ChevronDown size={15} style="transform: rotate({tussenstopsOpen[i] ? 180 : 0}deg)" />
+									<ChevronDown size={15} style="transform: rotate({stopsOpen(i) ? 180 : 0}deg)" />
 								</button>
 							{/if}
 							{#if onVoertuig && heeftVoertuiginfo(leg)}
@@ -180,12 +255,17 @@
 							{/if}
 						</div>
 
-						{#if tussenstopsOpen[i]}
+						{#if stopsOpen(i)}
 							<ol class="lijst tussenstops klein">
 								{#each leg.tussenstops as t, k (k)}
-									<li class="rij" class:uitgevallen={t.uitgevallen}>
+									<li
+										class="rij"
+										class:uitgevallen={t.uitgevallen}
+										class:voorbij={nu !== undefined && voorbij(t.vertrek ?? t.aankomst, nu)}
+										data-stop={actieveLeg === i ? k : undefined}
+									>
 										<span class="getal tijdje"><Tijd tijd={t.vertrek ?? t.aankomst} uitgevallen={t.uitgevallen} /></span>
-										<span>{t.naam}</span>
+										<span class="stopnaam">{t.naam}</span>
 										{#if t.uitgevallen}<span class="status-fout">vervalt</span>{/if}
 									</li>
 								{/each}
@@ -196,9 +276,12 @@
 
 				<div class="halte">
 					<span class="tijdkolom"><Tijd tijd={leg.aankomst} uitgevallen={leg.uitgevallen || leg.naar.uitgevallen} stapel /></span>
-					<span class="lijnkolom"><span class="punt"></span></span>
+					<span class="lijnkolom"><span class="punt" data-stop={actieveLeg === i ? 'naar' : undefined}></span></span>
 					<span class="naamkolom">
-						<strong class="halte-naam">{leg.naar.naam}</strong>
+						<span class="naamlink">
+							<strong class="halte-naam" class:voorbij={aangekomen}>{leg.naar.naam}</strong>
+							{#if trein}<a class="stationlink" href={stationLink(leg.naar)} aria-label="Station {leg.naar.naam}"><Building2 size={15} /></a>{/if}
+						</span>
 						<Spoor halte={leg.naar} {trein} />
 					</span>
 				</div>
@@ -222,9 +305,57 @@
 		border-radius: var(--radius);
 		padding: 10px 12px;
 	}
+	.rit {
+		position: relative;
+	}
 	.rit.actief {
 		outline: 3px solid var(--primair);
 		outline-offset: -1px;
+	}
+	/* Bovenkant van de rit, als nulpunt voor het meten (de li zelf heeft een rand) */
+	.meetanker {
+		position: absolute;
+		top: 0;
+		left: 0;
+		width: 0;
+		height: 100%;
+	}
+	/* Midden van de lijnkolom: padding + tijdkolom + kolomafstand + halve lijnkolom */
+	.bolletje,
+	.stopje {
+		position: absolute;
+		left: calc(12px + var(--tijd) + 8px + var(--lijn) / 2);
+		transform: translate(-50%, -50%);
+		border-radius: 50%;
+		pointer-events: none;
+	}
+	.stopje {
+		width: 9px;
+		height: 9px;
+		background: var(--kaart);
+		border: 2px solid var(--tekst-zwak);
+		z-index: 1;
+	}
+	.stopje.voorbij {
+		background: var(--tekst-zwak);
+	}
+	.bolletje {
+		width: 16px;
+		height: 16px;
+		background: var(--primair);
+		border: 3px solid #fff;
+		box-shadow: 0 0 0 2px var(--primair), 0 2px 6px rgb(0 0 0 / 30%);
+		z-index: 2;
+		transition: top 0.8s ease;
+	}
+	.halte-naam.voorbij,
+	.tussenstops .voorbij .stopnaam {
+		text-decoration: line-through;
+		text-decoration-thickness: 1px;
+		color: var(--tekst-zwak);
+	}
+	.tussenstops .voorbij {
+		color: var(--tekst-zwak);
 	}
 	.rit.uitgevallen {
 		border-color: var(--fout);
@@ -251,6 +382,29 @@
 		font-size: 1rem;
 		min-width: 0;
 		overflow-wrap: anywhere;
+	}
+	.naamlink {
+		display: inline-flex;
+		align-items: center;
+		gap: 4px;
+		min-width: 0;
+	}
+	.stationlink {
+		flex: 0 0 auto;
+		display: inline-flex;
+		align-items: center;
+		justify-content: center;
+		width: 28px;
+		height: 28px;
+		border-radius: 8px;
+		color: var(--tekst-zwak);
+	}
+	.stationlink:active {
+		background: var(--kaart-2);
+	}
+	.stationrij {
+		color: var(--primair);
+		text-decoration: none;
 	}
 	.lijnkolom {
 		position: relative;

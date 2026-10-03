@@ -17,7 +17,11 @@
 		eigenPositie = null,
 		voertuig = null,
 		extraPunt = null,
-		hoogte = '320px'
+		hoogte = '320px',
+		compact = false,
+		onKlik,
+		punten = [],
+		midden = null
 	}: {
 		advies?: Advies | null;
 		focusLeg?: number;
@@ -25,6 +29,14 @@
 		voertuig?: (VoertuigPositie & { label?: string }) | null;
 		extraPunt?: { lat: number; lon: number; label?: string } | null;
 		hoogte?: string;
+		/** Klein kaartje in de pagina: niet te verschuiven (scrollt niet mee met je vinger) en zonder knoppen */
+		compact?: boolean;
+		/** Tik op een compact kaartje (bijvoorbeeld om hem groot te openen) */
+		onKlik?: () => void;
+		/** Losse punten met een naam (bijvoorbeeld voorzieningen op een station); tik toont de naam */
+		punten?: { lat: number; lon: number; naam: string; kleur?: string }[];
+		/** Middelpunt en zoom als er geen route is om op in te zoomen */
+		midden?: { lat: number; lon: number; zoom?: number } | null;
 	} = $props();
 
 	let container = $state<HTMLDivElement>();
@@ -99,6 +111,17 @@
 		};
 	}
 
+	function puntenGeoJson() {
+		return {
+			type: 'FeatureCollection' as const,
+			features: punten.map((p) => ({
+				type: 'Feature' as const,
+				properties: { naam: p.naam, kleur: p.kleur ?? '#2563eb' },
+				geometry: { type: 'Point' as const, coordinates: [p.lon, p.lat] }
+			}))
+		};
+	}
+
 	function grenzen(): LngLatBoundsLike | null {
 		const legs = advies?.legs ?? [];
 		const gekozen = focusLeg >= 0 && legs[focusLeg] ? [legs[focusLeg]] : legs;
@@ -128,11 +151,12 @@
 			kaart = new maplibre.Map({
 				container,
 				style: STIJL,
-				center: [5.3, 52.1],
-				zoom: 7,
+				center: midden ? [midden.lon, midden.lat] : [5.3, 52.1],
+				zoom: midden ? (midden.zoom ?? 16) : 7,
+				interactive: !compact,
 				attributionControl: { compact: true }
 			});
-			kaart.addControl(new maplibre.NavigationControl({ showCompass: false }), 'top-right');
+			if (!compact) kaart.addControl(new maplibre.NavigationControl({ showCompass: false }), 'top-right');
 			kaart.on('error', (e) => {
 				if (!geladen) fout = 'Kaart kon niet worden geladen.';
 				console.warn(e.error);
@@ -145,6 +169,7 @@
 				kaart.addSource('ik', { type: 'geojson', data: puntGeoJson(eigenPositie) });
 				kaart.addSource('voertuig', { type: 'geojson', data: puntGeoJson(voertuig) });
 				kaart.addSource('extra', { type: 'geojson', data: puntGeoJson(extraPunt) });
+				kaart.addSource('punten', { type: 'geojson', data: puntenGeoJson() });
 				kaart.addLayer({
 					id: 'spoor',
 					type: 'line',
@@ -182,6 +207,21 @@
 					source: 'haltes',
 					paint: { 'circle-radius': 6, 'circle-color': '#ffffff', 'circle-stroke-width': 3, 'circle-stroke-color': '#0b1a4a' }
 				});
+				kaart.addLayer({
+					id: 'punten',
+					type: 'circle',
+					source: 'punten',
+					paint: { 'circle-radius': 7, 'circle-color': ['get', 'kleur'], 'circle-stroke-width': 2, 'circle-stroke-color': '#ffffff' }
+				});
+				// Naam van een punt tonen bij een tik (zonder lettertypes van de kaartstijl nodig te hebben)
+				kaart.on('click', 'punten', (e) => {
+					const f = e.features?.[0];
+					if (!f || !kaart) return;
+					const [x, y] = (f.geometry as { coordinates: [number, number] }).coordinates;
+					new maplibre.Popup({ closeButton: false, offset: 10 }).setLngLat([x, y]).setText(String(f.properties?.naam ?? '')).addTo(kaart);
+				});
+				kaart.on('mouseenter', 'punten', () => kaart && (kaart.getCanvas().style.cursor = 'pointer'));
+				kaart.on('mouseleave', 'punten', () => kaart && (kaart.getCanvas().style.cursor = ''));
 				kaart.addLayer({
 					id: 'extra',
 					type: 'circle',
@@ -239,6 +279,10 @@
 		const d = puntGeoJson(extraPunt);
 		if (geladen && kaart) (kaart.getSource('extra') as GeoJSONSource | undefined)?.setData(d);
 	});
+	$effect(() => {
+		const d = puntenGeoJson();
+		if (geladen && kaart) (kaart.getSource('punten') as GeoJSONSource | undefined)?.setData(d);
+	});
 	// Alleen opnieuw inzoomen als de route of de gekozen rit verandert, niet bij elke GPS-update
 	const routeSleutel = $derived(`${focusLeg}|${lijnen.map((l) => `${l.length}:${l[0]?.join(',')}:${l[l.length - 1]?.join(',')}`).join('|')}`);
 	let eersteKeer = true;
@@ -253,9 +297,17 @@
 	});
 </script>
 
-<div class="kaartvak" style:height={hoogte}>
+<!-- svelte-ignore a11y_click_events_have_key_events, a11y_no_static_element_interactions (de pagina heeft een eigen knop om te vergroten) -->
+<div
+	class="kaartvak"
+	class:klikbaar={compact && !!onKlik}
+	style:height={hoogte}
+	onclick={(e) => {
+		if (compact && onKlik && !(e.target as Element).closest('.maplibregl-ctrl')) onKlik();
+	}}
+>
 	<div class="kaart-el" bind:this={container} role="region" aria-label="Kaart met de route"></div>
-	{#if geladen}
+	{#if geladen && !compact}
 		<button type="button" class="spoorknop" aria-pressed={spoorLaag} onclick={wisselSpoorLaag} title="Spoorlijnen tonen">
 			<TrainTrack size={16} aria-hidden="true" /> Spoor
 		</button>
@@ -274,6 +326,9 @@
 	.kaart-el {
 		position: absolute;
 		inset: 0;
+	}
+	.klikbaar {
+		cursor: pointer;
 	}
 	.spoorknop {
 		position: absolute;

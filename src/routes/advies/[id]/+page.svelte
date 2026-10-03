@@ -2,10 +2,13 @@
 	import { onDestroy, untrack } from 'svelte';
 	import type { PageProps } from './$types';
 	import { goto } from '$app/navigation';
-	import { CalendarPlus, ChevronDown, ChevronLeft, Footprints, Map as KaartIcoon, Play, Star, TriangleAlert, Info } from '@lucide/svelte';
+	import { page } from '$app/state';
+	import { CalendarPlus, Check, ChevronDown, ChevronLeft, Footprints, Map as KaartIcoon, Play, Star, TriangleAlert, Info } from '@lucide/svelte';
 	import type { Advies, Leg, Plek, TreinInfo } from '$lib/types';
 	import { zoekAdvies } from '$lib/client/planner.svelte';
 	import { data } from '$lib/client/data.svelte';
+	import { actief } from '$lib/client/actief.svelte';
+	import { kiesAlternatief } from '$lib/client/reisacties';
 	import { haalTreinInfo } from '$lib/client/trein';
 	import { volgPositie, type Positie } from '$lib/client/gps';
 	import { adviesStatus, isOV } from '$lib/reis';
@@ -104,6 +107,13 @@
 		downloadIcs(maakIcs(advies, van, naar), `reis-${naar.naam.replace(/[^\w-]+/g, '-').toLowerCase()}.ics`);
 	}
 
+	// Geopend vanuit "Alternatieven" op de reispagina: dan vervangt dit advies het vervolg van je reis
+	const alternatiefVanaf = $derived.by(() => {
+		const w = page.url.searchParams.get('alternatief');
+		const n = w === null ? NaN : Number(w);
+		return data.actieveReis && Number.isInteger(n) && n >= 0 && n <= data.actieveReis.advies.legs.length ? n : null;
+	});
+
 	let startBezig = $state(false);
 	let startFout = $state<string | null>(null);
 	async function start() {
@@ -111,7 +121,12 @@
 		startBezig = true;
 		startFout = null;
 		try {
-			await data.startReis(van, naar, advies);
+			if (alternatiefVanaf !== null && data.actieveReis) {
+				await kiesAlternatief(data.actieveReis, advies, alternatiefVanaf);
+				void actief.ververs();
+			} else {
+				await data.startReis(van, naar, advies);
+			}
 			goto('/reis');
 		} catch (e) {
 			startFout = (e as Error).message;
@@ -203,11 +218,18 @@
 
 		<div class="startbalk">
 			{#if startFout}<p class="status-fout klein">{startFout}</p>{/if}
-			<button class="knop vol groot" onclick={start} disabled={startBezig}>
-				<Play size={20} /> {startBezig ? 'Starten…' : 'Start reis'}
-			</button>
-			{#if data.actieveReis}
-				<p class="zwak klein midden"><Info size={14} /> Je huidige reis wordt dan afgesloten.</p>
+			{#if alternatiefVanaf !== null}
+				<button class="knop vol groot" onclick={start} disabled={startBezig}>
+					<Check size={20} /> {startBezig ? 'Bezig…' : 'Kies dit alternatief'}
+				</button>
+				<p class="zwak klein midden"><Info size={14} /> Dit vervangt het vervolg van je huidige reis.</p>
+			{:else}
+				<button class="knop vol groot" onclick={start} disabled={startBezig}>
+					<Play size={20} /> {startBezig ? 'Starten…' : 'Start reis'}
+				</button>
+				{#if data.actieveReis}
+					<p class="zwak klein midden"><Info size={14} /> Je huidige reis wordt dan afgesloten.</p>
+				{/if}
 			{/if}
 		</div>
 	{/if}

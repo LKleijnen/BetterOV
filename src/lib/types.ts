@@ -342,3 +342,37 @@ export interface ActieveReisPointer {
 	gedeeldId?: string;
 	laatsteCheck?: string;
 }
+
+/** Een voorziening op of bij een station (NS Places API) */
+export interface Voorziening {
+	/** Soort van NS, bijvoorbeeld stationfacility of ovfiets */
+	soort: string;
+	/** Naam van de soort zoals NS die geeft */
+	soortNaam?: string;
+	naam: string;
+	lat?: number;
+	lon?: number;
+	/** Nu open, als NS dat weet */
+	open?: boolean;
+	/** Openingstijden per dag (1 = maandag) */
+	openingstijden?: { dag: number; van: string; tot: string }[];
+	beschrijving?: string;
+	link?: string;
+	/** OV-fiets: aantal beschikbare fietsen */
+	ovFietsen?: number;
+}
+
+export interface StationInfo {
+	code: string;
+	naam: string;
+	lat: number;
+	lon: number;
+	land?: string;
+	/** Soort station van NS, bijvoorbeeld INTERCITY_STATION */
+	type?: string;
+	sporen: string[];
+	reisassistentie?: boolean;
+	voorzieningen: Voorziening[];
+	bron: string[];
+	opgehaaldOp: string;
+}
