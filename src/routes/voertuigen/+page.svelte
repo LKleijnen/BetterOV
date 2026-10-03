@@ -1,5 +1,5 @@
 <script lang="ts">
-	import { ChevronLeft, ChevronRight, Search, TrainFront } from '@lucide/svelte';
+	import { ChevronLeft, ChevronRight, Search, TrainFront, TrainFrontTunnel, TramFront } from '@lucide/svelte';
 	import { laadVoertuigen, variantAnker, zoekVoertuigen, type Treffer, type Voertuig } from '$lib/voertuigen';
 
 	let lijst = $state.raw<Voertuig[]>([]);
@@ -30,7 +30,7 @@
 		<a class="icoonknop" href="/meer" aria-label="Terug"><ChevronLeft size={22} /></a>
 		<h1 style="margin: 0">Voertuigen</h1>
 	</div>
-	<p class="zwak">Alles over de treinen in de app: versies, techniek, geschiedenis en leuke feiten.</p>
+	<p class="zwak">Alles over de treinen, trams en metro's: versies, techniek, geschiedenis en leuke feiten.</p>
 
 	<label class="zoekveld">
 		<Search size={18} aria-hidden="true" />
@@ -52,7 +52,7 @@
 				{#each items as t (t.voertuig.id)}
 					<li>
 						<a href={link(t)}>
-							<TrainFront size={20} aria-hidden="true" />
+							{#if t.voertuig.soort === 'tram'}<TramFront size={20} aria-hidden="true" />{:else if t.voertuig.soort === 'metro'}<TrainFrontTunnel size={20} aria-hidden="true" />{:else}<TrainFront size={20} aria-hidden="true" />{/if}
 							<span class="tekst">
 								<strong>{t.voertuig.naam}</strong>
 								<span class="zwak klein">

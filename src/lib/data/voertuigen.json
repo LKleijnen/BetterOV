@@ -2104,5 +2104,1137 @@
 			"taal": "nl",
 			"titel": "Protos_(treinstel)"
 		}
+	},
+	{
+		"id": "m5",
+		"code": "GVB-M5",
+		"groep": "Tram en metro",
+		"naam": "Alstom Metropolis M5 (Amsterdamse metro)",
+		"soort": "metro",
+		"vervoerders": "GVB (Amsterdam)",
+		"kort": "De M5 is de lange metro van Amsterdam: zes rijtuigen achter elkaar, samen 116 meter, en je kunt van voor tot achter door de hele trein lopen. Hij is gebouwd door Alstom (type Metropolis) en rijdt sinds 2013, ook op de Noord/Zuidlijn (52). Tip: is het druk waar je instapt, loop dan binnendoor naar een rustiger rijtuig.",
+		"varianten": [
+			{
+				"code": "M5",
+				"naam": "M5 (hoofdserie, 23 stellen)",
+				"omschrijving": "Besteld in 2010 om de oude 'Zilvermeeuwen', de eerste generatie Amsterdamse metro's, te vervangen. Volledig doorloopbaar, met een rolstoelplek in het voorste rijtuig. Samen met de M7 de modernste metro van Amsterdam; de M5 is de grootste en meest voorkomende.",
+				"herkenning": "Stelnummers in paren van 107/108 tot en met 161/162: elk stel bestaat uit twee helften die elk een eigen nummer hebben",
+				"bakken": "6 rijtuigen (2 helften van 3)",
+				"zitplaatsen": "174 zitplaatsen en 786 staanplaatsen",
+				"gebouwd": "2012–2015"
+			},
+			{
+				"code": "M6",
+				"naam": "M6 (5 extra stellen, nu ook M5 genoemd)",
+				"omschrijving": "Voor de Noord/Zuidlijn was een optie op extra stellen gereserveerd, die eerst 'M6' heette. In februari 2013 werden er 5 besteld, technisch precies gelijk aan de M5. Als reiziger merk je geen verschil.",
+				"herkenning": "Van buiten niet te onderscheiden; GVB noemt alle 28 stellen nu M5",
+				"bakken": "6 rijtuigen",
+				"zitplaatsen": "174 zitplaatsen",
+				"gebouwd": "2013–2015"
+			}
+		],
+		"techniek": [
+			{
+				"label": "Bouwer",
+				"waarde": "Alstom (Metropolis-familie), gebouwd in Polen"
+			},
+			{
+				"label": "Bouwjaren",
+				"waarde": "2012–2015"
+			},
+			{
+				"label": "Aantal gebouwd",
+				"waarde": "28 stellen (23 + 5)"
+			},
+			{
+				"label": "Lengte",
+				"waarde": "116,2 m"
+			},
+			{
+				"label": "Gewicht",
+				"waarde": "ca. 190 ton"
+			},
+			{
+				"label": "Vermogen",
+				"waarde": "3.200 kW (16 motoren van 200 kW), ongeveer 4.300 pk"
+			},
+			{
+				"label": "Topsnelheid",
+				"waarde": "Ontworpen voor 90 km/h; in Amsterdam rijdt hij maximaal ca. 70 km/h"
+			},
+			{
+				"label": "Zitplaatsen",
+				"waarde": "174 (plus 786 staanplaatsen)"
+			},
+			{
+				"label": "Opbouw",
+				"waarde": "6 rijtuigen (Tc–M1–M2–M2–M1–Tc), 24 assen, volledig doorloopbaar"
+			},
+			{
+				"label": "Spanning/aandrijving",
+				"waarde": "750 V gelijkstroom via een derde rail (een extra stroomrail naast het spoor)"
+			},
+			{
+				"label": "Maximale koppeling",
+				"waarde": "Rijdt als één zesdelig stel; dat stel bestaat zelf uit twee driedelige helften"
+			}
+		],
+		"kosten": "De eerste 23 stellen werden op 18 februari 2010 besteld. De 5 extra stellen uit de optie (februari 2013) kostten samen ongeveer € 42 miljoen, zo'n € 8,4 miljoen per stel (bron: Alstom).",
+		"geschiedenis": [
+			"Om de oude 'Zilvermeeuwen', de eerste metro's van Amsterdam, te vervangen, bestelde GVB op 18 februari 2010 23 nieuwe metrostellen bij het Franse Alstom, van de Metropolis-familie. Voor de Noord/Zuidlijn was er een optie op extra stellen, eerst 'M6' genoemd. In februari 2013 werden daaruit 5 stellen besteld; omdat die precies gelijk zijn, heten alle 28 nu M5.",
+			"In 2012 maakte de M5 zijn eerste testritten, onder meer bij station Kraaiennest in Zuidoost. Op 2 mei 2013 werd het eerste stel aan GVB overgedragen, maar de inzet liep vertraging op door een probleem met het Train-TV-systeem (schermen en camera's). Dat werd tijdelijk opgelost door het analoge systeem uit de oude Zilvermeeuwen over te zetten. Eind juni 2013 reden de eerste M5's met reizigers op ringlijn 50. Bij het gebogen middenperron van Centraal Station bleek de kier bij de rolstoelplek te groot; een schuimrand bleek geen afdoende oplossing.",
+			"In de nacht van 11 op 12 maart 2016 werd een halve M5 (stel 161) met een speciaal tunnelvoertuig door de nog lege tunnel van de Noord/Zuidlijn naar station Noord getrokken, ruim twee jaar voor de opening van die lijn op 22 juli 2018. Sindsdien rijdt de M5 ook onder het IJ door.",
+			"In 2023 raakten de stellen 116 en 158 zwaar beschadigd. Van onbeschadigde helften werd een nieuw stel samengesteld, waarbij één helft een ander nummer kreeg. Mede hierdoor bestelde GVB in 2024 extra M7-metro's. De M5 blijft de komende jaren de ruggengraat van de Amsterdamse metro."
+		],
+		"feiten": [
+			"Je kunt door de hele M5 lopen: 116 meter metro zonder deuren tussen de rijtuigen.",
+			"Elk stel heeft twee nummers (bijvoorbeeld 109/110), omdat het eigenlijk uit twee helften van drie rijtuigen bestaat.",
+			"Een halve M5 werd in 2016 door de nog ongebruikte Noord/Zuidlijn-tunnel naar Noord gesleept, met een speciaal tunneltransportvoertuig.",
+			"Het eerste Train-TV-probleem werd opgelost met een systeem dat uit de oude Zilvermeeuwen werd gesloopt.",
+			"Met 3.200 kW vermogen heeft een M5 ongeveer evenveel kracht als een stuk of tien gewone auto's samen... maar dan wel om 190 ton te trekken.",
+			"De M5 hoort bij dezelfde Metropolis-familie als de metro's van lijn 2 en 4 in Boedapest.",
+			"De afkorting M5 betekent simpelweg: vijfde type metromaterieel van Amsterdam."
+		],
+		"bronnen": [
+			{
+				"titel": "Metromaterieel M5 (Wikipedia)",
+				"url": "https://nl.wikipedia.org/wiki/Metromaterieel_M5"
+			},
+			{
+				"titel": "M5 (Amsterdam Metro) (Wikipedia, Engels)",
+				"url": "https://en.wikipedia.org/wiki/M5_(Amsterdam_Metro)"
+			},
+			{
+				"titel": "Alstom to provide Amsterdam 5 additional metro trainsets (Alstom, 2013)",
+				"url": "https://www.alstom.com/press-releases-news/2013/2/alstom-to-provide-amsterdam-5-additional-metro-trainsets"
+			},
+			{
+				"titel": "Nieuwe Amsterdamse metro M5 maakt testrit (Treinreiziger.nl)",
+				"url": "https://www.treinreiziger.nl/nieuwe-amsterdamse-metro-m5-maakt-testrit/"
+			},
+			{
+				"titel": "Geschiedenis van de Noord/Zuidlijn (Wikipedia)",
+				"url": "https://nl.wikipedia.org/wiki/Geschiedenis_van_de_Noord/Zuidlijn"
+			}
+		],
+		"wikipedia": {
+			"taal": "nl",
+			"titel": "Metromaterieel_M5"
+		}
+	},
+	{
+		"id": "m7",
+		"code": "GVB-M7",
+		"groep": "Tram en metro",
+		"naam": "CAF Inneo M7 (Amsterdamse metro)",
+		"soort": "metro",
+		"vervoerders": "GVB (Amsterdam)",
+		"kort": "De M7 is de nieuwste metro van Amsterdam, gebouwd door het Spaanse CAF (type Inneo) en sinds februari 2023 in dienst. Eén stel is zo'n 60 meter lang, half zo lang als een M5: in de spits rijden er meestal twee aan elkaar, buiten de spits vaak één. Elk stel heeft twee multifunctionele ruimtes voor bijvoorbeeld een rolstoel of kinderwagen.",
+		"varianten": [
+			{
+				"code": "M7",
+				"naam": "M7 eerste serie",
+				"omschrijving": "De 30 stellen uit het contract van 2018. Ze lijken van buiten op de M5, maar zijn half zo lang en worden naar behoefte enkel of gekoppeld ingezet. De modernste Amsterdamse metro, met onder meer handgrepen en zittingen waarover reizigers mochten meestemmen.",
+				"herkenning": "Stelnummers 163–192",
+				"bakken": "3 rijtuigen, 59,6 m",
+				"zitplaatsen": "78 zitplaatsen en 402 staanplaatsen",
+				"gebouwd": "2021–2024",
+				"nummers": [
+					[
+						163,
+						192
+					]
+				]
+			},
+			{
+				"code": "M7",
+				"naam": "M7 tweede serie",
+				"omschrijving": "In juli 2024 bestelde GVB uit de optie nog 13 stellen, onder meer omdat twee M5-stellen zwaar beschadigd waren. Ze zijn gelijk aan de eerste serie. Mogelijk rijden ze nog niet allemaal.",
+				"herkenning": "Stelnummers 193–205 (verwacht)",
+				"bakken": "3 rijtuigen",
+				"zitplaatsen": "78 zitplaatsen",
+				"gebouwd": "Levering verwacht rond 2027",
+				"nummers": [
+					[
+						193,
+						205
+					]
+				]
+			}
+		],
+		"techniek": [
+			{
+				"label": "Bouwer",
+				"waarde": "CAF (Spanje), type Inneo"
+			},
+			{
+				"label": "Bouwjaren",
+				"waarde": "2021–2024 (eerste serie); tweede serie verwacht rond 2027"
+			},
+			{
+				"label": "Aantal gebouwd",
+				"waarde": "30 geleverd, 13 extra besteld (samen 43)"
+			},
+			{
+				"label": "Lengte",
+				"waarde": "59,6 m"
+			},
+			{
+				"label": "Breedte",
+				"waarde": "3,005 m"
+			},
+			{
+				"label": "Gewicht",
+				"waarde": "ca. 95 ton"
+			},
+			{
+				"label": "Topsnelheid",
+				"waarde": "80 km/h"
+			},
+			{
+				"label": "Acceleratie",
+				"waarde": "Optrekken maximaal 1,2 m/s², remmen 1,3 m/s² (gewone remming)"
+			},
+			{
+				"label": "Zitplaatsen",
+				"waarde": "78 (plus 402 staanplaatsen bij 4 personen per m²; samen 480) en 2 multifunctionele ruimtes"
+			},
+			{
+				"label": "Opbouw",
+				"waarde": "3 rijtuigen (Mc–T–Mc): twee aangedreven kopwagens met een middenrijtuig"
+			},
+			{
+				"label": "Spanning/aandrijving",
+				"waarde": "Elektrisch, 750 V gelijkstroom via de derde rail van het Amsterdamse metronet"
+			},
+			{
+				"label": "Maximale koppeling",
+				"waarde": "2 stellen (ca. 120 m), vooral in de spits"
+			}
+		],
+		"kosten": "€ 225 miljoen voor 30 stellen (contract 28 november 2018), ongeveer € 7,5 miljoen per stel. Voor de 13 extra stellen trok de Vervoerregio Amsterdam in juli 2024 € 111,5 miljoen uit, ongeveer € 8,6 miljoen per stel.",
+		"geschiedenis": [
+			"Na een aanbesteding werd in april 2018 bekend dat CAF de nieuwe Amsterdamse metro mocht bouwen. Op 28 november 2018 tekende GVB het contract voor 30 metro's van het type Inneo, met een optie op nog 30. Omdat de nummering van het bestaande materieel gewoon doorloopt, kregen ze de naam M7.",
+			"In de zomer van 2019 stond een levensecht model (mock-up) in een grote tent. In zo'n veertig bezoeksessies konden reizigers, ov-fans en GVB-medewerkers het ontwerp beoordelen en stemmen: 65% koos voor lagere handgrepen (1,975 m) en 54% voor afgeronde zittingen.",
+			"De eerste M7 (stel 163) kwam eind augustus 2021 aan bij de hoofdwerkplaats in Diemen, na een reis van zo'n 2.000 kilometer: in drie delen per schip naar Rotterdam en daarna over de weg. Na een uitgebreid testprogramma ging de M7 op 28 februari 2023 in dienst, op onder meer de lijnen 50, 53 en 54. Het dertigste en laatste stel van de eerste serie (192) arriveerde op 28 november 2024.",
+			"Op 9 juli 2024 besloot de Regioraad van de Vervoerregio tot 13 extra M7's, uit de optie van het contract van 2018. Of het 11 of 13 zouden worden hing af van de vraag of twee beschadigde M5-stellen gerepareerd of vervangen moesten worden; het werden er 13. Ze worden rond 2027 verwacht."
+		],
+		"feiten": [
+			"Ook Brussel heeft een metro die 'M7' heet, en die is óók door CAF gebouwd: twee buurlanden, één naam, één fabrikant.",
+			"Reizigers mochten meebeslissen: 65% stemde voor lagere handgrepen en 54% voor afgeronde zittingen.",
+			"De eerste M7 reisde in drie stukken per schip van Spanje naar Rotterdam, een tocht van ongeveer twee weken.",
+			"Omdat een M7 maar 60 meter is, kan GVB buiten de spits met een korte trein rijden en in de spits twee koppelen; dat bespaart energie en onderhoud.",
+			"Eén M7-stel weegt met 95 ton precies half zoveel als een twee keer zo lange M5.",
+			"De naam M7 is simpelweg doornummeren: het zevende type metromaterieel van Amsterdam."
+		],
+		"bronnen": [
+			{
+				"titel": "Metromaterieel M7 (Wikipedia)",
+				"url": "https://nl.wikipedia.org/wiki/Metromaterieel_M7"
+			},
+			{
+				"titel": "Factsheet CAF GVB M7-metro voor Amsterdam (GVB, pdf)",
+				"url": "https://over.gvb.nl/content/uploads/2018/11/Factsheet-CAF-GVB-M7-metro-voor-Amsterdam.pdf"
+			},
+			{
+				"titel": "GVB bestelt 30 nieuwe metro's in Spanje (OV-Magazine)",
+				"url": "https://www.ovmagazine.nl/2018/05/gvb-bestelt-30-nieuwe-metros-in-spanje-1531/"
+			},
+			{
+				"titel": "Vervoerregio Amsterdam betaalt voor 13 nieuwe metro's (Spoorpro)",
+				"url": "https://www.spoorpro.nl/materieel/2024/07/11/vervoerregio-amsterdam-betaalt-voor-13-nieuwe-metros/"
+			},
+			{
+				"titel": "Stemresultaten na bezoek mock-up nieuwe M7 metro (Vervoerregio Amsterdam)",
+				"url": "https://vervoerregio.nl/artikel/20240715-stemresultaten-na-bezoek-mock-up-nieuwe-m7-metro"
+			},
+			{
+				"titel": "M7 (Amsterdam Metro) (Wikipedia, Engels)",
+				"url": "https://en.wikipedia.org/wiki/M7_(Amsterdam_Metro)"
+			}
+		],
+		"wikipedia": {
+			"taal": "nl",
+			"titel": "Metromaterieel_M7"
+		}
+	},
+	{
+		"id": "ret-metro",
+		"code": "RET-METRO",
+		"groep": "Tram en metro",
+		"naam": "Bombardier Flexity Swift (Rotterdamse metro: SG3, RSG3 en HSG3)",
+		"soort": "metro",
+		"vervoerders": "RET (Rotterdam, metrolijnen A–E, ook naar Den Haag en Hoek van Holland)",
+		"kort": "Op de Rotterdamse metro rijdt vaak een Flexity Swift van Bombardier (types SG3, RSG3 en HSG3): drie gelede delen en bijna 43 meter per stel, met beklede stoelen en een stuk stiller dan de oudere tweedelige metro's (MG2/1 en SG2/1). Hij kan stroom halen uit de derde rail én uit de bovenleiding en mag 100 km/h, handig op de lange stukken naar Den Haag en Hoek van Holland. Vanaf ongeveer 2030 komen er nieuwe metro's van 90 meter.",
+		"varianten": [
+			{
+				"code": "RSG3",
+				"naam": "RSG3 (RandstadRail)",
+				"omschrijving": "De eerste serie, voor RandstadRail-lijn E naar Den Haag Centraal. Kwam oorspronkelijk in wit-blauwe RandstadRail-kleuren met rode stoelen. Heeft naast stroomafnemers voor de derde rail een pantograaf (de beugel op het dak) voor de bovenleiding. Beklede stoelen en airco.",
+				"herkenning": "Nummers 5501–5522",
+				"bakken": "3 gelede delen, 42,7 m",
+				"zitplaatsen": "104 zitplaatsen, 166 staanplaatsen, 1 rolstoelplek",
+				"gebouwd": "2008–2009",
+				"nummers": [
+					[
+						5501,
+						5522
+					]
+				]
+			},
+			{
+				"code": "SG3",
+				"naam": "SG3",
+				"omschrijving": "Technisch gelijk aan de RSG3, maar in de RET-huisstijl. Verving de oude Düwag-metro's (SG2) uit de jaren tachtig. Was de eerste driedelige metro van de RET; door betere isolatie veel stiller dan de oudere types.",
+				"herkenning": "Nummers 5601–5642; grijze R-net-kleuren met rode deuren, groene stoelen",
+				"bakken": "3 gelede delen, 42,7 m",
+				"zitplaatsen": "104 zitplaatsen, 166 staanplaatsen",
+				"gebouwd": "2009–2011",
+				"nummers": [
+					[
+						5601,
+						5642
+					]
+				]
+			},
+			{
+				"code": "HSG3",
+				"naam": "HSG3 (Hoekse Lijn)",
+				"omschrijving": "De jongste serie, voor de Hoekse Lijn (de metro naar Hoek van Holland) en meer ritten op lijn E. Vrijwel gelijk aan de SG3, met beklede stoelen, klimaatbeheersing en schermen met actuele reisinformatie en camerabeelden. De modernste Rotterdamse metro.",
+				"herkenning": "Nummers 5701–5722",
+				"bakken": "3 gelede delen, 42,7 m",
+				"zitplaatsen": "104 zitplaatsen",
+				"gebouwd": "2015–2017",
+				"nummers": [
+					[
+						5701,
+						5722
+					]
+				]
+			},
+			{
+				"code": "MG2/1",
+				"naam": "MG2/1 (oudere metro, 5300-serie)",
+				"omschrijving": "Tweedelige metro van Bombardier en Traxis. In de eerste 42 staan alle stoelen in de rijrichting, in de laatste 21 zitten er ook stoelen tegenover elkaar. Ouder, luidruchtiger en met minder comfort dan de SG3-familie; wordt vanaf ongeveer 2030 vervangen.",
+				"herkenning": "Nummers 5301–5363",
+				"bakken": "2 gelede delen, 30,5 m; één echte cabine (aan de andere kant een hulpstuurstand), dus altijd gekoppeld",
+				"zitplaatsen": "72 zitplaatsen, 153 staanplaatsen",
+				"gebouwd": "1998–2001",
+				"nummers": [
+					[
+						5301,
+						5363
+					]
+				]
+			},
+			{
+				"code": "SG2/1",
+				"naam": "SG2/1 (oudere sneltram-metro, 5400-serie)",
+				"omschrijving": "Sneltramversie van de MG2/1, mét pantograaf voor de bovenleiding, aangeschaft voor de Beneluxlijn. Kan samen met de MG2/1 rijden. Wordt vanaf ongeveer 2030 vervangen.",
+				"herkenning": "Nummers 5401–5418",
+				"bakken": "2 gelede delen, 30,5 m",
+				"zitplaatsen": "64 zitplaatsen, 153 staanplaatsen",
+				"gebouwd": "2001–2002",
+				"nummers": [
+					[
+						5401,
+						5418
+					]
+				]
+			}
+		],
+		"techniek": [
+			{
+				"label": "Bouwer",
+				"waarde": "Bombardier Transportation (tegenwoordig Alstom), fabriek in Bautzen (Duitsland), HSG3 deels in Wenen; type Flexity Swift"
+			},
+			{
+				"label": "Bouwjaren",
+				"waarde": "2008–2011 (RSG3 en SG3) en 2015–2017 (HSG3)"
+			},
+			{
+				"label": "Aantal gebouwd",
+				"waarde": "86 (22 RSG3, 42 SG3, 22 HSG3)"
+			},
+			{
+				"label": "Lengte",
+				"waarde": "42,71 m"
+			},
+			{
+				"label": "Breedte",
+				"waarde": "2,66 m"
+			},
+			{
+				"label": "Gewicht",
+				"waarde": "64,3 ton"
+			},
+			{
+				"label": "Vermogen",
+				"waarde": "1.040 kW"
+			},
+			{
+				"label": "Topsnelheid",
+				"waarde": "100 km/h"
+			},
+			{
+				"label": "Zitplaatsen",
+				"waarde": "104 (plus 166 staanplaatsen en 1 rolstoelplek; samen 271)"
+			},
+			{
+				"label": "Spanning/aandrijving",
+				"waarde": "750 V gelijkstroom, zowel via de derde rail (stroomrail naast het spoor) als via de bovenleiding"
+			},
+			{
+				"label": "Maximale koppeling",
+				"waarde": "Kan met andere RET-metro's gekoppeld rijden; het precieze maximum is niet bevestigd"
+			}
+		],
+		"kosten": "In februari 2014 kocht de RET 16 HSG3's voor de Hoekse Lijn voor in totaal € 80 miljoen (ongeveer € 5 miljoen per stel), betaald uit eigen middelen. Voor de opvolgers van de oudste metro's trok de MRDH op 14 juli 2025 € 578 miljoen uit voor 38 nieuwe, 90 meter lange metro's.",
+		"geschiedenis": [
+			"Rotterdam reed sinds begin jaren tachtig met tweedelige metro's van Düwag (de SG2, 5200-serie, 71 stuks). Eind jaren negentig kwamen de MG2/1 (5300-serie) en in 2001–2002 de SG2/1 (5400-serie). Voor RandstadRail, waarbij de oude Hofpleinlijn naar Den Haag werd omgebouwd tot metrolijn E, kocht de RET bij Bombardier een nieuw, driedelig type: de RSG3. Die reed vanaf december 2008 op de Erasmuslijn en vanaf 20 januari 2009 op RandstadRail, ter vervanging van 11 SG2's.",
+			"In juni 2005 werden 42 vergelijkbare SG3's besteld om de oude SG2's te vervangen. Ze werden tussen 2009 en 2011 in Bautzen gebouwd en reden vanaf november 2009 met reizigers. In maart 2010 werd de 5251 als eerste SG2 definitief afgevoerd. Nieuw voor Rotterdam waren de beklede stoelen: eerder kreeg de metro altijd plastic stoelen, uit angst voor vandalisme.",
+			"Voor de Hoekse Lijn, de oude spoorlijn naar Hoek van Holland die metro werd, kocht de RET in februari 2014 16 extra stellen en in december 2015 nog eens 6: de HSG3. Ze werden in 2016–2017 geleverd. Door softwareproblemen ging de Hoekse Lijn niet in 2017 maar pas op 30 september 2019 open. Op 31 maart 2023 volgde de verlenging naar Hoek van Holland Strand: de 'Metro aan Zee'.",
+			"De oudste metro's (5300- en 5400-serie) gaan vanaf ongeveer 2030 met pensioen. Daarvoor komen 38 nieuwe metro's van 90 meter, ongeveer zo lang als drie gekoppelde MG2/1's, die ook meer ritten op lijn E mogelijk maken. Welke fabrikant ze bouwt, stond bij het besluit nog niet vast."
+		],
+		"feiten": [
+			"De namen zijn afkortingen: SG3 = Sneltram Geleed, 3 bakken. De R staat voor RandstadRail en de H voor de Hoekse Lijn.",
+			"Met de Hoekse Lijn rijdt de Rotterdamse metro tot aan het strand: station Hoek van Holland Strand opende op 31 maart 2023.",
+			"Deze metro haalt zijn stroom uit de derde rail óf uit de bovenleiding, afhankelijk van waar hij rijdt.",
+			"Rotterdamse metro's kregen vroeger altijd plastic stoelen tegen vandalisme; de SG3-familie was de eerste met beklede stoelen.",
+			"De RSG3 begon in wit-blauw met rode stoelen; de SG3 kreeg grijze R-net-kleuren met rode deuren en groene stoelen.",
+			"De nieuwe metro's die rond 2030 komen, zijn met 90 meter ruim twee keer zo lang als een SG3.",
+			"Je ziet soms oud en nieuw door elkaar: een oudere tweedelige metro en een SG3 aan elkaar gekoppeld in één trein."
+		],
+		"bronnen": [
+			{
+				"titel": "Metrotype R (Wikipedia)",
+				"url": "https://nl.wikipedia.org/wiki/Metrotype_R"
+			},
+			{
+				"titel": "Metro – materieel (RET)",
+				"url": "https://corporate.ret.nl/over-de-ret/materieel/metro"
+			},
+			{
+				"titel": "RET koopt 16 nieuwe metro's voor Hoekse Lijn (Mobiliteit.nl)",
+				"url": "https://www.mobiliteit.nl/ov/metro/2014/02/05/ret-koopt-16-nieuwe-metros-voor-hoekse-lijn/"
+			},
+			{
+				"titel": "MRDH investeert in nieuwe RET-metro's (RET)",
+				"url": "https://corporate.ret.nl/nieuws/mrdh-investeert-in-nieuwe-ret-metro-s"
+			},
+			{
+				"titel": "Hoekse Lijn (Wikipedia)",
+				"url": "https://nl.wikipedia.org/wiki/Hoekse_Lijn"
+			},
+			{
+				"titel": "Metrotype B (5300-serie) (Wikipedia)",
+				"url": "https://nl.wikipedia.org/wiki/Metrotype_B_(5300-serie)"
+			}
+		],
+		"wikipedia": {
+			"taal": "nl",
+			"titel": "Metrotype_R"
+		}
+	},
+	{
+		"id": "urbos",
+		"code": "URBOS",
+		"groep": "Tram en metro",
+		"naam": "CAF Urbos 100 (GVB 15G en Utrechtse sneltram)",
+		"soort": "tram",
+		"vervoerders": "GVB (Amsterdam, type 15G) en U-OV (Utrecht, lijnen 20, 21 en 22; sinds 14 december 2025 gereden door Transdev, de trams zijn van de provincie Utrecht)",
+		"kort": "Een Urbos 100 van het Spaanse CAF: een tram met over de volle lengte een lage vloer, dus overal gelijkvloers instappen, ook met kinderwagen of rolstoel. Hij heeft aan beide kanten een cabine en deuren. In Amsterdam heet hij 15G (30 meter, wit-blauw of grijs-zwart); in Utrecht rijden bredere versies van 33 en 41 meter, meestal twee aan twee gekoppeld tot een tram van wel 75 meter.",
+		"varianten": [
+			{
+				"code": "15G",
+				"naam": "GVB 15G (Amsterdam)",
+				"omschrijving": "De Amsterdamse versie is met 2,40 meter smaller dan de Utrechtse, want de Amsterdamse straten zijn krap. Je ziet hem onder meer op de lijnen 5, 6, 19 en 25. Van december 2020 tot eind maart 2026 reden op lijn 25 (de Amsteltram naar Amstelveen en Uithoorn) altijd twee 15G's aan elkaar; sinds 29 maart 2026 rijdt lijn 25 met losse trams. Het is de nieuwste tram van Amsterdam.",
+				"herkenning": "Nummers 3001–3072. De 3001–3025 en 3070–3072 rijden in grijs-zwarte R-net-kleuren, de rest in het wit-blauw van GVB.",
+				"bakken": "5 modules, 30 m",
+				"zitplaatsen": "50 zitplaatsen en 125 staanplaatsen",
+				"gebouwd": "2019–2022",
+				"nummers": [
+					[
+						3001,
+						3072
+					],
+					[
+						3001,
+						3025
+					],
+					[
+						3070,
+						3072
+					]
+				]
+			},
+			{
+				"code": "Urbos 100 (5-delig)",
+				"naam": "Utrechtse Urbos, vijfdelig",
+				"omschrijving": "De eerste Utrechtse serie, besteld voor de Uithoflijn (tram 22, Utrecht Centraal – Utrecht Science Park). Met 2,65 meter is hij een stuk breder dan de Amsterdamse 15G, dus er is meer loopruimte. Rijdt meestal gekoppeld met een tweede tram.",
+				"herkenning": "Nummers 6001–6027",
+				"bakken": "5 modules, ca. 33 m",
+				"zitplaatsen": "62 zitplaatsen",
+				"gebouwd": "2016–2018",
+				"nummers": [
+					[
+						6001,
+						6027
+					]
+				]
+			},
+			{
+				"code": "Urbos 100 (7-delig)",
+				"naam": "Utrechtse Urbos, zevendelig",
+				"omschrijving": "Twee modules langer dan de vijfdelige, verder vrijwel gelijk. Eerst werden er 22 besteld voor de vernieuwde SUNIJ-lijn naar Nieuwegein en IJsselstein (tram 20 en 21), in 2020 kwamen er 5 bij. Sinds 3 januari 2021 rijden deze lagevloertrams naar Nieuwegein. Een vijfdelige en een zevendelige samen vormen een tram van zo'n 75 meter.",
+				"herkenning": "Nummers 6051–6077",
+				"bakken": "7 modules, ca. 41 m",
+				"gebouwd": "2019–2021",
+				"nummers": [
+					[
+						6051,
+						6077
+					]
+				]
+			}
+		],
+		"techniek": [
+			{
+				"label": "Bouwer",
+				"waarde": "CAF (Construcciones y Auxiliar de Ferrocarriles), Spanje, fabrieken in Beasain en Zaragoza"
+			},
+			{
+				"label": "Bouwjaren",
+				"waarde": "2016–2022 (Utrecht 2016–2021, Amsterdam 2019–2022)"
+			},
+			{
+				"label": "Aantal gebouwd",
+				"waarde": "126 voor Nederland: 72 voor GVB en 54 voor Utrecht (27 vijfdelig, 27 zevendelig)"
+			},
+			{
+				"label": "Lengte",
+				"waarde": "15G: 30,0 m. Utrecht: ca. 33,0 m (vijfdelig) of 41,2 m (zevendelig)"
+			},
+			{
+				"label": "Breedte",
+				"waarde": "15G: 2,40 m. Utrecht: 2,65 m"
+			},
+			{
+				"label": "Gewicht",
+				"waarde": "15G: 39,0 ton (Utrechtse versie onbekend)"
+			},
+			{
+				"label": "Vermogen",
+				"waarde": "15G: 4 × 120 kW = 480 kW"
+			},
+			{
+				"label": "Topsnelheid",
+				"waarde": "70 km/h"
+			},
+			{
+				"label": "Zitplaatsen",
+				"waarde": "15G: 50 (plus 125 staanplaatsen). Utrecht vijfdelig: 62"
+			},
+			{
+				"label": "Vloer",
+				"waarde": "100% lage vloer (het getal 100 in de typenaam); bij de 15G ligt de vloer op 30 cm hoogte"
+			},
+			{
+				"label": "Spanning/aandrijving",
+				"waarde": "Elektrisch via de bovenleiding: 600 V gelijkstroom in Amsterdam, 750 V gelijkstroom in Utrecht"
+			},
+			{
+				"label": "Rijrichting",
+				"waarde": "Tweerichtingstram: cabine aan beide uiteinden, deuren aan beide kanten"
+			},
+			{
+				"label": "Maximale koppeling",
+				"waarde": "2 trams (15G gekoppeld 60 m; in Utrecht tot ca. 75 m)"
+			}
+		],
+		"kosten": "GVB: € 209,1 miljoen voor 63 trams (contract november 2016). In mei 2020 werden er uit de optie nog 9 besteld, zodat het er 72 werden; grofweg € 2,9 miljoen per tram. Utrecht: de provincie trok in 2016 € 141 miljoen uit voor 22 extra trams plús de vernieuwing van spoor en haltes van de SUNIJ-lijn, dus de prijs per tram is daaruit niet af te leiden.",
+		"geschiedenis": [
+			"In 2015 begon GVB met de aanbesteding van een nieuwe tram. Op 2 september 2016 werd bekend dat het de Urbos 100 van het Spaanse CAF werd en op 11 november 2016 tekende GVB het contract voor 63 trams, met een optie op nog eens 60. Om 02.45 uur 's nachts op 26 april 2019 kwam de eerste tram aan bij de Hoofdwerkplaats Rail in Diemen. Daarna werd in drie stappen getest: eerst op het terrein, toen op het tramnet zonder andere trams en ten slotte tussen het gewone tramverkeer.",
+			"Op 13 december 2020 reden de eerste 15G's met reizigers, gekoppeld en in R-net-kleuren, op de vernieuwde Amstelveenlijn (lijn 25). Lijn 5 volgde in maart 2021 en lijn 19 in juni 2021. Er waren kinderziektes: piepende wielen in de keerlus bij het Azartplein (opgelost met een smeersysteem dat via gps weet waar het moet smeren), storingen bij de wissels aan de Strawinskylaan en kritiek van belangenorganisaties op de uitschuifbare oprijplank voor rolstoelen. De laatste van de 72 trams werd zeven jaar na de start van de aanbesteding afgeleverd.",
+			"Utrecht koos eind 2014 voor dezelfde tramfamilie. In januari 2015 werd het contract getekend voor 27 vijfdelige trams voor de nieuwe Uithoflijn; de eerste (6001) kwam op 9 december 2016 aan in de remise in Nieuwegein. De Uithoflijn werd op 14 december 2019 officieel geopend en vervoert sinds 16 december 2019 reizigers. Ook hier waren er in het begin storingen, onder andere aan de assentellers (systemen die bijhouden waar een tram op het spoor staat).",
+			"Voor de oude sneltramlijn naar Nieuwegein en IJsselstein (de SUNIJ-lijn) bestelde de provincie 22 langere, zevendelige trams; in 2020 kwamen er nog 5 bij. De lijn werd in 2020 en 2021 helemaal omgebouwd: de perrons werden verlaagd naar 30 centimeter en verlengd tot 75 meter. Sinds 3 januari 2021 rijden de nieuwe trams naar Nieuwegein en zijn de Zwitserse sneltrams uit 1983 verdwenen."
+		],
+		"feiten": [
+			"Het getal 100 in 'Urbos 100' staat voor 100% lage vloer: nergens in de tram zit een opstapje.",
+			"De gekoppelde Utrechtse trams van zo'n 75 meter werden bij de bestelling aangekondigd als de langste stadstrams van Europa, met plek voor bijna 500 reizigers per rit.",
+			"Van de 72 Amsterdamse 15G's kregen er 28 de grijs-zwarte kleuren van R-net (het merk voor snel en frequent regionaal ov), speciaal voor de Amstelveenlijn.",
+			"Tegen gepiep in krappe bochten heeft de 15G een smeersysteem dat met gps bepaalt waar een dun laagje smeermiddel op de wielen moet.",
+			"Op lijn 25 reden de 15G's ruim vijf jaar altijd gekoppeld, ook als het rustig was, omdat ontkoppelen overdag lastig is. Sinds maart 2026 rijden ze daar los, wat minder storingen moet geven.",
+			"De eerste 15G arriveerde midden in de nacht, om 02.45 uur, per vrachtwagen in Diemen.",
+			"De Uithoflijn begon met 10 trams per uur per richting en dat werd opgevoerd naar 16: in de spits rijdt er bijna elke vier minuten een."
+		],
+		"bronnen": [
+			{
+				"titel": "Amsterdamse gelede trams 15G (Wikipedia)",
+				"url": "https://nl.wikipedia.org/wiki/Amsterdamse_gelede_trams_15G"
+			},
+			{
+				"titel": "15G: in zeven jaar van start tot finish (GVB)",
+				"url": "https://over.gvb.nl/nieuws/15g-in-zeven-jaar-van-start-tot-finish/"
+			},
+			{
+				"titel": "GVB en CAF tekenen contract voor 63 nieuwe 15G-trams (Infrasite)",
+				"url": "https://www.infrasite.nl/rail/2016/11/18/gvb-en-caf-tekenen-contract-voor-63-nieuwe-15g-trams/"
+			},
+			{
+				"titel": "Spaanse trams in Utrecht (Wikipedia)",
+				"url": "https://nl.wikipedia.org/wiki/Spaanse_trams_in_Utrecht"
+			},
+			{
+				"titel": "Het materieel/de tram (Regiotram Utrecht, provincie Utrecht)",
+				"url": "https://regiotramutrecht.provincie-utrecht.nl/over-de-tram/het-materieelde-tram"
+			},
+			{
+				"titel": "Utrecht bestelt 22 extra trams bij CAF (OV-Magazine)",
+				"url": "https://www.ovmagazine.nl/nieuws/utrecht-bestelt-22-extra-trams-bij-caf"
+			}
+		],
+		"wikipedia": {
+			"taal": "nl",
+			"titel": "Amsterdamse_gelede_trams_15G"
+		}
+	},
+	{
+		"id": "tina",
+		"code": "TINA",
+		"groep": "Tram en metro",
+		"naam": "Stadler TINA (nieuwe Haagse tram)",
+		"soort": "tram",
+		"vervoerders": "HTM (Den Haag; eerst lijn 2, later o.a. 1, 6 en 12)",
+		"kort": "TINA is de gloednieuwe tram van HTM, gebouwd door het Zwitserse Stadler en sinds september 2026 met reizigers onderweg, eerst op lijn 2. De vloer is van voor tot achter helemaal vlak, zonder één opstapje, en er zijn USB-aansluitingen om je telefoon te laden. Een grote accu op het dak vangt remenergie op en laat de tram ruim een kilometer zonder bovenleiding rijden.",
+		"varianten": [
+			{
+				"code": "TINA",
+				"naam": "Haagse TINA",
+				"omschrijving": "De nieuwste en meest toegankelijke tram van Nederland, als opvolger van de rood-beige GTL8-trams die ruim 40 jaar door Den Haag reden. Breder dan de Avenio (2,65 m) en met een volledig vlakke vloer. Wordt de komende jaren stap voor stap ingezet, dus nog niet op elke lijn.",
+				"herkenning": "Nummers 7001–7062",
+				"bakken": "3 delen, ca. 36,5 m; 5 dubbele deuren per kant",
+				"zitplaatsen": "68 vaste zitplaatsen, 16 klapstoelen en ca. 162 staanplaatsen",
+				"gebouwd": "Vanaf 2025",
+				"nummers": [
+					[
+						7001,
+						7062
+					]
+				]
+			}
+		],
+		"techniek": [
+			{
+				"label": "Bouwer",
+				"waarde": "Stadler: ontworpen in Zwitserland, gebouwd in Siedlce (Polen)"
+			},
+			{
+				"label": "Bouwjaren",
+				"waarde": "Vanaf 2025 (eerste tram aangekomen 8 augustus 2025)"
+			},
+			{
+				"label": "Aantal gebouwd",
+				"waarde": "62 besteld (eerst 56, later uitgebreid)"
+			},
+			{
+				"label": "Lengte",
+				"waarde": "ca. 36,5 m"
+			},
+			{
+				"label": "Breedte",
+				"waarde": "2,65 m"
+			},
+			{
+				"label": "Topsnelheid",
+				"waarde": "70 km/h (ontwerp)"
+			},
+			{
+				"label": "Zitplaatsen",
+				"waarde": "68 plus 16 klapstoelen (ca. 162 staanplaatsen)"
+			},
+			{
+				"label": "Opbouw",
+				"waarde": "3 delen, 8 assen in heel platte draaistellen met torsieveren, waardoor de vloer helemaal vlak is"
+			},
+			{
+				"label": "Spanning/aandrijving",
+				"waarde": "Elektrisch via de bovenleiding, plus LTO-accu op het dak: tot 1,26 km zonder bovenleiding"
+			},
+			{
+				"label": "Zuinigheid",
+				"waarde": "Ongeveer 25% minder energie per reiziger, onder meer doordat remenergie in de accu wordt opgeslagen"
+			}
+		],
+		"kosten": "De totale investering is € 462 miljoen, waarvan ongeveer de helft voor de trams zelf en € 60 miljoen voor twee remises. HTM betaalt € 15 miljoen, de gemeente Den Haag € 45 miljoen en de Metropoolregio Rotterdam Den Haag de rest.",
+		"geschiedenis": [
+			"HTM zocht een opvolger voor de rood-beige GTL8-trams, die al ruim veertig jaar door Den Haag rijden. In december 2022 tekende HTM een contract met Stadler voor 56 trams van het type TINA, later uitgebreid tot 62. Het is de eerste Stadler-tram in Nederland, en HTM is daarmee wereldwijd de grootste klant voor de TINA.",
+			"Reizigers mochten meedenken over details als knoppen, handgrepen en het houtpatroon van de vloer. In november 2023 presenteerde HTM het ontwerp. Achter de cabines komen kunstwerken die zijn geïnspireerd op M.C. Escher, om de tram iets echt Haags te geven.",
+			"De eerste TINA (7001) kwam op vrijdagavond 8 augustus 2025 per dieplader vanaf de Duits-Nederlandse grens bij Babberich naar Den Haag en reed kort daarna zijn eerste meters op het Haagse tramnet. Daarna volgde een jaar van testen en toelating.",
+			"Eind augustus 2026 mocht het publiek een kijkje nemen. Op vrijdag 4 september 2026 reden de eerste passagiers mee, van de remise in Scheveningen naar het Kerkplein, en vanaf maandag 7 september rijdt TINA in de gewone dienst op lijn 2. Vanaf 2027 volgen de lijnen 1, 6 en 12; de GTL8's verdwijnen geleidelijk."
+		],
+		"feiten": [
+			"TINA is een afkorting van het Duitse 'Total Integrierter Niederflur-Antrieb': volledig geïntegreerde lagevloeraandrijving.",
+			"Het is de eerste tram van Stadler in Nederland, en met 62 stuks is HTM wereldwijd de grootste TINA-klant.",
+			"Dankzij de accu kan TINA 1,26 km zonder bovenleiding rijden; zo kunnen draden verdwijnen op lastige kruisingen of mooie plekken in de oude stad.",
+			"Achter de cabines hangen kunstwerken geïnspireerd op M.C. Escher.",
+			"Het publiek mocht meebeslissen over knoppen, handgrepen en het houtpatroon van de vloer.",
+			"De eerste TINA reisde per dieplader over de snelweg naar Den Haag, vanaf de grens bij Babberich.",
+			"Per reiziger verbruikt TINA ongeveer een kwart minder energie dan de trams die hij vervangt."
+		],
+		"bronnen": [
+			{
+				"titel": "Haagse TINA (Wikipedia)",
+				"url": "https://nl.wikipedia.org/wiki/Haagse_TINA"
+			},
+			{
+				"titel": "TINA, de nieuwe tram van HTM (HTM)",
+				"url": "https://www.htm.nl/over-htm/ons-vervoer/tina-de-nieuwe-tram-van-htm/"
+			},
+			{
+				"titel": "TINA Den Haag HTM (Stadler)",
+				"url": "https://www.stadlerrail.com/en/solutions/references/tina-htm"
+			},
+			{
+				"titel": "Den Haag's 'beautiful TINA tram' unveiled (Railway Gazette, 2026)",
+				"url": "https://www.railwaygazette.com/tram-light-rail-vehicle/2026/09/07/den-haags-beautiful-tina-tram-unveiled/"
+			},
+			{
+				"titel": "Eerste rit met passagiers voor Tina-tram in Den Haag (Mobiliteit.nl)",
+				"url": "https://www.mobiliteit.nl/beleid/2026/09/07/eerste-rit-met-passagiers-voor-tina-tram-in-den-haag/"
+			},
+			{
+				"titel": "Nieuwe trams met kunst en snufjes (Den Haag Centraal)",
+				"url": "https://www.denhaagcentraal.net/nieuws/nieuwe-trams-met-kunst-en-snufjes/"
+			}
+		],
+		"wikipedia": {
+			"taal": "nl",
+			"titel": "Haagse_TINA"
+		}
+	},
+	{
+		"id": "avenio",
+		"code": "AVENIO",
+		"groep": "Tram en metro",
+		"naam": "Siemens Avenio (Haagse stadstram)",
+		"soort": "tram",
+		"vervoerders": "HTM (Den Haag en omgeving)",
+		"kort": "De Avenio van Siemens is de moderne stadstram van Den Haag: 35 meter lang, met een lage vloer en airco. Hij kan in twee richtingen rijden en heeft aan elke kant vier dubbele deuren en één enkele deur. Sinds 2020 heeft elke Avenio een slimme 'remhulp': radar en een camera waarschuwen de bestuurder en helpen aanrijdingen te voorkomen.",
+		"varianten": [
+			{
+				"code": "Avenio (serie 1)",
+				"naam": "Avenio eerste serie",
+				"omschrijving": "De 40 trams uit het contract van 2011. Rijden sinds november 2015 met reizigers. Alle Avenio's zijn voor de reiziger gelijk: lage vloer, airco en ruime deuren.",
+				"herkenning": "Nummers 5001–5040; wit-rood (vroeger grijs-rood)",
+				"bakken": "4 delen, 35 m",
+				"zitplaatsen": "ca. 70 zitplaatsen en 168 staanplaatsen",
+				"gebouwd": "2014–2015",
+				"nummers": [
+					[
+						5001,
+						5040
+					]
+				]
+			},
+			{
+				"code": "Avenio (serie 2)",
+				"naam": "Avenio tweede serie",
+				"omschrijving": "20 extra trams, besteld in maart 2014. De eerste twee kwamen op 20 november 2015 aan in de remise Zichtenburg. Gelijk aan de eerste serie.",
+				"herkenning": "Nummers 5041–5060",
+				"bakken": "4 delen, 35 m",
+				"zitplaatsen": "ca. 70 zitplaatsen",
+				"gebouwd": "2015–2016",
+				"nummers": [
+					[
+						5041,
+						5060
+					]
+				]
+			},
+			{
+				"code": "Avenio (serie 3)",
+				"naam": "Avenio derde serie",
+				"omschrijving": "10 extra trams, besteld in 2017. De 5061 kwam op 7 juni 2019, de 5070 op 24 januari 2020. De jongste Avenio's.",
+				"herkenning": "Nummers 5061–5070",
+				"bakken": "4 delen, 35 m",
+				"zitplaatsen": "ca. 70 zitplaatsen",
+				"gebouwd": "2019–2020",
+				"nummers": [
+					[
+						5061,
+						5070
+					]
+				]
+			}
+		],
+		"techniek": [
+			{
+				"label": "Bouwer",
+				"waarde": "Siemens Mobility, fabriek in Wenen (Oostenrijk)"
+			},
+			{
+				"label": "Bouwjaren",
+				"waarde": "2014–2020"
+			},
+			{
+				"label": "Aantal gebouwd",
+				"waarde": "70"
+			},
+			{
+				"label": "Lengte",
+				"waarde": "35,0 m"
+			},
+			{
+				"label": "Breedte",
+				"waarde": "2,55 m"
+			},
+			{
+				"label": "Gewicht",
+				"waarde": "ca. 50,7 ton"
+			},
+			{
+				"label": "Vermogen",
+				"waarde": "ca. 720 kW (6 motoren van 120 kW)"
+			},
+			{
+				"label": "Topsnelheid",
+				"waarde": "80 km/h"
+			},
+			{
+				"label": "Acceleratie",
+				"waarde": "1,2 m/s² bij het optrekken"
+			},
+			{
+				"label": "Zitplaatsen",
+				"waarde": "ca. 70 (64 vaste plus 5 klapstoelen volgens een andere telling) en 168 staanplaatsen"
+			},
+			{
+				"label": "Opbouw",
+				"waarde": "4 delen, tweerichtingstram, 4 dubbele en 1 enkele deur per kant"
+			},
+			{
+				"label": "Comfort",
+				"waarde": "Airco in de hele tram (twee grote units die elk twee delen koelen) plus aparte airco voor de cabines"
+			}
+		],
+		"kosten": "Het eerste contract (november 2011, 40 trams) was ruim € 100 miljoen waard, inclusief opleiding van bestuurders, documentatie en reserveonderdelen: zo'n € 2,5 miljoen per tram. De 20 extra trams uit 2014 kostten € 55 miljoen.",
+		"geschiedenis": [
+			"In november 2011 bestelde HTM 40 lagevloertrams van het nieuwe type Avenio bij Siemens, gebouwd in Wenen. De eerste Avenio (5003) werd op 5 juli 2014 bij de Grote Kerk in Den Haag aan koning Willem-Alexander getoond.",
+			"Daarna liep het project flinke vertraging op. HTM vond al in Wenen gebreken die Siemens niet op tijd kon oplossen, en spoorwerkzaamheden maakten testritten lastig. Pas op 2 november 2015 reed de Avenio voor het eerst met reizigers, op lijn 2. Daarna volgden de lijnen 11 (maart 2016), 17 (mei 2016), 9 (augustus 2016), 15 (april 2017) en 16 (juni 2022). Het plan om ook drukke lijn 1 met Avenio's te rijden werd losgelaten, omdat de nodige aanpassingen aan de Scheveningseweg vertraagd raakten door onenigheid over het kappen van bomen.",
+			"HTM bestelde in maart 2014 20 extra trams en in 2017 nog eens 10. De laatste, de 5070, kwam op 24 januari 2020, waarmee er 70 Avenio's rijden. In 2019 testte HTM een door Siemens ontwikkeld remhulpsysteem, eerst op één en daarna op tien trams; vanaf januari 2020 kregen alle Avenio's het. HTM was daarmee de eerste vervoerder in Nederland met dit systeem.",
+			"De oorspronkelijk grijs-rode R-net-trams werden tot eind 2023 omgespoten naar wit-rood. Sinds september 2026 rijdt de Avenio samen met de nieuwe TINA-tram op de Haagse stadslijnen."
+		],
+		"feiten": [
+			"De eerste Avenio werd in 2014 aan koning Willem-Alexander getoond, ruim een jaar voordat er een reiziger in mocht.",
+			"HTM was de eerste in Nederland met een automatische remhulp: radar en een camera zien fietsers, voetgangers en plots remmende auto's en grijpen zo nodig in.",
+			"De remhulp werd eerst uitgebreid getest: de proeftrams reden er samen 500.000 kilometer mee.",
+			"Lijn 1 kreeg nooit Avenio's, omdat het aanpassen van de Scheveningseweg vastliep op een discussie over bomen.",
+			"De Avenio is gebouwd in de Siemens-fabriek in Wenen, waar zo'n negenhonderd mensen werken.",
+			"Met 2,55 meter is de Avenio smaller dan de RandstadRail-tram (2,65 m)."
+		],
+		"bronnen": [
+			{
+				"titel": "Haagse Avenio (Wikipedia)",
+				"url": "https://nl.wikipedia.org/wiki/Haagse_Avenio"
+			},
+			{
+				"titel": "Den Haag orders Siemens Avenio trams (Railway Gazette, 2011)",
+				"url": "https://www.railwaygazette.com/urban/2011/11/18/den-haag-orders-siemens-avenio-trams/"
+			},
+			{
+				"titel": "HTM voert automatische remhulp in op alle Aveniotrams (HTM)",
+				"url": "https://www.htm.nl/nieuws/htm-voert-automatische-remhulp-in-op-alle-aveniotrams"
+			},
+			{
+				"titel": "Dossier Avenio – beschrijving van de Haagse Avenio (haagsetrams.com)",
+				"url": "https://haagsetrams.com/avenio/avenio-denhaag-materieelinfo/"
+			},
+			{
+				"titel": "Avenio tram commences passenger service in The Hague (Siemens)",
+				"url": "https://press.siemens.com/global/en/feature/avenio-tram-commences-passenger-service-hague"
+			},
+			{
+				"titel": "HTM bestelt 20 extra Avenio trams bij Siemens (Treinreiziger.nl)",
+				"url": "https://www.treinreiziger.nl/htm-bestelt-20-extra-avenio-trams-bij-siemens/"
+			}
+		],
+		"wikipedia": {
+			"taal": "nl",
+			"titel": "Haagse_Avenio"
+		}
+	},
+	{
+		"id": "regiocitadis",
+		"code": "REGIOCITADIS",
+		"groep": "Tram en metro",
+		"naam": "Alstom RegioCitadis (RandstadRail-tram van HTM)",
+		"soort": "tram",
+		"vervoerders": "HTM (RandstadRail Den Haag – Zoetermeer, vooral lijnen 3, 4 en 34)",
+		"kort": "De RegioCitadis van Alstom is de RandstadRail-tram van HTM, die vanuit Den Haag over de oude spoorlijn naar Zoetermeer rijdt. Hij is breder en meer 'treinachtig' dan de stadstrams en mag op RandstadRail tot 80 km/h. Let op: ongeveer 70% van de vloer is laag; de hogere delen bereik je via een paar treden, en op RandstadRail-haltes heeft het perron een hoog en een laag deel.",
+		"varianten": [
+			{
+				"code": "RegioCitadis (serie 1)",
+				"naam": "RegioCitadis eerste serie",
+				"omschrijving": "Gebouwd door Alstom LHB in Salzgitter (Duitsland) voor de start van RandstadRail in 2006. De lage delen liggen op 41,5 cm, de hoge op 66,5 cm hoogte.",
+				"herkenning": "Nummers 4001–4054 (de 4015 bestaat niet meer)",
+				"bakken": "3 rijtuigen, 36,76 m",
+				"zitplaatsen": "84 zitplaatsen (ca. 220 reizigers in totaal)",
+				"gebouwd": "2006–2007",
+				"nummers": [
+					[
+						4001,
+						4054
+					]
+				]
+			},
+			{
+				"code": "RegioCitadis (serie 2)",
+				"naam": "RegioCitadis tweede serie",
+				"omschrijving": "18 extra trams uit de optie van november 2008, gebouwd in Reichshoffen (Frankrijk) en tussen februari en de zomer van 2011 één per week afgeleverd. Voor de reiziger gelijk aan de eerste serie.",
+				"herkenning": "Nummers 4055–4072",
+				"bakken": "3 rijtuigen, 36,76 m",
+				"zitplaatsen": "84 zitplaatsen",
+				"gebouwd": "2011",
+				"nummers": [
+					[
+						4055,
+						4072
+					]
+				]
+			}
+		],
+		"techniek": [
+			{
+				"label": "Bouwer",
+				"waarde": "Alstom: eerste serie Alstom LHB in Salzgitter (Duitsland), tweede serie Reichshoffen (Frankrijk)"
+			},
+			{
+				"label": "Bouwjaren",
+				"waarde": "2006–2007 en 2011"
+			},
+			{
+				"label": "Aantal gebouwd",
+				"waarde": "72 (71 in dienst)"
+			},
+			{
+				"label": "Lengte",
+				"waarde": "36,76 m"
+			},
+			{
+				"label": "Breedte",
+				"waarde": "2,65 m"
+			},
+			{
+				"label": "Hoogte",
+				"waarde": "3,80 m"
+			},
+			{
+				"label": "Gewicht",
+				"waarde": "ca. 58 ton"
+			},
+			{
+				"label": "Vermogen",
+				"waarde": "720 kW (4 motoren)"
+			},
+			{
+				"label": "Topsnelheid",
+				"waarde": "Ontworpen voor 100 km/h; in de praktijk maximaal 80 km/h"
+			},
+			{
+				"label": "Zitplaatsen",
+				"waarde": "84"
+			},
+			{
+				"label": "Vloer",
+				"waarde": "70% lage vloer (41,5 cm), hoge delen op 66,5 cm"
+			},
+			{
+				"label": "Spanning/aandrijving",
+				"waarde": "Elektrisch via de bovenleiding, geschikt voor 600 V én 750 V gelijkstroom"
+			},
+			{
+				"label": "Opbouw",
+				"waarde": "3 rijtuigen, asindeling Bo'2'2'Bo (alleen de buitenste draaistellen aangedreven)"
+			}
+		],
+		"kosten": "Alstom won in april 2004 een contract van € 150 miljoen voor de RandstadRail-trams (eerste serie). De prijs van de 18 extra trams uit 2008 is niet gevonden.",
+		"geschiedenis": [
+			"Voor RandstadRail werden de oude spoorlijnen van Den Haag naar Zoetermeer (en de Hofpleinlijn naar Rotterdam) omgebouwd tot lightrail: een tussenvorm van tram en trein. HTM koos daarvoor de RegioCitadis van Alstom, een 'tramtrein' die zowel door de stad als over vrije baan snel kan rijden. In april 2004 werd het contract van € 150 miljoen bekendgemaakt.",
+			"Op 29 oktober 2006 begon HTM met de RegioCitadis op lijn 4. Na twee ontsporingen op 29 november 2006 werden alle RandstadRail-lijnen stilgelegd, behalve het RET-deel tussen Hofplein en Nootdorp. Pas op 27 oktober 2007 reden alle lijnen weer volgens plan.",
+			"In november 2008 nam HTM een optie op 18 extra trams. Die werden in 2011 in Reichshoffen gebouwd en in een half jaar tijd geleverd, waarmee de vloot op 72 kwam. In 2014 raakten twee trams beschadigd; de 4015 werd na een botsing met de 4046 gesloopt, zodat er nu 71 rijden.",
+			"De RegioCitadis is nog altijd het werkpaard van RandstadRail. Voor de RandstadRail-haltes werden de perrons zo gebouwd dat er een hoog en een laag deel is, zodat je bij de lage vloer gelijkvloers instapt."
+		],
+		"feiten": [
+			"De RegioCitadis is gebouwd als 'tramtrein': hij kan in principe 100 km/h, maar mag in de Haagse regio maximaal 80.",
+			"Met 2,65 meter is hij 10 centimeter breder dan de Haagse stadstram Avenio.",
+			"Op RandstadRail-haltes zie je perrons met een hoog en een laag deel, afgestemd op de twee vloerhoogtes van deze tram.",
+			"De 18 trams van de tweede serie kwamen in 2011 met een tempo van één per week uit de Franse fabriek.",
+			"In de zomer van 2011, toen de laatste Haagse RegioCitadis werd afgeleverd, vierde Alstom zijn honderdste RegioCitadis.",
+			"Familieleden van deze tram rijden onder meer als RegioTram in Kassel (Duitsland)."
+		],
+		"bronnen": [
+			{
+				"titel": "Haagse RegioCitadis (Wikipedia)",
+				"url": "https://nl.wikipedia.org/wiki/Haagse_RegioCitadis"
+			},
+			{
+				"titel": "ALSTOM wins 150 million euro contract for the supply of tram-trains in the Netherlands (Alstom, 2004)",
+				"url": "https://www.alstom.com/press-releases-news/2004/4/ALSTOM-wins-150-million-euro-contract-forthesupply-oftram-trains-intheNetherlands-20040420"
+			},
+			{
+				"titel": "The Netherlands receive 18 more Regio Citadis (Alstom, 2011)",
+				"url": "https://www.alstom.com/press-releases-news/2011/3/the-netherlands-receive-18-more-regio-citadis"
+			},
+			{
+				"titel": "RandstadRail – de trams (HTM)",
+				"url": "https://www.htm.nl/over-htm/ons-vervoer/randstadrail-wit-blauwe-trams-htm/"
+			},
+			{
+				"titel": "RandstadRail (Wikipedia, Engels)",
+				"url": "https://en.wikipedia.org/wiki/RandstadRail"
+			}
+		],
+		"wikipedia": {
+			"taal": "nl",
+			"titel": "Haagse_RegioCitadis"
+		}
+	},
+	{
+		"id": "ret-citadis",
+		"code": "RET-CITADIS",
+		"groep": "Tram en metro",
+		"naam": "Alstom Citadis 302 (Rotterdamse tram)",
+		"soort": "tram",
+		"vervoerders": "RET (Rotterdam)",
+		"kort": "De Rotterdamse stadstram is een Alstom Citadis: een lagevloertram van ruim 30 meter die maar in één richting rijdt en alleen aan één kant deuren heeft (daarom keren de trams via keerlussen). Er zijn twee series: de 2000-serie uit 2002–2004 en de iets kortere 2100-serie uit 2010–2012. De oudste serie kreeg rond 2016 alsnog airco, nieuwe stoelen en schermen met reisinformatie.",
+		"varianten": [
+			{
+				"code": "Citadis 302 (2000-serie)",
+				"naam": "Citadis, eerste serie",
+				"omschrijving": "De trams waarmee Rotterdam in 2002 overstapte op lagevloertrams, gekocht voor de 'Tramplus'-lijnen naar de buitenwijken. Na de modernisering zijn ze qua comfort weer bij: met airco en reisinformatieschermen. 59 van de 60 rijden nog.",
+				"herkenning": "Nummers 2001–2060 (de 2035 bestaat niet meer)",
+				"bakken": "5 delen, 31,31 m; vier dubbele deuren aan één kant",
+				"zitplaatsen": "63 zitplaatsen",
+				"gebouwd": "2002–2004",
+				"gemoderniseerd": "Vanaf 2015/2016: nieuwe draaistellen (de onderstellen met de wielen), kunstleren stoelen, ledverlichting, airco, schermen met reisinformatie en ledrichtingfilms",
+				"nummers": [
+					[
+						2001,
+						2060
+					]
+				]
+			},
+			{
+				"code": "Citadis 302 (2100-serie)",
+				"naam": "Citadis, tweede serie",
+				"omschrijving": "Een halve meter korter dan de eerste serie, zodat hij makkelijker door krappe bochten komt. Met deze 53 trams verdwenen de laatste oude hoogvloertrams uit Rotterdam. Iets jonger dan de 2000-serie; voor reizigers vergelijkbaar.",
+				"herkenning": "Nummers 2101–2153",
+				"bakken": "5 delen, 30,85 m",
+				"gebouwd": "2010–2012",
+				"nummers": [
+					[
+						2101,
+						2153
+					]
+				]
+			}
+		],
+		"techniek": [
+			{
+				"label": "Bouwer",
+				"waarde": "Alstom (La Rochelle, Frankrijk), type Citadis 302"
+			},
+			{
+				"label": "Bouwjaren",
+				"waarde": "2002–2004 en 2010–2012"
+			},
+			{
+				"label": "Aantal gebouwd",
+				"waarde": "113 (60 + 53), waarvan 112 in dienst"
+			},
+			{
+				"label": "Lengte",
+				"waarde": "31,31 m (2000-serie) of 30,85 m (2100-serie)"
+			},
+			{
+				"label": "Breedte",
+				"waarde": "2,40 m"
+			},
+			{
+				"label": "Hoogte",
+				"waarde": "3,40 m"
+			},
+			{
+				"label": "Gewicht",
+				"waarde": "ca. 36,7 ton"
+			},
+			{
+				"label": "Vermogen",
+				"waarde": "ca. 420 kW (4 motoren)"
+			},
+			{
+				"label": "Topsnelheid",
+				"waarde": "70 km/h"
+			},
+			{
+				"label": "Zitplaatsen",
+				"waarde": "63 (2000-serie)"
+			},
+			{
+				"label": "Rijrichting",
+				"waarde": "Eenrichtingstram: één cabine, deuren aan één kant (vier dubbele deuren)"
+			},
+			{
+				"label": "Vloer",
+				"waarde": "Volledig lage vloer"
+			}
+		],
+		"kosten": "De eerste 60 trams kostten volgens Alstom € 82 miljoen (contract juli 2000), ongeveer € 1,4 miljoen per tram; een andere bron noemt € 100 miljoen. De prijs van de 53 trams uit 2007 is niet gevonden.",
+		"geschiedenis": [
+			"Rotterdam was in 2000 een van de eerste klanten voor de Citadis. De RET bestelde 60 lagevloertrams voor zijn nieuwe 'Tramplus'-lijnen, die buitenwijken bedienen waar geen metro komt. Ze vervingen de Düwag-gelede trams (ZGT) die zo'n 25 jaar hadden gereden. Vanaf november 2002 leverde Alstom ongeveer één tram per week, en in augustus 2003 werd de nieuwe tram officieel gepresenteerd.",
+			"In juli 2007 volgden 53 extra Citadissen, de 2100-serie, die tussen 2010 en 2012 werden afgeleverd. Ze zijn iets korter, zodat ze beter door krappe bochten kunnen. Daarmee verdwenen de laatste hoogvloertrams en had Rotterdam met 113 stuks destijds de grootste Citadis-vloot ter wereld.",
+			"Op 10 maart 2014 raakten de trams 2029 en 2035 zwaar beschadigd bij een kettingbotsing. Van de voorkant van de 2029 en de achterkant van de 2035 werd één tram gemaakt, die verder ging als 2029. Vanaf 2015 werden de 59 trams van de eerste serie gemoderniseerd; medewerkers van Alstom Ridderkerk bouwden vanaf januari 2016 in de RET-remise airco in, drie trams per vijftien dagen.",
+			"De Citadissen naderen het einde van hun leven: rond 2030 moet volgens de MRDH de helft van de Rotterdamse trams worden vervangen. In september 2026 begon de RET een marktconsultatie voor nieuwe trams, die anders dan de Citadis in twee richtingen moeten kunnen rijden."
+		],
+		"feiten": [
+			"Met 113 trams had Rotterdam rond 2012 de grootste Citadis-vloot ter wereld.",
+			"Twee kapotte trams werden één: de voorkant van de 2029 en de achterkant van de 2035 vormen sinds de botsing van 2014 samen tram 2029.",
+			"De tweede serie is bewust bijna een halve meter korter, zodat hij soepeler door de krappe Rotterdamse bochten komt.",
+			"Airco is er achteraf ingebouwd, in de eigen remise, in een tempo van drie trams per vijftien dagen.",
+			"De Citadis heeft alleen aan één kant deuren; de opvolger moet juist in twee richtingen kunnen rijden.",
+			"De koplampen zijn vervangen door ledmodules, wat onderhoud en energie bespaart.",
+			"Bij de eerste levering kwam er ongeveer elke week een nieuwe tram bij, anderhalf jaar lang."
+		],
+		"bronnen": [
+			{
+				"titel": "Rotterdamse Citadis (Wikipedia)",
+				"url": "https://nl.wikipedia.org/wiki/Rotterdamse_Citadis"
+			},
+			{
+				"titel": "ALSTOM to supply rolling stock for Rotterdam tramway (Alstom, 2000)",
+				"url": "https://www.alstom.com/press-releases-news/2000/7/alstom-to-supply-rolling-stock-for-rotterdam-tramway"
+			},
+			{
+				"titel": "Rotterdam decides to extend its Citadis fleet with 53 more tramway train sets (Alstom, 2007)",
+				"url": "https://www.alstom.com/press-releases-news/2007/7/rotterdam-decides-to-extend-its-citadis-fleet-with-53-more-tramway-train-sets-from-alstom"
+			},
+			{
+				"titel": "Alstom moderniseert Citadis-tram van RET met airconditioning (OVPro)",
+				"url": "https://ovpro.nl/tram/2015/07/27/alstom-moderniseert-citadis-tram-van-ret-met-airconditioning"
+			},
+			{
+				"titel": "RET vraagt fabrikanten naar nieuwe trams die in twee richtingen kunnen rijden (Spoorpro, 2026)",
+				"url": "https://www.spoorpro.nl/materieel/2026/09/10/ret-vraagt-fabrikanten-naar-nieuwe-trams-die-in-twee-richtingen-kunnen-rijden/"
+			},
+			{
+				"titel": "Tram – materieel (RET)",
+				"url": "https://corporate.ret.nl/over-de-ret/materieel/tram"
+			}
+		],
+		"wikipedia": {
+			"taal": "nl",
+			"titel": "Rotterdamse_Citadis"
+		}
 	}
 ]
