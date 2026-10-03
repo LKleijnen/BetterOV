@@ -25,7 +25,8 @@ Advertentievrije OV-webapp (PWA) voor eigen gebruik en een kleine kring vrienden
 | M12 | Laatste data blijft zichtbaar bij slecht bereik, met tijdstip van ophalen | Overal |
 | M13 | Favoriete reizen en plekken | Favorieten |
 | M14 | Google-login alleen voor de allowlist, uitnodigen met een eenmalige link, sync tussen apparaten | Login, Meer → Beheer |
-| M17–M19 | Voertuiginfo: trein zoals op het perron met afbeelding per bak, eerste klas, stilte en drukte, haakjes per bestemming als de trein splitst, kortere trein, treintype (bouwer, bouwjaar, nieuw/ouder; ook regionale en internationale treinen), live positie | Voertuiginfo (per rit) |
+| M17–M19 | Voertuiginfo: trein zoals op het perron met afbeelding per bak, 1e klas en stilte boven de juiste bak (van NS of de vaste indeling van het type), drukte, haakjes per bestemming als de trein splitst (ook in de tijdlijn en het blok *Nu*), kortere trein, versie per treinstel en welke moderner is, live positie | Voertuiginfo (per rit) |
+| — | Voertuigengids: alle treintypes, trams en metro's met versies, techniek, kosten, geschiedenis, leuke feiten, foto (Wikipedia) en bronnen; zoeken op naam of treinstelnummer | Meer → Voertuigen, Voertuiginfo → *Meer over …* |
 | M20 | Laatste trein naar huis: 's avonds vanzelf op het startscherm als je ver van huis bent, met pushmelding 30 en 10 min voor vertrek (en bij uitval) | Plannen, Meer → Instellingen |
 | M21 | Reis live delen via een link zonder login | Reis → Deel live |
 | M22 | Agenda-export (.ics): één afspraak per trein/bus, met spoor en uitstaptijd | Reisadvies, Reis |
@@ -137,7 +138,8 @@ Datamodel zoals in de projectomschrijving, met twee toevoegingen:
 
 ## Beperkingen en nog te controleren
 
-- **NS-treinsamenstelling:** de Virtual Train API is niet openbaar gedocumenteerd en kon hier niet live getest worden. Het instapadvies leest per bak eerste klas en stilte als de data dat bevat, en valt anders terug op per treinstel. In het voertuiginfo-scherm staat *Ruwe NS-data*: daarmee is de verwerking snel bij te stellen zodra de key werkt.
+- **NS-treinsamenstelling:** de Virtual Train API is niet openbaar gedocumenteerd en kon hier niet live getest worden. Per bak leest de app eerste klas en stilte als de data dat bevat, en gebruikt anders de vaste indeling van het type (`src/lib/treinvariant.ts`). Splitsen herkent de app aan de eindbestemming per treinstel én aan de ritdata (takken, meerdere vertrekken, minder treinstellen). In het voertuiginfo-scherm staat *Ruwe NS-data* (met *Kopieer alles*): daarmee is de verwerking snel bij te stellen.
+- **Voertuigengids:** de teksten in `src/lib/data/voertuigen.json` komen uit openbare bronnen (met bronnen op elke pagina). De foto haalt de browser zelf uit het Wikipedia-artikel, met maker en licentie van Wikimedia Commons.
 - **Voertuignummer bus/tram:** staat niet in de open data van Transitous; de app zegt dat eerlijk.
 - **Busprijzen** zijn schattingen (`src/lib/data/tarieven.json`); elk jaar in januari bijwerken.
 - **Push op iOS** werkt alleen als de app op het beginscherm staat; de app legt dat uit bij de eerste login.

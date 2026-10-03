@@ -1,5 +1,5 @@
 <script lang="ts">
-	import { CalendarDays, ChevronRight, History, Info, LogOut, Settings, Shield, Smartphone } from '@lucide/svelte';
+	import { CalendarDays, ChevronRight, History, Info, LogOut, Settings, Shield, Smartphone, TrainFront } from '@lucide/svelte';
 	import { sessie } from '$lib/client/sessie.svelte';
 	import { firebaseActief } from '$lib/client/config';
 	import Onderblad from '$lib/components/Onderblad.svelte';
@@ -22,6 +22,7 @@
 		<li><a href="/instellingen"><Settings size={20} /> <span>Instellingen en meldingen</span> <ChevronRight size={18} /></a></li>
 		<li><a href="/weekplanning"><CalendarDays size={20} /> <span>Weekplanning (vaste reizen)</span> <ChevronRight size={18} /></a></li>
 		<li><a href="/geschiedenis"><History size={20} /> <span>Eerdere reizen</span> <ChevronRight size={18} /></a></li>
+		<li><a href="/voertuigen"><TrainFront size={20} /> <span>Voertuigen</span> <ChevronRight size={18} /></a></li>
 		<li><button onclick={() => (uitlegOpen = true)}><Smartphone size={20} /> <span>Op beginscherm zetten</span> <ChevronRight size={18} /></button></li>
 		{#if sessie.admin && firebaseActief}
 			<li><a href="/beheer"><Shield size={20} /> <span>Beheer: uitnodigingen</span> <ChevronRight size={18} /></a></li>
