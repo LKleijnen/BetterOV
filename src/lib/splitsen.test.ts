@@ -37,6 +37,20 @@ describe('tekst bij splitsen', () => {
 		expect(t?.kort).toBe('Splitst in Sittard · zit voorin (naar Maastricht)');
 	});
 
+	it('noemt twee treinstellen voorin samen het voorste deel', () => {
+		const drie = info({
+			delen: [
+				{ nummer: '1', faciliteiten: [], bakken: 4 },
+				{ nummer: '2', faciliteiten: [], bakken: 4 },
+				{ nummer: '3', faciliteiten: [], bakken: 4 }
+			],
+			instapadvies: { eersteKlas: [], stilte: [], rijrichting: 'links', samenvatting: [], nauwkeurig: false },
+			splitsing: { station: 'Zwolle', jouwDelen: [0, 1], bestemmingen: [], jouwBestemming: 'Groningen', voorUitstappen: true }
+		});
+		expect(splitsTekst(drie)?.jouw).toBe('Zit in het voorste deel naar Groningen.');
+		expect(splitsTekst({ ...drie, splitsing: { ...drie.splitsing!, jouwDelen: [1, 2] } })?.jouw).toBe('Zit in het achterste deel naar Groningen.');
+	});
+
 	it('telt bij rijrichting rechts vanaf de andere kant', () => {
 		const t = splitsTekst(
 			info({

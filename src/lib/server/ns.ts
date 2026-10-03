@@ -444,7 +444,7 @@ export interface NsRitHalte {
 	};
 }
 
-const lijst = (x: unknown): string[] =>
+const alsLijst = (x: unknown): string[] =>
 	(Array.isArray(x) ? x : x == null || x === '' ? [] : [x]).filter((y) => y != null && y !== '').map(String);
 
 /** De ruwe ritdata van NS (journey), 45 s gecachet */
@@ -465,11 +465,11 @@ export function nsRitHaltes(r: Ruw): NsRitHalte[] {
 		const vertrekken = (Array.isArray(s?.departures) ? s.departures : []).map((d: Ruw) => ({
 			naar: naam(d?.destination) ?? naam(d?.direction),
 			ritnummer: d?.product?.number != null ? String(d.product.number) : undefined,
-			nummers: lijst(d?.stockIdentifiers)
+			nummers: alsLijst(d?.stockIdentifiers)
 		}));
 		return {
 			id: s?.id != null ? String(s.id) : undefined,
-			volgende: lijst(s?.nextStopId),
+			volgende: alsLijst(s?.nextStopId),
 			code: typeof s?.id === 'string' ? s.id.split('_')[0].toUpperCase() : undefined,
 			uic: s?.stop?.uicCode ? String(s.stop.uicCode) : undefined,
 			naam: s?.stop?.name ?? '',

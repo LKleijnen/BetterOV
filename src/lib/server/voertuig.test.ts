@@ -122,6 +122,17 @@ describe('splitsen zonder eindbestemming per treinstel (alleen ritdata)', () => 
 		expect(bepaalSplitsing(delen, rit, { stationNaam: 'Utrecht Centraal', naar: 'Sittard' })?.voorUitstappen).toBe(false);
 	});
 
+	it('zegt niets over jouw deel als niet duidelijk is welke tak de jouwe is', () => {
+		const rit = [
+			tak('UT_0', 'Utrecht Centraal', ['STD_0'], ['9501', '9502']),
+			tak('STD_0', 'Sittard', ['MT_0', 'HRL_0'], ['9501', '9502']),
+			tak('MT_0', 'Maastricht', [], ['9501']),
+			tak('HRL_0', 'Heerlen', [], ['9502'])
+		];
+		const s = bepaalSplitsing(delen, rit, { stationNaam: 'Utrecht Centraal', naar: 'Valkenburg', richting: 'Onbekend' });
+		expect(s).toEqual({ station: 'Sittard', jouwDelen: [], bestemmingen: [], voorUitstappen: true });
+	});
+
 	it('geeft niets bij een gewone rit', () => {
 		const rit = [halte('Utrecht Centraal', ['9501', '9502']), halte('Sittard', ['9501', '9502']), halte('Maastricht', ['9501', '9502'])];
 		expect(bepaalSplitsing(delen, rit, { stationNaam: 'Utrecht Centraal', naar: 'Maastricht' })).toBeUndefined();

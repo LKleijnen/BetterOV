@@ -122,8 +122,13 @@ function zelfdeNaam(a?: string, b?: string): boolean {
  * ritnummer. Zonder volgende-informatie is de lijst al één lijn.
  */
 export function ritPad(rit: NsRitHalte[], v: { naar?: string; richting?: string; ritnummer?: string } = {}): NsRitHalte[] {
+	return ritPadMetZekerheid(rit, v).pad;
+}
+
+/** Zoals ritPad, en of de tak zeker de jouwe is (anders is bij een splitsing de eerste tak gekozen) */
+function ritPadMetZekerheid(rit: NsRitHalte[], v: { naar?: string; richting?: string; ritnummer?: string }): { pad: NsRitHalte[]; zeker: boolean } {
 	const opId = new Map(rit.filter((h) => h.id).map((h) => [h.id!, h]));
-	if (!rit.some((h) => (h.volgende?.length ?? 0) > 1) || opId.size < rit.length) return rit;
+	if (!rit.some((h) => (h.volgende?.length ?? 0) > 1) || opId.size < rit.length) return { pad: rit, zeker: true };
 	const takVanaf = (id: string): NsRitHalte[] => {
 		const uit: NsRitHalte[] = [];
 		const gezien = new Set<string>();
@@ -137,6 +142,7 @@ export function ritPad(rit: NsRitHalte[], v: { naar?: string; richting?: string;
 	};
 	const pad: NsRitHalte[] = [];
 	const gezien = new Set<string>();
+	let zeker = true;
 	let h: NsRitHalte | undefined = rit[0];
 	while (h && !gezien.has(h.id!)) {
 		gezien.add(h.id!);
@@ -151,12 +157,14 @@ export function ritPad(rit: NsRitHalte[], v: { naar?: string; richting?: string;
 				(v.richting ? takken.find((t) => zelfdeNaam(t.haltes.at(-1)?.naam, v.richting)) : undefined) ??
 				(v.ritnummer
 					? takken.find((t) => huidig.vertrekken?.some((d) => d.ritnummer === v.ritnummer && zelfdeNaam(d.naar, t.haltes.at(-1)?.naam)))
-					: undefined) ??
-				takken[0];
-			h = opId.get(keuze.id);
+					: undefined);
+			// Stap je al vóór deze splitsing uit, dan maakt de tak niet uit
+			const alUitgestapt = !!v.naar && pad.some((x) => zelfdeNaam(x.naam, v.naar));
+			if (!keuze && !alUitgestapt) zeker = false;
+			h = opId.get((keuze ?? takken[0]).id);
 		} else h = volgende.length ? opId.get(volgende[0]) : undefined;
 	}
-	return pad;
+	return { pad, zeker };
 }
 
 /** Eindhalte van elke andere tak die bij deze halte afsplitst */
@@ -196,7 +204,7 @@ export function bepaalSplitsing(
 	rit: NsRitHalte[],
 	v: { stationNaam?: string; naar?: string; richting?: string; ritnummer?: string }
 ): Splitsing | undefined {
-	const pad = ritPad(rit, v);
+	const { pad, zeker: takZeker } = ritPadMetZekerheid(rit, v);
 	const stoppend = pad.filter((h) => h.status !== 'PASSING');
 	const iVan = Math.max(0, stoppend.findIndex((h) => zelfdeNaam(h.naam, v.stationNaam)));
 	const iNaar = v.naar ? stoppend.findIndex((h, i) => i > iVan && zelfdeNaam(h.naam, v.naar)) : -1;
@@ -260,6 +268,16 @@ export function bepaalSplitsing(
 			? delen.map((_, deel) => ({ deel, naar: jouwDelen.includes(deel) ? jouwBestemming : (anderen.length === 1 ? anderen[0] : '') })).filter((b) => b.naar)
 			: [];
 	if (perTreinstel && !jouwDelen.length) return undefined;
+
+	// Weten we niet welke tak de jouwe is, dan geen uitspraak over jouw deel of de bestemmingen
+	if (!takZeker && !perTreinstel) {
+		return {
+			station: iSplits >= 0 ? stoppend[iSplits].naam : undefined,
+			jouwDelen: [],
+			bestemmingen: [],
+			voorUitstappen: true
+		};
+	}
 
 	return {
 		station: iSplits >= 0 ? stoppend[iSplits].naam : undefined,
