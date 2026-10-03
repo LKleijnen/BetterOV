@@ -1,6 +1,6 @@
 // Nepdata voor ontwikkeling en tests (MOCK_API=1). Nooit gebruikt in productie.
 
-import type { Advies, Halte, Leg, PlanAntwoord, Plek, TreinInfo, Vertrek, VertrekAntwoord, Voorkeur } from '../types';
+import type { Advies, Halte, Leg, PlanAntwoord, Plek, StationInfo, TreinInfo, Vertrek, VertrekAntwoord, Voorkeur } from '../types';
 import { adviesId, herbereken } from '../reis';
 import { afstandMeter, codeerPolyline, looptijdSeconden } from '../geo';
 import { opVertrek } from './planner';
@@ -359,6 +359,34 @@ export function mockTrein(ritnummer: string): TreinInfo {
 					voorUitstappen: true
 				}
 			: undefined,
+		bron: ['Mockdata'],
+		opgehaaldOp: new Date().toISOString()
+	};
+}
+
+/** Station met sporen en voorzieningen (nepdata) */
+export function mockStation(naam = 'Utrecht Centraal'): StationInfo {
+	const lat = 52.0894;
+	const lon = 5.1101;
+	const vlak = (dLat: number, dLon: number) => ({ lat: lat + dLat, lon: lon + dLon });
+	const tijden = [1, 2, 3, 4, 5, 6, 7].map((dag) => ({ dag, van: '06:00', tot: '23:00' }));
+	return {
+		code: 'UT',
+		naam,
+		lat,
+		lon,
+		land: 'NL',
+		type: 'MEGA_STATION',
+		sporen: ['1', '2', '3', '4', '5', '7', '8', '11', '12', '14', '15', '18', '19', '20', '21'],
+		reisassistentie: true,
+		voorzieningen: [
+			{ soort: 'stationfacility', soortNaam: 'Stationsvoorzieningen', naam: 'Toiletten', ...vlak(0.0003, 0.0004), open: true, openingstijden: tijden },
+			{ soort: 'stationfacility', soortNaam: 'Stationsvoorzieningen', naam: 'Kluisjes', ...vlak(-0.0002, 0.0006), beschrijving: 'Bagagekluisjes in verschillende maten' },
+			{ soort: 'stationfacility', soortNaam: 'Stationsvoorzieningen', naam: 'NS Servicepunt', ...vlak(0.0001, -0.0003), open: true, openingstijden: tijden },
+			{ soort: 'ovfiets', soortNaam: 'OV-fiets', naam: 'OV-fiets Jaarbeursplein', ...vlak(-0.0006, -0.0012), ovFietsen: 143 },
+			{ soort: 'shop', soortNaam: 'Winkels en horeca', naam: 'AH to go', ...vlak(0.0002, 0.0001), open: false, openingstijden: tijden },
+			{ soort: 'shop', soortNaam: 'Winkels en horeca', naam: 'Kiosk', ...vlak(-0.0001, 0.0002) }
+		],
 		bron: ['Mockdata'],
 		opgehaaldOp: new Date().toISOString()
 	};

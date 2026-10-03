@@ -18,9 +18,9 @@ Advertentievrije OV-webapp (PWA) voor eigen gebruik en een kleine kring vrienden
 | M4, M15, M16 | Adviezen op vertrektijd met labels Snelst / Minste overstappen / Goedkoopst / Rustigst; heeft alles een overstap, dan zoekt de app er een reis met minder overstappen bij | Reisadviezen |
 | M5 | Vertrekbord per halte of in de buurt, ververst elke 30 s | Vertrek |
 | M6 | *Nu vertrekken*: looptijd vanaf GPS en aftelling | Reisadvies |
-| M7, M8 | Actieve reis met één tik; ververst bij openen en elke 30 s; alternatieven vanaf het overstappunt | Reis |
+| M7, M8 | Actieve reis met één tik; ververst bij openen en elke 30 s; samenvatting bovenaan, bolletje op de lijn en doorgestreepte haltes, snelheid (GPS); alternatieven vanaf het overstappunt (inklapbaar, kiezen op de detailpagina) | Reis |
 | M9 | Pushmelding binnen 2 min bij uitval, onhaalbare overstap, spoorwijziging, vertraging | Cron-worker |
-| M10 | Live kaart met eigen positie en (geschatte of GPS-)positie van het voertuig; treinen over het echte spoor (NS SpoorKaart), optioneel alle spoorlijnen | Reis → Live kaart |
+| M10 | Live kaart met eigen positie en (geschatte of GPS-)positie van het voertuig; treinen over het echte spoor (NS SpoorKaart), optioneel alle spoorlijnen | Reis (kaartje, schermvullend) |
 | M11 | Fallback naar de NS-planner, met melding | Server |
 | M12 | Laatste data blijft zichtbaar bij slecht bereik, met tijdstip van ophalen | Overal |
 | M13 | Favoriete reizen en plekken | Favorieten |
@@ -29,6 +29,7 @@ Advertentievrije OV-webapp (PWA) voor eigen gebruik en een kleine kring vrienden
 | M20 | Laatste trein naar huis: 's avonds vanzelf op het startscherm als je ver van huis bent, met pushmelding 30 en 10 min voor vertrek (en bij uitval) | Plannen, Meer → Instellingen |
 | M21 | Reis live delen via een link zonder login | Reis → Deel live |
 | M22 | Agenda-export (.ics): één afspraak per trein/bus, met spoor en uitstaptijd | Reisadvies, Reis |
+| — | Stationspagina: kaart van het station met voorzieningen (NS Places API), sporen, reisassistentie, OV-fietsen, openingstijden; bij een overstap met aankomst- en vertrekspoor | Stationsicoon bij een treinhalte, overstap |
 | C1, C2 | Eerdere reizen, weekplanning van vaste reizen | Meer |
 | — | Weergave automatisch (systeem), licht of donker | Meer → Instellingen |
 
@@ -126,6 +127,7 @@ Open de app, log in met Google en nodig mensen uit via *Meer* → *Beheer: uitno
 | `POST /api/reisstatus` | Ververst een lopende reis en geeft de problemen |
 | `GET /api/spoorkaart` | Spoorlijnen (NS SpoorKaart); de app rekent zelf de route over het spoor uit |
 | `GET /api/rit`, `/api/voertuig`, `/api/zoek`, `/api/omgekeerd` | Rit met alle haltes, treinpositie, zoeken, adres bij GPS |
+| `GET /api/station` | NS-station (code, of naam + lat/lon): sporen, soort, reisassistentie en voorzieningen |
 | `GET/POST/DELETE /api/wekker` | Waarschuwing voor de laatste trein naar huis aan/uit (Firestore `laatsteTreinWekkers`) |
 | Cron (elke minuut) | Controleert actieve reizen, stuurt push, waarschuwt voor de laatste trein naar huis, rondt reizen af, ruimt gedeelde reizen op |
 

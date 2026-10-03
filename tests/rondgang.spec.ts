@@ -277,3 +277,36 @@ test('reis onderweg: samenvatting, kaartje, voortgang en alternatieven', async (
 	await page.waitForURL('**/reis');
 	expect(fouten).toEqual([]);
 });
+
+test('station: vanuit een overstap naar de stationspagina met sporen, kaart en voorzieningen', async ({ page }) => {
+	const fouten: string[] = [];
+	page.on('pageerror', (e) => fouten.push(e.message));
+	await page.route('https://tiles.openfreemap.org/**', (route) =>
+		route.fulfill({
+			contentType: 'application/json',
+			body: JSON.stringify({ version: 8, sources: {}, layers: [{ id: 'achtergrond', type: 'background', paint: { 'background-color': '#dde' } }] })
+		})
+	);
+	await page.goto('/');
+	await kiesPlek(page, /^Van/, 'amersfoort', /Amersfoort Centraal/);
+	await kiesPlek(page, /^Naar/, 'amsterdam c', /Amsterdam Centraal/);
+	await page.getByRole('button', { name: 'Plan reis' }).click();
+	await page.locator('a.advies', { has: page.locator('.lijnlabel').nth(1) }).first().click();
+	// Stationsicoon bij elke treinhalte
+	await expect(page.getByRole('link', { name: /^Station / }).first()).toBeVisible();
+	// Overstap uitklappen: link naar het station met beide sporen
+	await page.locator('button.overstap').first().click();
+	await page.locator('a.stationrij').first().click();
+	await page.waitForURL(/\/station\?.*aankomst=/);
+	await expect(page.getByRole('heading', { level: 1 })).toHaveText('Utrecht Centraal');
+	await expect(page.getByText(/Overstap:/)).toBeVisible();
+	await expect(page.getByRole('heading', { name: 'Plattegrond' })).toBeVisible();
+	await expect(page.locator('canvas.maplibregl-canvas')).toHaveCount(1);
+	await expect(page.getByRole('heading', { name: 'Sporen' })).toBeVisible();
+	await expect(page.getByText('143 fietsen beschikbaar')).toBeVisible();
+	// Vertrektijden van dit station
+	await page.getByRole('button', { name: 'Vertrektijden' }).click();
+	await page.waitForURL('**/vertrektijden');
+	await expect(page.getByText(/Ververst elke 30 s/)).toBeVisible();
+	expect(fouten).toEqual([]);
+});
