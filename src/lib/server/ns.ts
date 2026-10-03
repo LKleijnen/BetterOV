@@ -417,6 +417,10 @@ export async function nsVertrektijden(key: string | undefined, stationCode: stri
 // ---------- Rit (journey): drukte en materieel per halte ----------
 
 export interface NsRitHalte {
+	/** Id van de halte binnen de rit (bijvoorbeeld "ASD_0"), om takken te volgen */
+	id?: string;
+	/** Id's van de volgende haltes: twee of meer als de trein hier splitst */
+	volgende?: string[];
 	code?: string;
 	uic?: string;
 	naam: string;
@@ -429,6 +433,8 @@ export interface NsRitHalte {
 	geplandSpoor?: string;
 	drukte?: Drukte;
 	uitgevallen?: boolean;
+	/** Vertrekken vanaf deze halte met hun bestemming en treinstellen (bij splitsen meer dan één) */
+	vertrekken?: { naar?: string; ritnummer?: string; nummers: string[] }[];
 	materieel?: {
 		aantalDelen?: number;
 		normaalDelen?: number;
@@ -438,50 +444,65 @@ export interface NsRitHalte {
 	};
 }
 
-export async function nsRit(key: string | undefined, ritnummer: string, datumTijd?: string): Promise<NsRitHalte[]> {
-	return gecached(`ns-rit:${ritnummer}:${datumTijd?.slice(0, 13) ?? ''}`, 45, async () => {
-		const r = await ns(
-			key,
-			'/reisinformatie-api/api/v2/journey',
-			{ train: ritnummer, dateTime: datumTijd, omitCrowdForecast: 'false' },
-			7000
-		);
-		const stops: Ruw[] = r?.payload?.stops ?? [];
-		return stops.map((s): NsRitHalte => {
-			const aank = s?.arrivals?.[0];
-			const vert = s?.departures?.[0];
-			const stock = s?.actualStock;
-			const gepland = s?.plannedStock;
-			return {
-				code: typeof s?.id === 'string' ? s.id.split('_')[0].toUpperCase() : undefined,
-				uic: s?.stop?.uicCode ? String(s.stop.uicCode) : undefined,
-				naam: s?.stop?.name ?? '',
-				lat: s?.stop?.lat ?? 0,
-				lon: s?.stop?.lng ?? 0,
-				status: s?.status,
-				aankomst: tijd(aank?.plannedTime, aank?.actualTime),
-				vertrek: tijd(vert?.plannedTime, vert?.actualTime),
-				spoor: vert?.actualTrack ?? vert?.plannedTrack ?? aank?.actualTrack ?? aank?.plannedTrack,
-				geplandSpoor: vert?.plannedTrack ?? aank?.plannedTrack,
-				drukte: nsDrukte(vert?.crowdForecast ?? aank?.crowdForecast),
-				uitgevallen: (vert?.cancelled ?? aank?.cancelled) || undefined,
-				materieel: stock
-					? {
-							aantalDelen: stock.numberOfParts,
-							normaalDelen: gepland?.numberOfParts,
-							zitplaatsen: stock.numberOfSeats,
-							type: stock.trainType,
-							delen: (stock.trainParts ?? []).map((p: Ruw) => ({
-								nummer: p?.stockIdentifier != null ? String(p.stockIdentifier) : undefined,
-								type: p?.type ?? stock.trainType,
-								faciliteiten: Array.isArray(p?.facilities) ? p.facilities : [],
-								afbeelding: p?.image?.uri
-							}))
-						}
-					: undefined
-			};
-		});
+const alsLijst = (x: unknown): string[] =>
+	(Array.isArray(x) ? x : x == null || x === '' ? [] : [x]).filter((y) => y != null && y !== '').map(String);
+
+/** De ruwe ritdata van NS (journey), 45 s gecachet */
+export async function nsRitRuw(key: string | undefined, ritnummer: string, datumTijd?: string): Promise<Ruw> {
+	return gecached(`ns-rit-ruw:${ritnummer}:${datumTijd?.slice(0, 13) ?? ''}`, 45, () =>
+		ns(key, '/reisinformatie-api/api/v2/journey', { train: ritnummer, dateTime: datumTijd, omitCrowdForecast: 'false' }, 7000)
+	);
+}
+
+export function nsRitHaltes(r: Ruw): NsRitHalte[] {
+	const stops: Ruw[] = r?.payload?.stops ?? [];
+	return stops.map((s): NsRitHalte => {
+		const aank = s?.arrivals?.[0];
+		const vert = s?.departures?.[0];
+		const stock = s?.actualStock;
+		const gepland = s?.plannedStock;
+		const naam = (x: Ruw): string | undefined => (typeof x === 'string' ? x : (x?.name ?? x?.mediumName ?? x?.longName)) || undefined;
+		const vertrekken = (Array.isArray(s?.departures) ? s.departures : []).map((d: Ruw) => ({
+			naar: naam(d?.destination) ?? naam(d?.direction),
+			ritnummer: d?.product?.number != null ? String(d.product.number) : undefined,
+			nummers: alsLijst(d?.stockIdentifiers)
+		}));
+		return {
+			id: s?.id != null ? String(s.id) : undefined,
+			volgende: alsLijst(s?.nextStopId),
+			code: typeof s?.id === 'string' ? s.id.split('_')[0].toUpperCase() : undefined,
+			uic: s?.stop?.uicCode ? String(s.stop.uicCode) : undefined,
+			naam: s?.stop?.name ?? '',
+			lat: s?.stop?.lat ?? 0,
+			lon: s?.stop?.lng ?? 0,
+			status: s?.status,
+			aankomst: tijd(aank?.plannedTime, aank?.actualTime),
+			vertrek: tijd(vert?.plannedTime, vert?.actualTime),
+			spoor: vert?.actualTrack ?? vert?.plannedTrack ?? aank?.actualTrack ?? aank?.plannedTrack,
+			geplandSpoor: vert?.plannedTrack ?? aank?.plannedTrack,
+			drukte: nsDrukte(vert?.crowdForecast ?? aank?.crowdForecast),
+			uitgevallen: (vert?.cancelled ?? aank?.cancelled) || undefined,
+			vertrekken: vertrekken.length ? vertrekken : undefined,
+			materieel: stock
+				? {
+						aantalDelen: stock.numberOfParts,
+						normaalDelen: gepland?.numberOfParts,
+						zitplaatsen: stock.numberOfSeats,
+						type: stock.trainType,
+						delen: (stock.trainParts ?? []).map((p: Ruw) => ({
+							nummer: p?.stockIdentifier != null ? String(p.stockIdentifier) : undefined,
+							type: p?.type ?? stock.trainType,
+							faciliteiten: Array.isArray(p?.facilities) ? p.facilities : [],
+							afbeelding: p?.image?.uri
+						}))
+					}
+				: undefined
+		};
 	});
+}
+
+export async function nsRit(key: string | undefined, ritnummer: string, datumTijd?: string): Promise<NsRitHalte[]> {
+	return nsRitHaltes(await nsRitRuw(key, ritnummer, datumTijd));
 }
 
 export function ritHalteBij(

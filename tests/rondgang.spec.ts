@@ -157,8 +157,14 @@ test('voertuiginfo: splitsende trein met haakjes per bestemming', async ({ page 
 	await kiesPlek(page, /^Naar/, 'amsterdam c', /Amsterdam Centraal/);
 	await page.getByRole('button', { name: 'Plan reis' }).click();
 	await page.locator('a.advies').first().click();
+	// Ook in de reistijdlijn: waar hij splitst en in welk deel je moet zitten
+	await expect(page.locator('li.rit').getByText(/Deze trein splitst in Leiden Centraal/).first()).toBeVisible();
 	await page.getByRole('button', { name: 'Voertuiginfo' }).first().click();
-	await expect(page.getByText(/Deze trein splitst in Leiden Centraal/)).toBeVisible();
+	const paneel = page.getByRole('dialog', { name: 'Voertuiginfo' });
+	await expect(paneel.getByText(/Deze trein splitst in Leiden Centraal/)).toBeVisible();
+	// Ruwe NS-data is te kopiëren (om het echte formaat te kunnen controleren)
+	await paneel.getByText('Ruwe NS-data (voor controle)').click();
+	await expect(paneel.getByRole('button', { name: 'Kopieer alles' })).toBeVisible();
 	const trein = page.locator('figure.trein');
 	await expect(trein.locator('.bestemming', { hasText: 'Den Haag Centraal' })).toBeVisible();
 	await expect(trein.locator('.bestemming.jouw', { hasText: 'Rotterdam Centraal' })).toContainText('Jouw deel');

@@ -21,9 +21,12 @@ function plekVanJouwDeel(info: TreinInfo): 'voorste' | 'achterste' | 'middelste'
 	const n = info.delen.length;
 	if (!s || !richting || !s.jouwDelen.length || n < 2) return '';
 	// Bij rijrichting rechts staat het laatste deel van de tekening voorop
-	const posities = s.jouwDelen.map((i) => (richting === 'rechts' ? n - 1 - i : i));
-	if (posities.every((p) => p === 0)) return 'voorste';
-	if (posities.every((p) => p === n - 1)) return 'achterste';
+	const posities = s.jouwDelen.map((i) => (richting === 'rechts' ? n - 1 - i : i)).sort((a, b) => a - b);
+	const aaneen = posities.every((p, k) => k === 0 || p === posities[k - 1] + 1);
+	if (posities.length === n || !aaneen) return '';
+	// Ook twee treinstellen voorin (van drie) zijn samen "het voorste deel"
+	if (posities[0] === 0) return 'voorste';
+	if (posities[posities.length - 1] === n - 1) return 'achterste';
 	return 'middelste';
 }
 
