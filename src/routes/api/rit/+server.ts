@@ -3,7 +3,8 @@ import { config } from '$lib/server/config';
 import { motisRit } from '$lib/server/motis';
 import { nsRit, type NsRitHalte } from '$lib/server/ns';
 import { ritPad } from '$lib/server/trein';
-import { foutAntwoord } from '$lib/server/antwoord';
+import { foutAntwoord, getal } from '$lib/server/antwoord';
+import { mockRit } from '$lib/server/mock';
 import type { Halte, Leg } from '$lib/types';
 import type { RequestHandler } from './$types';
 
@@ -52,6 +53,12 @@ export const GET: RequestHandler = async ({ url }) => {
 	const datum = url.searchParams.get('datum') || undefined;
 	const c = config();
 	if (!tripId && !ritnummer) return json({ fout: 'tripId of ritnummer is verplicht' }, { status: 400 });
+	if (c.mock) {
+		// Nepdata: de app geeft de haltes van jouw deel mee, de rit wordt eromheen verzonnen
+		const p = url.searchParams;
+		const halte = (k: string) => ({ naam: p.get(`${k}Naam`) ?? k, lat: getal(p.get(`${k}Lat`)) ?? 52.09, lon: getal(p.get(`${k}Lon`)) ?? 5.11, tijd: p.get(`${k}Tijd`) ?? new Date().toISOString() });
+		return json({ leg: mockRit({ ritnummer, tripId, van: halte('van'), naar: halte('naar') }), bron: 'mock', opgehaaldOp: new Date().toISOString() });
+	}
 	let fout: unknown;
 	if (tripId && !c.mock) {
 		try {

@@ -250,6 +250,10 @@ test('reis onderweg: samenvatting, kaartje, voortgang en alternatieven', async (
 	await expect(page.getByRole('button', { name: 'Live kaart' })).toHaveCount(0);
 	await page.getByRole('button', { name: 'Kaart schermvullend' }).click();
 	await expect(page.getByRole('dialog', { name: 'Live kaart' })).toBeVisible();
+	// De hele rit staat erop, met de haltes ervoor en erna; hun namen linken naar de stationspagina
+	await expect(page.getByText(/zwart: de rest van de rit/)).toBeVisible();
+	await expect(page.locator('a.haltelabel[href^="/station?"]', { hasText: 'Beginstation' })).toBeAttached();
+	await expect(page.locator('a.haltelabel', { hasText: 'Halte erna' })).toBeAttached();
 	await page.getByRole('button', { name: 'Kaart verkleinen' }).click();
 	await expect(page.getByRole('dialog', { name: 'Live kaart' })).toHaveCount(0);
 

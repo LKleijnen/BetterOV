@@ -20,7 +20,7 @@ Advertentievrije OV-webapp (PWA) voor eigen gebruik en een kleine kring vrienden
 | M6 | *Nu vertrekken*: looptijd vanaf GPS en aftelling | Reisadvies |
 | M7, M8 | Actieve reis met één tik; ververst bij openen en elke 30 s; samenvatting bovenaan, bolletje op de lijn en doorgestreepte haltes, snelheid (GPS); alternatieven vanaf het overstappunt (inklapbaar, kiezen op de detailpagina) | Reis |
 | M9 | Pushmelding binnen 2 min bij uitval, onhaalbare overstap, spoorwijziging, vertraging | Cron-worker |
-| M10 | Live kaart met eigen positie en (geschatte of GPS-)positie van het voertuig; treinen over het echte spoor (NS SpoorKaart), optioneel alle spoorlijnen | Reis (kaartje, schermvullend) |
+| M10 | Live kaart met eigen positie en (geschatte of GPS-)positie van het voertuig, ook vóór je instapt en na je uitstapt; de hele rit in zwart met jouw deel in geel; alle haltes met naam (tik of zoom in) en link naar de stationspagina; treinen over het echte spoor (NS SpoorKaart), optioneel alle spoorlijnen | Reis (kaartje, schermvullend), Reisadvies, Voertuiginfo |
 | M11 | Fallback naar de NS-planner, met melding | Server |
 | M12 | Laatste data blijft zichtbaar bij slecht bereik, met tijdstip van ophalen | Overal |
 | M13 | Favoriete reizen en plekken | Favorieten |

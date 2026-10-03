@@ -21,7 +21,7 @@
 		Bell,
 		Split
 	} from '@lucide/svelte';
-	import type { Advies, Probleem, TreinInfo, VoertuigPositie } from '$lib/types';
+	import type { Advies, Leg, Probleem, TreinInfo, VoertuigPositie } from '$lib/types';
 	import { data } from '$lib/client/data.svelte';
 	import { actief } from '$lib/client/actief.svelte';
 	import { api } from '$lib/client/api';
@@ -34,6 +34,7 @@
 	import { splitsTekst } from '$lib/splitsen';
 	import { klok, ms, relatief } from '$lib/tijd';
 	import { voertuigPositie } from '$lib/client/voertuigpositie';
+	import { volledigeRitten } from '$lib/client/rit';
 	import { downloadIcs, maakIcs } from '$lib/ics';
 	import ReisTijdlijn from '$lib/components/ReisTijdlijn.svelte';
 	import Aftelling from '$lib/components/Aftelling.svelte';
@@ -122,10 +123,31 @@
 	// Klein kaartje: tijdens een rit die rit, anders de hele reis
 	const kleineFocus = $derived(inVoertuig && stap ? stap.legIndex : -1);
 
+	// De volledige ritten (ook vóór je instapt en na je uitstapt): voor de kaart en de positie van het voertuig
+	let ritten = $state.raw<(Leg | null)[]>([]);
+	let rittenVoor = '';
+	$effect(() => {
+		const a = reis?.advies;
+		if (!a || a.id === rittenVoor) return;
+		rittenVoor = a.id;
+		ritten = [];
+		untrack(() =>
+			volledigeRitten(a.legs).then((r) => {
+				if (rittenVoor === a.id) ritten = r;
+			})
+		);
+	});
+
 	async function werkVoertuigBij() {
 		if (!reis || !stap) return;
-		const legIndex = kaartLeg >= 0 ? kaartLeg : stap.legIndex;
-		voertuig = await voertuigPositie(reis.advies.legs[legIndex]);
+		const legs = reis.advies.legs;
+		// Het voertuig waar je in zit of op wacht (ook als het nog onderweg naar je station is)
+		let i = kaartLeg >= 0 ? kaartLeg : stap.legIndex;
+		if (kaartLeg < 0 && legs[i] && !isOV(legs[i])) {
+			const volgende = legs.findIndex((l, k) => k > i && isOV(l));
+			if (volgende >= 0) i = volgende;
+		}
+		voertuig = await voertuigPositie(ritten[i] ?? legs[i]);
 	}
 
 	// Locatie alleen vanzelf als de app hem al mag gebruiken; anders pas na een tik
@@ -332,7 +354,7 @@
 
 		{#if !kaartGroot}
 			<div class="kaartvak-klein">
-				<Kaart advies={reis.advies} focusLeg={kleineFocus} eigenPositie={mijnPositie} {voertuig} hoogte="190px" compact onKlik={() => toonKaart(-1)} />
+				<Kaart advies={reis.advies} {ritten} focusLeg={kleineFocus} eigenPositie={mijnPositie} {voertuig} hoogte="190px" compact onKlik={() => toonKaart(-1)} />
 				<button type="button" class="kaartknop vergroot" aria-label="Kaart schermvullend" onclick={() => toonKaart(-1)}><Maximize2 size={18} /></button>
 				{#if !gpsAan}
 					<button type="button" class="kaartknop locatie" aria-label="Toon mijn locatie" onclick={() => (gpsAan = true)}><LocateFixed size={18} /></button>
@@ -378,10 +400,10 @@
 
 {#if reis && kaartGroot}
 	<div class="kaart-volledig" role="dialog" aria-modal="true" aria-label="Live kaart">
-		<Kaart advies={reis.advies} focusLeg={kaartLeg} eigenPositie={mijnPositie} {voertuig} hoogte="100%" />
+		<Kaart advies={reis.advies} {ritten} focusLeg={kaartLeg} eigenPositie={mijnPositie} {voertuig} hoogte="100%" />
 		<button type="button" class="kaartknop sluit" aria-label="Kaart verkleinen" onclick={sluitKaart}><Minimize2 size={20} /></button>
 		<p class="legenda klein">
-			{mijnPositie ? 'Blauw: jij' : 'Je eigen locatie staat uit'}{voertuig ? (voertuig.soort === 'gps' ? ' · geel: de trein (GPS)' : ' · geel: geschatte positie van het voertuig') : ''}
+			Geel: jouw deel · zwart: de rest van de rit · {mijnPositie ? 'blauw: jij' : 'je eigen locatie staat uit'}{voertuig ? (voertuig.soort === 'gps' ? ' · gele stip: de trein (GPS)' : ' · gele stip: geschatte positie van het voertuig') : ''}. Zoom in of tik op een halte voor de naam.
 			{#if !gpsAan}· <button type="button" class="tekstknop" onclick={() => (gpsAan = true)}>Locatie aanzetten</button>{/if}
 		</p>
 	</div>
