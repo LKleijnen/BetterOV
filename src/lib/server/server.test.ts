@@ -6,7 +6,7 @@ import { schattingTrein, berekenPrijs } from './prijs';
 import { naarVelden, vanVelden, Tijdstempel } from './firestore';
 import { opVertrek, plan } from './planner';
 import { berekenInstapadvies } from './trein';
-import { bakIndeling } from './ns';
+import { bakIndeling, nsVoorziening } from './ns';
 import { kiesLaatste } from './laatste';
 import { maakAdvies, ovLeg, loopLeg, t } from '../testdata';
 
@@ -429,5 +429,40 @@ describe('beheerders en Gmail-adressen', async () => {
 		const admins = beheerders('kleijnen.lars@gmail.com');
 		expect(isBeheerder('kleijnenlars@gmail.com', admins)).toBe(true);
 		expect(isBeheerder('iemand@gmail.com', admins)).toBe(false);
+	});
+});
+
+describe('voorzieningen op een station (Places API)', () => {
+	it('leest een voorziening met openingstijden, OV-fietsen en een veilige link', () => {
+		const groep = { type: 'ovfiets', name: 'OV-fiets' };
+		const v = nsVoorziening(
+			{
+				name: 'OV-fiets Jaarbeursplein',
+				lat: '52.089',
+				lng: 5.108,
+				open: 'Yes',
+				extra: { rentalBikes: '143' },
+				openingHours: [{ dayOfWeek: 1, startTime: '06:00', endTime: '23:00' }, { dayOfWeek: 'x' }],
+				link: { uri: 'https://www.ns.nl/ov-fiets' }
+			},
+			groep
+		);
+		expect(v).toEqual({
+			soort: 'ovfiets',
+			soortNaam: 'OV-fiets',
+			naam: 'OV-fiets Jaarbeursplein',
+			lat: 52.089,
+			lon: 5.108,
+			open: true,
+			openingstijden: [{ dag: 1, van: '06:00', tot: '23:00' }],
+			beschrijving: undefined,
+			link: 'https://www.ns.nl/ov-fiets',
+			ovFietsen: 143
+		});
+	});
+
+	it('slaat voorzieningen zonder naam over en negeert onveilige links', () => {
+		expect(nsVoorziening({ lat: 52 }, {})).toBeNull();
+		expect(nsVoorziening({ name: 'Kiosk', link: { uri: 'javascript:alert(1)' } }, { type: 'shop' })?.link).toBeUndefined();
 	});
 });

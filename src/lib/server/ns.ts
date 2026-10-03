@@ -2,7 +2,7 @@
 // ritinformatie (drukte, materieel), treinsamenstelling, posities en prijzen.
 // NS-antwoorden worden defensief gelezen: ontbrekende velden leveren lege waarden op.
 
-import type { Advies, Drukte, Halte, Leg, Melding, Modus, Plek, Tijd, TreinDeel, BakInfo, Vertrek, VoertuigPositie } from '../types';
+import type { Advies, Drukte, Halte, Leg, Melding, Modus, Plek, Tijd, TreinDeel, BakInfo, Vertrek, VoertuigPositie, Voorziening } from '../types';
 import { adviesId, herbereken } from '../reis';
 import { nsUitgeschakeld, type Reisopties } from '../reisopties';
 import { afstandMeter, looptijdSeconden } from '../geo';
@@ -62,11 +62,17 @@ export interface NsStation {
 	lon: number;
 	land?: string;
 	synoniemen: string[];
+	/** Sporen (nummers zoals "1", "5b") */
+	sporen?: string[];
+	/** Soort station van NS, bijvoorbeeld INTERCITY_STATION */
+	type?: string;
+	reisassistentie?: boolean;
+	faciliteiten?: boolean;
 }
 
 export async function nsStations(key: string | undefined): Promise<NsStation[]> {
 	if (!key) return [];
-	return gedeeldGecached('ns-stations-v2', 86400, async () => {
+	return gedeeldGecached('ns-stations-v3', 86400, async () => {
 		const r = await ns(key, '/reisinformatie-api/api/v2/stations', {}, 10000);
 		const lijst: Ruw[] = Array.isArray(r?.payload) ? r.payload : [];
 		return lijst
@@ -81,7 +87,13 @@ export async function nsStations(key: string | undefined): Promise<NsStation[]> 
 					lat: s.lat,
 					lon: s.lng,
 					land: s.land,
-					synoniemen: Array.isArray(s.synoniemen) ? s.synoniemen : []
+					synoniemen: Array.isArray(s.synoniemen) ? s.synoniemen : [],
+					sporen: Array.isArray(s.sporen)
+						? s.sporen.map((x: Ruw) => String(x?.spoorNummer ?? x ?? '')).filter(Boolean)
+						: undefined,
+					type: typeof s.stationType === 'string' ? s.stationType : undefined,
+					reisassistentie: typeof s.heeftReisassistentie === 'boolean' ? s.heeftReisassistentie : undefined,
+					faciliteiten: typeof s.heeftFaciliteiten === 'boolean' ? s.heeftFaciliteiten : undefined
 				})
 			);
 	});
@@ -709,6 +721,50 @@ export async function nsSpoorkaart(key: string | undefined): Promise<string> {
 			}
 		}
 		throw laatste;
+	});
+}
+
+// ---------- Voorzieningen op een station (Places API) ----------
+
+function getalOf(x: unknown): number | undefined {
+	const n = typeof x === 'string' ? Number(x) : x;
+	return typeof n === 'number' && Number.isFinite(n) ? n : undefined;
+}
+
+/** Eén voorziening uit de Places API; alles defensief, want het formaat is niet overal bevestigd */
+export function nsVoorziening(l: Ruw, groep: Ruw): Voorziening | null {
+	const naam = l?.name ?? l?.title ?? l?.description;
+	if (!naam || typeof naam !== 'string') return null;
+	const lat = getalOf(l?.lat ?? l?.location?.lat);
+	const lon = getalOf(l?.lng ?? l?.lon ?? l?.location?.lng);
+	const extra: Ruw = l?.extra && typeof l.extra === 'object' ? l.extra : {};
+	const fietsen = getalOf(extra.rentalBikes ?? extra.availableBikes ?? l?.rentalBikes);
+	const tijden = (Array.isArray(l?.openingHours) ? l.openingHours : [])
+		.map((o: Ruw) => ({ dag: getalOf(o?.dayOfWeek), van: o?.startTime, tot: o?.endTime }))
+		.filter((o: Ruw) => o.dag !== undefined && typeof o.van === 'string' && typeof o.tot === 'string');
+	const open = String(l?.open ?? '').toLowerCase();
+	const link = l?.link?.uri ?? l?.url ?? l?.sites?.[0]?.url;
+	return {
+		soort: String(groep?.type ?? l?.type ?? 'overig'),
+		soortNaam: typeof groep?.name === 'string' ? groep.name : undefined,
+		naam,
+		lat,
+		lon: lat !== undefined ? lon : undefined,
+		open: open === 'yes' || open === 'true' ? true : open === 'no' || open === 'false' ? false : undefined,
+		openingstijden: tijden.length ? tijden : undefined,
+		beschrijving: typeof l?.description === 'string' && l.description !== naam ? l.description : undefined,
+		link: typeof link === 'string' && /^https:\/\//.test(link) ? link : undefined,
+		ovFietsen: fietsen
+	};
+}
+
+/** Voorzieningen op en rond een NS-station (toiletten, OV-fiets, winkels, kluisjes, …), 10 minuten gecachet */
+export async function nsVoorzieningen(key: string | undefined, stationCode: string): Promise<Voorziening[]> {
+	if (!key) return [];
+	return gedeeldGecached(`ns-places:${stationCode}`, 600, async () => {
+		const r = await ns(key, '/places-api/v2/places', { station: stationCode, lang: 'nl' }, 7000);
+		const groepen: Ruw[] = Array.isArray(r?.payload) ? r.payload : [];
+		return groepen.flatMap((g) => (Array.isArray(g?.locations) ? g.locations : []).map((l: Ruw) => nsVoorziening(l, g))).filter(Boolean) as Voorziening[];
 	});
 }
 

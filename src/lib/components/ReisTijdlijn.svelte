@@ -1,5 +1,5 @@
 <script lang="ts">
-	import { ArrowLeftRight, ChevronDown, CircleX, Hourglass, Info, Map as KaartIcoon, Split, TrainFront, TriangleAlert } from '@lucide/svelte';
+	import { ArrowLeftRight, Building2, ChevronDown, CircleX, Hourglass, Info, Map as KaartIcoon, Split, TrainFront, TriangleAlert } from '@lucide/svelte';
 	import type { Advies, Leg, TreinInfo } from '$lib/types';
 	import { isOV, overstappen, type Overstap } from '$lib/reis';
 	import { duurTekst, klok } from '$lib/tijd';
@@ -100,6 +100,14 @@
 		return m >= 1000 ? `${(m / 1000).toFixed(1).replace('.', ',')} km` : `${Math.round(m / 10) * 10} m`;
 	}
 
+	/** Link naar de stationspagina; bij een overstap met de sporen erbij */
+	function stationLink(h: { naam: string; lat: number; lon: number }, sporen: { aankomst?: string; vertrek?: string } = {}): string {
+		const q = new URLSearchParams({ naam: h.naam, lat: String(h.lat), lon: String(h.lon) });
+		if (sporen.aankomst) q.set('aankomst', sporen.aankomst);
+		if (sporen.vertrek) q.set('vertrek', sporen.vertrek);
+		return `/station?${q}`;
+	}
+
 	function lijnKleur(leg: Leg): string {
 		if (leg.isNS) return '#ffc917';
 		return leg.kleur ?? 'var(--primair)';
@@ -141,7 +149,17 @@
 					<ChevronDown size={16} aria-hidden="true" style="transform: rotate({open ? 180 : 0}deg)" />
 				</button>
 				{#if open}
+					{@const aankomst = advies.legs[o.vanLeg]}
+					{@const vertrek = advies.legs[o.naarLeg]}
 					<div class="opbouw">
+						{#if aankomst?.modus === 'trein' && vertrek?.modus === 'trein'}
+							<a class="rij looprij stationrij" href={stationLink(vertrek.van, { aankomst: aankomst.naar.spoor, vertrek: vertrek.van.spoor })}>
+								<Building2 size={16} aria-hidden="true" />
+								<span class="flex">
+									Station {vertrek.van.naam}{#if aankomst.naar.spoor && vertrek.van.spoor}: spoor {aankomst.naar.spoor} → {vertrek.van.spoor}{/if}
+								</span>
+							</a>
+						{/if}
 						{#each item.lopen as l (l.i)}{@render looprij(l.leg, l.i)}{/each}
 						<div class="rij looprij" class:status-fout={o.marge < 0}>
 							<Hourglass size={16} aria-hidden="true" />
@@ -178,7 +196,10 @@
 					<span class="tijdkolom"><Tijd tijd={leg.vertrek} uitgevallen={leg.uitgevallen || leg.van.uitgevallen} stapel /></span>
 					<span class="lijnkolom"><span class="punt" data-stop={actieveLeg === i ? 'van' : undefined}></span></span>
 					<span class="naamkolom">
-						<strong class="halte-naam" class:voorbij={vertrokken}>{leg.van.naam}</strong>
+						<span class="naamlink">
+							<strong class="halte-naam" class:voorbij={vertrokken}>{leg.van.naam}</strong>
+							{#if trein}<a class="stationlink" href={stationLink(leg.van)} aria-label="Station {leg.van.naam}"><Building2 size={15} /></a>{/if}
+						</span>
 						<Spoor halte={leg.van} {trein} />
 					</span>
 				</div>
@@ -257,7 +278,10 @@
 					<span class="tijdkolom"><Tijd tijd={leg.aankomst} uitgevallen={leg.uitgevallen || leg.naar.uitgevallen} stapel /></span>
 					<span class="lijnkolom"><span class="punt" data-stop={actieveLeg === i ? 'naar' : undefined}></span></span>
 					<span class="naamkolom">
-						<strong class="halte-naam" class:voorbij={aangekomen}>{leg.naar.naam}</strong>
+						<span class="naamlink">
+							<strong class="halte-naam" class:voorbij={aangekomen}>{leg.naar.naam}</strong>
+							{#if trein}<a class="stationlink" href={stationLink(leg.naar)} aria-label="Station {leg.naar.naam}"><Building2 size={15} /></a>{/if}
+						</span>
 						<Spoor halte={leg.naar} {trein} />
 					</span>
 				</div>
@@ -358,6 +382,29 @@
 		font-size: 1rem;
 		min-width: 0;
 		overflow-wrap: anywhere;
+	}
+	.naamlink {
+		display: inline-flex;
+		align-items: center;
+		gap: 4px;
+		min-width: 0;
+	}
+	.stationlink {
+		flex: 0 0 auto;
+		display: inline-flex;
+		align-items: center;
+		justify-content: center;
+		width: 28px;
+		height: 28px;
+		border-radius: 8px;
+		color: var(--tekst-zwak);
+	}
+	.stationlink:active {
+		background: var(--kaart-2);
+	}
+	.stationrij {
+		color: var(--primair);
+		text-decoration: none;
 	}
 	.lijnkolom {
 		position: relative;
