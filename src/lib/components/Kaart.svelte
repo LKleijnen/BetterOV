@@ -17,7 +17,9 @@
 		eigenPositie = null,
 		voertuig = null,
 		extraPunt = null,
-		hoogte = '320px'
+		hoogte = '320px',
+		compact = false,
+		onKlik
 	}: {
 		advies?: Advies | null;
 		focusLeg?: number;
@@ -25,6 +27,10 @@
 		voertuig?: (VoertuigPositie & { label?: string }) | null;
 		extraPunt?: { lat: number; lon: number; label?: string } | null;
 		hoogte?: string;
+		/** Klein kaartje in de pagina: niet te verschuiven (scrollt niet mee met je vinger) en zonder knoppen */
+		compact?: boolean;
+		/** Tik op een compact kaartje (bijvoorbeeld om hem groot te openen) */
+		onKlik?: () => void;
 	} = $props();
 
 	let container = $state<HTMLDivElement>();
@@ -130,9 +136,10 @@
 				style: STIJL,
 				center: [5.3, 52.1],
 				zoom: 7,
+				interactive: !compact,
 				attributionControl: { compact: true }
 			});
-			kaart.addControl(new maplibre.NavigationControl({ showCompass: false }), 'top-right');
+			if (!compact) kaart.addControl(new maplibre.NavigationControl({ showCompass: false }), 'top-right');
 			kaart.on('error', (e) => {
 				if (!geladen) fout = 'Kaart kon niet worden geladen.';
 				console.warn(e.error);
@@ -253,9 +260,17 @@
 	});
 </script>
 
-<div class="kaartvak" style:height={hoogte}>
+<!-- svelte-ignore a11y_click_events_have_key_events, a11y_no_static_element_interactions (de pagina heeft een eigen knop om te vergroten) -->
+<div
+	class="kaartvak"
+	class:klikbaar={compact && !!onKlik}
+	style:height={hoogte}
+	onclick={(e) => {
+		if (compact && onKlik && !(e.target as Element).closest('.maplibregl-ctrl')) onKlik();
+	}}
+>
 	<div class="kaart-el" bind:this={container} role="region" aria-label="Kaart met de route"></div>
-	{#if geladen}
+	{#if geladen && !compact}
 		<button type="button" class="spoorknop" aria-pressed={spoorLaag} onclick={wisselSpoorLaag} title="Spoorlijnen tonen">
 			<TrainTrack size={16} aria-hidden="true" /> Spoor
 		</button>
@@ -274,6 +289,9 @@
 	.kaart-el {
 		position: absolute;
 		inset: 0;
+	}
+	.klikbaar {
+		cursor: pointer;
 	}
 	.spoorknop {
 		position: absolute;

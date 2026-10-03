@@ -1,9 +1,25 @@
 import { describe, expect, it } from 'vitest';
-import { codeerPolyline, decodeerPolyline, lijnLengte, puntOpLijn } from './geo';
+import { codeerPolyline, decodeerPolyline, lijnLengte, puntOpLijn, snelheidKmu } from './geo';
 import { klok, nlDatumTijd, nlOnderdelen, vertragingMinuten } from './tijd';
 import { maakIcs } from './ics';
 import { loopLeg, maakAdvies, ovLeg } from './testdata';
 import { nachtGrens } from './server/laatste';
+
+describe('snelheid', () => {
+	it('gebruikt de snelheid van het toestel', () => {
+		expect(snelheidKmu({ lat: 52, lon: 5, nauwkeurigheid: 10, tijd: 0, snelheid: 25 })).toBeCloseTo(90);
+	});
+	it('rekent anders uit twee metingen', () => {
+		// 0,01 graad noorderbreedte is ruim 1100 m; in 30 s is dat ongeveer 133 km/u
+		const v = snelheidKmu({ lat: 52.01, lon: 5, nauwkeurigheid: 15, tijd: 30000 }, { lat: 52, lon: 5, nauwkeurigheid: 15, tijd: 0 });
+		expect(v).toBeGreaterThan(130);
+		expect(v).toBeLessThan(137);
+	});
+	it('zegt niets bij onnauwkeurige of te snelle metingen', () => {
+		expect(snelheidKmu({ lat: 52.0005, lon: 5, nauwkeurigheid: 80, tijd: 10000 }, { lat: 52, lon: 5, nauwkeurigheid: 80, tijd: 0 })).toBeUndefined();
+		expect(snelheidKmu({ lat: 52.001, lon: 5, nauwkeurigheid: 5, tijd: 1000 }, { lat: 52, lon: 5, nauwkeurigheid: 5, tijd: 0 })).toBeUndefined();
+	});
+});
 
 describe('polyline', () => {
 	it('codeert en decodeert heen en weer', () => {

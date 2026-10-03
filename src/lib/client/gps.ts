@@ -1,10 +1,32 @@
-// GPS-hulpfuncties. GPS wordt alleen gebruikt voor "Nu vertrekken", laatste verbinding en live positie.
+// GPS-hulpfuncties. GPS wordt alleen gebruikt voor "Nu vertrekken", laatste verbinding, live positie
+// en de snelheid tijdens de reis.
 
-export interface Positie {
-	lat: number;
-	lon: number;
-	nauwkeurigheid: number;
-	tijd: number;
+import { snelheidKmu, type GpsMeting } from '$lib/geo';
+
+export interface Positie extends GpsMeting {
+	/** Snelheid in km/u (van het toestel of uit de vorige meting), als die te bepalen is */
+	kmu?: number;
+}
+
+function meting(p: GeolocationPosition): GpsMeting {
+	const v = p.coords.speed;
+	return {
+		lat: p.coords.latitude,
+		lon: p.coords.longitude,
+		nauwkeurigheid: p.coords.accuracy,
+		tijd: p.timestamp,
+		snelheid: typeof v === 'number' && Number.isFinite(v) ? v : undefined
+	};
+}
+
+/** Mag de app je locatie al gebruiken zonder het te vragen? (onbekend: false) */
+export async function locatieToegestaan(): Promise<boolean> {
+	try {
+		const s = await navigator.permissions?.query({ name: 'geolocation' as PermissionName });
+		return s?.state === 'granted';
+	} catch {
+		return false;
+	}
 }
 
 let laatste: Positie | null = null;
@@ -21,7 +43,7 @@ export function huidigePositie(timeoutMs = 12000, maxLeeftijdMs = 30000): Promis
 		}
 		navigator.geolocation.getCurrentPosition(
 			(p) => {
-				laatste = { lat: p.coords.latitude, lon: p.coords.longitude, nauwkeurigheid: p.coords.accuracy, tijd: p.timestamp };
+				laatste = meting(p);
 				resolve(laatste);
 			},
 			(e) => reject(new Error(gpsFout(e))),
@@ -35,9 +57,14 @@ export function volgPositie(cb: (p: Positie) => void, fout?: (melding: string) =
 		fout?.('Locatie wordt niet ondersteund op dit apparaat.');
 		return () => {};
 	}
+	let vorige: Positie | null = null;
 	const id = navigator.geolocation.watchPosition(
 		(p) => {
-			laatste = { lat: p.coords.latitude, lon: p.coords.longitude, nauwkeurigheid: p.coords.accuracy, tijd: p.timestamp };
+			const m = meting(p);
+			// Dezelfde (gecachete) meting nog eens: niets nieuws
+			if (vorige && m.tijd === vorige.tijd) return;
+			laatste = { ...m, kmu: snelheidKmu(m, vorige) };
+			vorige = laatste;
 			cb(laatste);
 		},
 		(e) => fout?.(gpsFout(e)),
