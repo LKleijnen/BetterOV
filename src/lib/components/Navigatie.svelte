@@ -8,7 +8,7 @@
 		{ href: '/vertrektijden', label: 'Vertrek', icoon: Signpost, actief: page.url.pathname.startsWith('/vertrektijden') || page.url.pathname.startsWith('/rit') },
 		{ href: '/reis', label: 'Reis', icoon: Navigation, actief: page.url.pathname === '/reis' || page.url.pathname.startsWith('/reis/'), stip: !!data.actieveReis },
 		{ href: '/favorieten', label: 'Favorieten', icoon: Star, actief: page.url.pathname.startsWith('/favorieten') },
-		{ href: '/meer', label: 'Meer', icoon: Ellipsis, actief: ['/meer', '/instellingen', '/weekplanning', '/geschiedenis', '/beheer', '/over'].some((p) => page.url.pathname.startsWith(p)) }
+		{ href: '/meer', label: 'Meer', icoon: Ellipsis, actief: ['/meer', '/instellingen', '/weekplanning', '/geschiedenis', '/beheer', '/over', '/voertuigen'].some((p) => page.url.pathname.startsWith(p)) }
 	]);
 </script>
 

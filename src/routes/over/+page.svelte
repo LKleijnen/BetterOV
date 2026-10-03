@@ -21,6 +21,7 @@
 			<li>Routeplanning en vertrektijden: <a href="https://transitous.org" target="_blank" rel="noopener">Transitous</a> (MOTIS) — <a href="https://transitous.org/sources/" target="_blank" rel="noopener">gebruikte databronnen <ExternalLink size={12} /></a></li>
 			<li>Treininformatie, drukte, samenstelling, prijzen en fallback-planner: <a href="https://apiportal.ns.nl" target="_blank" rel="noopener">NS API</a></li>
 			<li>Kaart: <a href="https://openfreemap.org" target="_blank" rel="noopener">OpenFreeMap</a>, © <a href="https://www.openstreetmap.org/copyright" target="_blank" rel="noopener">OpenStreetMap-bijdragers</a>, <a href="https://maplibre.org" target="_blank" rel="noopener">MapLibre</a></li>
+			<li>Voertuigengids: achtergrond uit openbare bronnen (bij elk voertuig vermeld); foto's van <a href="https://commons.wikimedia.org" target="_blank" rel="noopener">Wikimedia Commons</a>, met maker en licentie bij de foto.</li>
 			<li>Prijzen voor bus, tram en metro zijn schattingen (indicatie) op basis van vaste tarieven.</li>
 		</ul>
 	</section>

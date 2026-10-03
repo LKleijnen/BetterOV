@@ -1,12 +1,13 @@
 <script lang="ts">
 	import { onDestroy, untrack } from 'svelte';
-	import { Accessibility, Armchair, Bike, Check, Copy, MapPin, Plug, Split, Toilet, TriangleAlert, VolumeX, Wifi } from '@lucide/svelte';
+	import { Accessibility, Armchair, Bike, BookOpen, Check, Copy, MapPin, Plug, Split, Toilet, TriangleAlert, VolumeX, Wifi } from '@lucide/svelte';
 	import type { Advies, Leg, TreinInfo, VoertuigPositie } from '$lib/types';
 	import { api } from '$lib/client/api';
 	import { haalTreinInfo, treinParams } from '$lib/client/trein';
 	import { voertuigPositie } from '$lib/client/voertuigpositie';
 	import { klok } from '$lib/tijd';
 	import { LEEFTIJD_NAMEN, materieelSoort, type MaterieelSoort } from '$lib/materieel';
+	import { laadVoertuigen, variantVoorNummer, voertuigVoorType, type Voertuig } from '$lib/voertuigen';
 	import { splitsTekst } from '$lib/splitsen';
 	import Drukte from './Drukte.svelte';
 	import LijnLabel from './LijnLabel.svelte';
@@ -79,6 +80,24 @@
 		}
 		return [...gezien.values()];
 	});
+
+	// Uitgebreide omschrijving en de versie van elk treinstel uit de voertuigengids (pas laden als nodig)
+	let gids = $state.raw<Voertuig[]>([]);
+	$effect(() => {
+		if (soorten.length && !gids.length) untrack(() => void laadVoertuigen().then((l) => (gids = l)).catch(() => {}));
+	});
+	const vervoerder = $derived(info?.vervoerder ?? leg.vervoerder);
+	function uitGids(soort: MaterieelSoort, nummers: string[]) {
+		const v = voertuigVoorType(gids, soort.code, vervoerder);
+		if (!v) return null;
+		// Per versie de treinstellen van deze trein (twee gekoppelde stellen kunnen verschillen)
+		const versies = new Map<number, string[]>();
+		for (const n of nummers) {
+			const i = variantVoorNummer(v, n);
+			if (i >= 0) versies.set(i, [...(versies.get(i) ?? []), n]);
+		}
+		return { v, versies: [...versies].map(([i, stellen]) => ({ variant: v.varianten[i], stellen })) };
+	}
 
 	function feitjes(s: MaterieelSoort): [string, string][] {
 		const uit: [string, string][] = [];
@@ -178,12 +197,19 @@
 			<section class="stapel sectie">
 				<h3>Over deze trein</h3>
 				{#each soorten as { soort, nummers } (soort.code)}
+					{@const extra = uitGids(soort, nummers)}
 					<div class="soort">
 						<div class="rij tussen">
 							<strong>{soort.naam}</strong>
 							{#if soort.leeftijd}<span class="leeftijd {soort.leeftijd}">{LEEFTIJD_NAMEN[soort.leeftijd]}</span>{/if}
 						</div>
-						<p class="klein">{soort.omschrijving}</p>
+						<p class="klein">{extra?.v.kort ?? soort.omschrijving}</p>
+						{#each extra?.versies ?? [] as { variant, stellen } (variant.code)}
+							<div class="versie klein">
+								<strong>{variant.naam || variant.code}</strong> <span class="zwak">({stellen.join(', ')})</span>
+								<p>{variant.omschrijving}</p>
+							</div>
+						{/each}
 						<dl class="feitjes klein">
 							{#each feitjes(soort) as [label, waarde] (label)}
 								<dt class="zwak">{label}</dt>
@@ -194,6 +220,11 @@
 								<dd>{nummers.join(', ')}</dd>
 							{/if}
 						</dl>
+						{#if extra}
+							<a class="knop tweede klein meer" href="/voertuigen/{extra.v.id}{nummers[0] ? `?nummer=${nummers[0]}` : ''}">
+								<BookOpen size={16} /> Meer over de {soort.naam.replace(/\s*\(.*\)$/, '')}
+							</a>
+						{/if}
 					</div>
 				{/each}
 			</section>
@@ -282,6 +313,18 @@
 	.leeftijd.gemoderniseerd {
 		background: var(--info-zacht);
 		color: var(--info);
+	}
+	.versie {
+		padding-left: 10px;
+		border-left: 3px solid var(--rand);
+	}
+	.versie p {
+		margin: 2px 0 0;
+	}
+	.meer {
+		align-self: flex-start;
+		margin-top: 4px;
+		text-decoration: none;
 	}
 	.feitjes {
 		display: grid;

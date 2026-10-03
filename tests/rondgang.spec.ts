@@ -231,3 +231,76 @@ test('kaart laadt (worker) en tekent de route over het spoor', async ({ page }) 
 	await expect(page.getByText('Kaart kon niet worden geladen.')).toHaveCount(0);
 	expect(fouten.filter((f) => !/GL Driver|WebGL/.test(f))).toEqual([]);
 });
+
+test('voertuigen: zoeken, versie bij treinstelnummer, foto en vanuit Voertuiginfo', async ({ page }) => {
+	const fouten: string[] = [];
+	page.on('pageerror', (e) => fouten.push(e.message));
+	// Wikipedia en Commons nagebootst: de app haalt de foto en de maker zelf op
+	await page.route('https://nl.wikipedia.org/api/rest_v1/page/summary/**', (route) =>
+		route.fulfill({
+			json: {
+				originalimage: { source: 'https://upload.wikimedia.org/wikipedia/commons/a/ab/Test_trein.png', width: 1280, height: 720 },
+				content_urls: { mobile: { page: 'https://nl.m.wikipedia.org/wiki/Test' } }
+			}
+		})
+	);
+	await page.route('https://commons.wikimedia.org/w/api.php**', (route) =>
+		route.fulfill({
+			json: {
+				query: {
+					pages: {
+						'1': {
+							imageinfo: [
+								{
+									thumburl: 'https://upload.wikimedia.org/wikipedia/commons/thumb/a/ab/Test_trein.png/1280px-Test_trein.png',
+									thumbwidth: 1280,
+									thumbheight: 720,
+									descriptionurl: 'https://commons.wikimedia.org/wiki/File:Test_trein.png',
+									extmetadata: { Artist: { value: '<a href="//commons.wikimedia.org/wiki/User:Fotograaf">Fotograaf</a>' }, LicenseShortName: { value: 'CC BY-SA 4.0' } }
+								}
+							]
+						}
+					}
+				}
+			}
+		})
+	);
+	const png = Buffer.from('iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8z8BQDwAEhQGAhKmMIQAAAABJRU5ErkJggg==', 'base64');
+	await page.route('https://upload.wikimedia.org/**', (route) => route.fulfill({ contentType: 'image/png', body: png }));
+
+	await page.goto('/meer');
+	await page.getByRole('link', { name: 'Voertuigen' }).click();
+	await page.waitForURL('**/voertuigen');
+	await expect(page.getByRole('link', { name: /Intercity Nieuwe Generatie/ })).toBeVisible();
+	// Zoeken op een treinstelnummer vindt de versie
+	await page.getByRole('searchbox', { name: 'Zoek een voertuig' }).fill('9572');
+	await expect(page.getByText('Treinstel 9572: VIRM vierde bouwserie')).toBeVisible();
+	await page.getByRole('link', { name: /VIRM/ }).click();
+	await page.waitForURL(/\/voertuigen\/virm\?nummer=9572/);
+	await expect(page.getByText(/Jij zat in treinstel/)).toBeVisible();
+	await expect(page.locator('article.versie.jouw')).toContainText('VIRM vierde bouwserie');
+	for (const kop of ['Versies', 'Techniek', 'Wat kostte hij?', 'Geschiedenis', 'Leuke feiten', 'Meer lezen']) {
+		await expect(page.getByRole('heading', { name: kop })).toBeVisible();
+	}
+	await expect(page.locator('figure.foto img')).toBeVisible();
+	await expect(page.locator('figure.foto figcaption')).toContainText('Fotograaf');
+	await expect(page.locator('figure.foto figcaption')).toContainText('CC BY-SA 4.0');
+
+	// Vanuit Voertuiginfo: uitgebreide omschrijving en een knop naar de pagina van dat type
+	await page.route('**/api/trein/**', async (route) => {
+		const r = await route.fetch({ url: route.request().url().replace(/trein\/\d+/, 'trein/3885') });
+		await route.fulfill({ response: r });
+	});
+	await page.goto('/');
+	await kiesPlek(page, /^Van/, 'utrecht c', /Utrecht Centraal/);
+	await kiesPlek(page, /^Naar/, 'amsterdam c', /Amsterdam Centraal/);
+	await page.getByRole('button', { name: 'Plan reis' }).click();
+	await page.locator('a.advies').first().click();
+	await page.getByRole('button', { name: 'Voertuiginfo' }).first().click();
+	const paneel = page.getByRole('dialog', { name: 'Voertuiginfo' });
+	await expect(paneel.getByText(/VIRM-1, vernieuwd, 6 bakken/)).toBeVisible();
+	await paneel.getByRole('link', { name: 'Meer over de VIRM' }).click();
+	await page.waitForURL(/\/voertuigen\/virm\?nummer=8641/);
+	await expect(page.locator('article.versie.jouw')).toContainText('6 bakken');
+	expect(fouten).toEqual([]);
+});
