@@ -27,7 +27,7 @@ export const GET: RequestHandler = async ({ url }) => {
 			: stationVoorPlek(stations, { naam: naam ?? '', lat: lat ?? 0, lon: lon ?? 0, type: 'station' }, 400);
 		if (!station) return json({ fout: 'Dit is geen NS-station.' }, { status: 404 });
 		// Zonder voorzieningen is de pagina nog steeds bruikbaar
-		const voorzieningen = await nsVoorzieningen(c.nsKey, station.code).catch(() => []);
+		const voorzieningen = await nsVoorzieningen(c.nsKey, station).catch(() => []);
 		const antwoord: StationInfo = {
 			code: station.code,
 			naam: station.naam,

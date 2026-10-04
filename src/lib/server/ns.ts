@@ -758,13 +758,39 @@ export function nsVoorziening(l: Ruw, groep: Ruw): Voorziening | null {
 	};
 }
 
-/** Voorzieningen op en rond een NS-station (toiletten, OV-fiets, winkels, kluisjes, …), 10 minuten gecachet */
-export async function nsVoorzieningen(key: string | undefined, stationCode: string): Promise<Voorziening[]> {
+/** Voorzieningen tot deze afstand van het station horen erbij (als NS geen stationscode meegeeft) */
+const VOORZIENING_STRAAL = 1000;
+
+/** Hoort deze plek uit de Places API bij het station? Op stationscode, of anders binnen 1 km */
+export function hoortBijStation(l: Ruw, station: { code: string; lat: number; lon: number }): boolean {
+	const codes = [l?.stationCode, l?.station_code, l?.extra?.stationCode, l?.extra?.station_code, l?.station?.code]
+		.filter((c): c is string => typeof c === 'string' && c.length > 0)
+		.map((c) => c.toUpperCase());
+	if (codes.length) return codes.includes(station.code.toUpperCase());
+	const lat = getalOf(l?.lat ?? l?.location?.lat);
+	const lon = getalOf(l?.lng ?? l?.lon ?? l?.location?.lng);
+	return lat !== undefined && lon !== undefined && afstandMeter(lat, lon, station.lat, station.lon) <= VOORZIENING_STRAAL;
+}
+
+/**
+ * Voorzieningen op en rond een NS-station (toiletten, OV-fiets, winkels, kluisjes, …), 10 minuten gecachet.
+ * De Places API negeert soms het station en geeft dan heel Nederland, dus we filteren zelf nog.
+ */
+export async function nsVoorzieningen(key: string | undefined, station: { code: string; lat: number; lon: number }): Promise<Voorziening[]> {
 	if (!key) return [];
-	return gedeeldGecached(`ns-places:${stationCode}`, 600, async () => {
-		const r = await ns(key, '/places-api/v2/places', { station: stationCode, lang: 'nl' }, 7000);
+	return gedeeldGecached(`ns-places-v2:${station.code}`, 600, async () => {
+		const r = await ns(
+			key,
+			'/places-api/v2/places',
+			{ station_code: station.code, lat: station.lat, lng: station.lon, radius: VOORZIENING_STRAAL, lang: 'nl' },
+			7000
+		);
 		const groepen: Ruw[] = Array.isArray(r?.payload) ? r.payload : [];
-		return groepen.flatMap((g) => (Array.isArray(g?.locations) ? g.locations : []).map((l: Ruw) => nsVoorziening(l, g))).filter(Boolean) as Voorziening[];
+		return groepen
+			.flatMap((g) =>
+				(Array.isArray(g?.locations) ? g.locations : []).filter((l: Ruw) => hoortBijStation(l, station)).map((l: Ruw) => nsVoorziening(l, g))
+			)
+			.filter(Boolean) as Voorziening[];
 	});
 }
 
