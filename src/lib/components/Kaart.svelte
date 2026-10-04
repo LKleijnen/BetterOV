@@ -301,7 +301,13 @@
 					id: 'haltejes',
 					type: 'circle',
 					source: 'haltejes',
-					paint: { 'circle-radius': 4.5, 'circle-color': '#ffffff', 'circle-stroke-width': 2, 'circle-stroke-color': donker ? '#d1d5db' : '#111827' }
+					// Grijs en klein als je uitzoomt (anders zit de kaart er vol mee), groter bij inzoomen
+					paint: {
+						'circle-radius': ['interpolate', ['linear'], ['zoom'], 7, 1.5, 10, 2.5, 13, 4, 16, 6],
+						'circle-color': '#9ca3af',
+						'circle-stroke-width': ['interpolate', ['linear'], ['zoom'], 8, 0.5, 13, 1.5],
+						'circle-stroke-color': donker ? '#1f2937' : '#ffffff'
+					}
 				});
 				if (!compact) {
 					// Tik op een halte: naam tonen (en daarmee de link naar het station)
