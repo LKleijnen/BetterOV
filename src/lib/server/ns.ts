@@ -439,6 +439,8 @@ export interface NsRitHalte {
 	lat: number;
 	lon: number;
 	status?: string;
+	/** Bestemming zoals op het bord, bij splitsende treinen bijvoorbeeld "Maastricht / Heerlen" */
+	bestemming?: string;
 	aankomst?: Tijd;
 	vertrek?: Tijd;
 	spoor?: string;
@@ -488,6 +490,7 @@ export function nsRitHaltes(r: Ruw): NsRitHalte[] {
 			lat: s?.stop?.lat ?? 0,
 			lon: s?.stop?.lng ?? 0,
 			status: s?.status,
+			bestemming: typeof s?.destination === 'string' && s.destination ? s.destination : undefined,
 			aankomst: tijd(aank?.plannedTime, aank?.actualTime),
 			vertrek: tijd(vert?.plannedTime, vert?.actualTime),
 			spoor: vert?.actualTrack ?? vert?.plannedTrack ?? aank?.actualTrack ?? aank?.plannedTrack,
