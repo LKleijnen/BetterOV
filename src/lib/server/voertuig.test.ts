@@ -234,18 +234,15 @@ describe('splitsen: minder treinstellen na een station, verder geen treinstellen
 		{ ...stop('Maastricht', null), bestemming: 'Maastricht', vertrekken: undefined }
 	];
 
-	it('weet welk treinstel naar jouw station gaat en waar de rest heen gaat', () => {
+	it('weet welk treinstel naar jouw station gaat, maar raadt niet waar de rest heen gaat', () => {
 		const s = bepaalSplitsing(delen, rit, { stationNaam: "'s-Hertogenbosch", naar: 'Roermond', ritnummer: '2769' });
 		expect(s).toEqual({
 			station: 'Eindhoven Centraal',
 			jouwDelen: [0],
-			bestemmingen: [
-				{ deel: 0, naar: 'Maastricht' },
-				{ deel: 1, naar: 'Heerlen' }
-			],
+			bestemmingen: [{ deel: 0, naar: 'Maastricht' }],
 			jouwBestemming: 'Maastricht',
-			andereBestemmingen: ['Heerlen'],
-			voorUitstappen: true
+			voorUitstappen: true,
+			alleenKorter: true
 		});
 	});
 });
