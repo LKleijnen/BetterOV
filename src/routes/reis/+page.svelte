@@ -7,9 +7,6 @@
 		CircleX,
 		Copy,
 		Gauge,
-		LocateFixed,
-		Maximize2,
-		Minimize2,
 		Navigation,
 		RefreshCw,
 		Route,
@@ -42,7 +39,7 @@
 	import LegOverzicht from '$lib/components/LegOverzicht.svelte';
 	import Onderblad from '$lib/components/Onderblad.svelte';
 	import VoertuigPaneel from '$lib/components/VoertuigPaneel.svelte';
-	import Kaart from '$lib/components/Kaart.svelte';
+	import KaartVak from '$lib/components/KaartVak.svelte';
 
 	const reis = $derived(data.actieveReis);
 
@@ -181,11 +178,6 @@
 		kaartLeg = i;
 		kaartGroot = true;
 		void werkVoertuigBij();
-	}
-
-	function sluitKaart() {
-		kaartGroot = false;
-		kaartLeg = -1;
 	}
 
 	// Snelheid tijdens een rit: GPS van je telefoon, anders die van de trein (NS)
@@ -352,15 +344,17 @@
 			<button onclick={agenda}><CalendarPlus size={18} /> Agenda</button>
 		</div>
 
-		{#if !kaartGroot}
-			<div class="kaartvak-klein">
-				<Kaart advies={reis.advies} {ritten} focusLeg={kleineFocus} eigenPositie={mijnPositie} {voertuig} hoogte="190px" compact onKlik={() => toonKaart(-1)} />
-				<button type="button" class="kaartknop vergroot" aria-label="Kaart schermvullend" onclick={() => toonKaart(-1)}><Maximize2 size={18} /></button>
-				{#if !gpsAan}
-					<button type="button" class="kaartknop locatie" aria-label="Toon mijn locatie" onclick={() => (gpsAan = true)}><LocateFixed size={18} /></button>
-				{/if}
-			</div>
-		{/if}
+		<KaartVak
+			advies={reis.advies}
+			{ritten}
+			{kleineFocus}
+			eigenPositie={mijnPositie}
+			{voertuig}
+			bind:groot={kaartGroot}
+			bind:focusLeg={kaartLeg}
+			onOpen={() => void werkVoertuigBij()}
+			onLocatie={gpsAan ? undefined : () => (gpsAan = true)}
+		/>
 		{#if gpsFout && gpsAan}<p class="status-fout klein">{gpsFout}</p>{/if}
 
 		<ReisTijdlijn
@@ -397,19 +391,6 @@
 		<button class="tekstknop stopknop" onclick={() => (stopOpen = true)}><Square size={14} /> Reis beëindigen</button>
 	{/if}
 </main>
-
-{#if reis && kaartGroot}
-	<div class="kaart-volledig" role="dialog" aria-modal="true" aria-label="Live kaart">
-		<Kaart advies={reis.advies} {ritten} focusLeg={kaartLeg} eigenPositie={mijnPositie} {voertuig} hoogte="100%" />
-		<button type="button" class="kaartknop sluit" aria-label="Kaart verkleinen" onclick={sluitKaart}><Minimize2 size={20} /></button>
-		<p class="legenda klein">
-			Geel: jouw deel · zwart: de rest van de rit · {mijnPositie ? 'blauw: jij' : 'je eigen locatie staat uit'}{voertuig ? (voertuig.soort === 'gps' ? ' · gele stip: de trein (GPS)' : ' · gele stip: geschatte positie van het voertuig') : ''}. Zoom in of tik op een halte voor de naam.
-			{#if !gpsAan}· <button type="button" class="tekstknop" onclick={() => (gpsAan = true)}>Locatie aanzetten</button>{/if}
-		</p>
-	</div>
-{/if}
-
-<svelte:window onkeydown={(e) => kaartGroot && e.key === 'Escape' && sluitKaart()} />
 
 <Onderblad bind:open={voertuigOpen} titel="Voertuiginfo">
 	{#if reis && voertuigLeg !== null}
@@ -486,55 +467,6 @@
 	}
 	.altkop h2 {
 		margin: 0;
-	}
-	.kaartvak-klein {
-		position: relative;
-	}
-	.kaartknop {
-		position: absolute;
-		display: inline-flex;
-		align-items: center;
-		justify-content: center;
-		width: 38px;
-		height: 38px;
-		border-radius: 10px;
-		border: 1px solid var(--rand);
-		background: var(--kaart);
-		color: var(--tekst);
-		box-shadow: var(--schaduw);
-		cursor: pointer;
-		z-index: 3;
-	}
-	.kaartknop.vergroot {
-		top: 8px;
-		right: 8px;
-	}
-	.kaartknop.locatie {
-		top: 8px;
-		left: 8px;
-	}
-	.kaart-volledig {
-		position: fixed;
-		inset: 0;
-		z-index: 1000;
-		display: flex;
-		flex-direction: column;
-		background: var(--bg);
-		padding: env(safe-area-inset-top) env(safe-area-inset-right) 0 env(safe-area-inset-left);
-	}
-	.kaart-volledig > :global(.kaartvak) {
-		flex: 1;
-		border-radius: 0;
-		border: 0;
-	}
-	.kaartknop.sluit {
-		top: calc(env(safe-area-inset-top) + 10px);
-		right: calc(env(safe-area-inset-right) + 54px);
-	}
-	.legenda {
-		margin: 0;
-		padding: 8px 12px calc(8px + env(safe-area-inset-bottom));
-		color: var(--tekst-zwak);
 	}
 	.volgende {
 		border: 2px solid var(--primair);

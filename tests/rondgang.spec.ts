@@ -224,7 +224,10 @@ test('kaart laadt (worker) en tekent de route over het spoor', async ({ page }) 
 	await kiesPlek(page, /^Naar/, 'amsterdam c', /Amsterdam Centraal/);
 	await page.getByRole('button', { name: 'Plan reis' }).click();
 	await page.locator('a.advies').first().click();
-	await page.getByRole('button', { name: 'Kaart' }).first().click();
+	// Ook bij een nog niet gekozen reis staat de kaart klein in de pagina
+	await page.getByRole('button', { name: 'Kaart schermvullend' }).click();
+	await expect(page.getByRole('dialog', { name: 'Kaart', exact: true })).toBeVisible();
+	await expect(page.getByText(/grijze stipjes: tussenstops/)).toBeVisible();
 	expect((await spoorkaart).status()).toBe(200);
 	await expect(page.getByRole('button', { name: 'Spoor' })).toBeVisible();
 	await expect(page.locator('canvas.maplibregl-canvas')).toHaveCount(1);
@@ -253,15 +256,15 @@ test('reis onderweg: samenvatting, kaartje, voortgang en alternatieven', async (
 	// Bovenaan de ritten achter elkaar, zoals bij het zoeken
 	await expect(page.locator('header.kop .lijnlabel').first()).toBeVisible();
 	// Kaart staat klein in de pagina en kan schermvullend
-	await expect(page.getByRole('button', { name: 'Live kaart' })).toHaveCount(0);
+	await expect(page.getByRole('dialog', { name: 'Kaart', exact: true })).toHaveCount(0);
 	await page.getByRole('button', { name: 'Kaart schermvullend' }).click();
-	await expect(page.getByRole('dialog', { name: 'Live kaart' })).toBeVisible();
+	await expect(page.getByRole('dialog', { name: 'Kaart', exact: true })).toBeVisible();
 	// De hele rit staat erop, met de haltes ervoor en erna; hun namen linken naar de stationspagina
 	await expect(page.getByText(/zwart: de rest van de rit/)).toBeVisible();
 	await expect(page.locator('a.haltelabel[href^="/station?"]', { hasText: 'Beginstation' })).toBeAttached();
 	await expect(page.locator('a.haltelabel', { hasText: 'Halte erna' })).toBeAttached();
 	await page.getByRole('button', { name: 'Kaart verkleinen' }).click();
-	await expect(page.getByRole('dialog', { name: 'Live kaart' })).toHaveCount(0);
+	await expect(page.getByRole('dialog', { name: 'Kaart', exact: true })).toHaveCount(0);
 
 	// Halverwege de treinrit: bolletje op de lijn, gepasseerde haltes doorgestreept, snelheid
 	const legs = await page.evaluate(() => {

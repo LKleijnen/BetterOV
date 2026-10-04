@@ -3,7 +3,7 @@
 	import type { PageProps } from './$types';
 	import { goto } from '$app/navigation';
 	import { page } from '$app/state';
-	import { CalendarPlus, Check, ChevronDown, ChevronLeft, Footprints, Map as KaartIcoon, Play, Star, TriangleAlert, Info } from '@lucide/svelte';
+	import { CalendarPlus, Check, ChevronDown, ChevronLeft, Footprints, Play, Star, TriangleAlert, Info } from '@lucide/svelte';
 	import type { Advies, Leg, Plek, TreinInfo } from '$lib/types';
 	import { zoekAdvies } from '$lib/client/planner.svelte';
 	import { data } from '$lib/client/data.svelte';
@@ -23,7 +23,7 @@
 	import Drukte from '$lib/components/Drukte.svelte';
 	import Onderblad from '$lib/components/Onderblad.svelte';
 	import VoertuigPaneel from '$lib/components/VoertuigPaneel.svelte';
-	import Kaart from '$lib/components/Kaart.svelte';
+	import KaartVak from '$lib/components/KaartVak.svelte';
 	import Aftelling from '$lib/components/Aftelling.svelte';
 
 	let { params }: PageProps = $props();
@@ -56,20 +56,26 @@
 	}
 
 	// ---------- Kaart ----------
-	let kaartOpen = $state(false);
+	// Klein in de pagina, met de knop (of een tik) schermvullend, net als op de reispagina
+	let kaartGroot = $state(false);
 	let kaartLeg = $state(-1);
 	function toonKaart(i: number) {
 		kaartLeg = i;
-		kaartOpen = true;
+		kaartGroot = true;
 	}
-	// De volledige ritten erbij (in het zwart), zodra de kaart opengaat
+	// De volledige ritten erbij (in het zwart)
 	let ritten = $state.raw<(Leg | null)[]>([]);
 	let rittenVoor = '';
 	$effect(() => {
 		const a = advies;
-		if (!kaartOpen || !a || a.id === rittenVoor) return;
+		if (!a || a.id === rittenVoor) return;
 		rittenVoor = a.id;
-		untrack(() => volledigeRitten(a.legs).then((r) => (ritten = r)));
+		ritten = [];
+		untrack(() =>
+			volledigeRitten(a.legs).then((r) => {
+				if (rittenVoor === a.id) ritten = r;
+			})
+		);
 	});
 
 	let prijsOpen = $state(false);
@@ -198,7 +204,6 @@
 
 		<div class="actiebalk">
 			<button aria-pressed={nuVertrekken} onclick={() => (nuVertrekken = !nuVertrekken)}><Footprints size={18} /> Nu vertrekken</button>
-			<button onclick={() => toonKaart(-1)}><KaartIcoon size={18} /> Kaart</button>
 			<button onclick={agenda}><CalendarPlus size={18} /> Agenda</button>
 		</div>
 
@@ -224,6 +229,8 @@
 			</section>
 		{/if}
 
+		<KaartVak {advies} {ritten} eigenPositie={positie} bind:groot={kaartGroot} bind:focusLeg={kaartLeg} />
+
 		<ReisTijdlijn {advies} {treinInfo} onVoertuig={toonVoertuig} onKaart={toonKaart} />
 
 		<div class="startbalk">
@@ -248,12 +255,6 @@
 <Onderblad bind:open={voertuigOpen} titel="Voertuiginfo">
 	{#if advies && voertuigLeg !== null}
 		<VoertuigPaneel leg={advies.legs[voertuigLeg]} info={treinInfo[voertuigLeg]} />
-	{/if}
-</Onderblad>
-
-<Onderblad bind:open={kaartOpen} titel="Kaart">
-	{#if advies}
-		<Kaart {advies} {ritten} focusLeg={kaartLeg} eigenPositie={positie} hoogte="60dvh" />
 	{/if}
 </Onderblad>
 
