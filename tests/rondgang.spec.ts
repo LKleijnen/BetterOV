@@ -250,6 +250,8 @@ test('reis onderweg: samenvatting, kaartje, voortgang en alternatieven', async (
 	await kiesPlek(page, /^Naar/, 'damrak', /Damrak 1/);
 	await page.getByRole('button', { name: 'Plan reis' }).click();
 	await page.locator('a.advies').first().click();
+	// Tussenstops staan altijd als stipjes op de lijn, ook als de reis nog niet bezig is
+	await expect(page.locator('li.rit .stopje').first()).toBeAttached();
 	await page.getByRole('button', { name: 'Start reis' }).click();
 	await page.waitForURL('**/reis');
 
@@ -274,6 +276,16 @@ test('reis onderweg: samenvatting, kaartje, voortgang en alternatieven', async (
 	const trein = legs.find((l: string[]) => l[0] === 'trein');
 	await page.clock.fastForward(Math.round((Date.parse(trein[1]) + Date.parse(trein[2])) / 2 - Date.now()));
 	await expect(page.getByRole('img', { name: 'Hier ben je nu ongeveer' })).toBeVisible();
+	// Halverwege de rit staat het bolletje ook halverwege de lijn (op tijd, niet op het aantal haltes)
+	const { bolletje, lijn } = await page.evaluate(() => {
+		const rit = document.querySelector('li.rit.actief')!;
+		const r = (el: Element | null) => el!.getBoundingClientRect();
+		const b = r(rit.querySelector('.bolletje'));
+		return { bolletje: b.top + b.height / 2, lijn: [r(rit.querySelector('.lijnstuk')).top, r(rit.querySelector('.lijnstuk')).bottom] };
+	});
+	const fractie = (bolletje - lijn[0]) / (lijn[1] - lijn[0]);
+	expect(fractie).toBeGreaterThan(0.3);
+	expect(fractie).toBeLessThan(0.7);
 	await expect(page.locator('li.rit.actief .halte-naam.voorbij').first()).toBeVisible();
 	await expect(page.getByText(/km\/u/)).toBeVisible();
 

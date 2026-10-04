@@ -55,3 +55,47 @@ export function ritVoortgang(stops: StopTijd[], nu: number): { index: number; fr
 export function voorbij(tijd: { verwacht: string } | undefined, nu: number): boolean {
 	return !!tijd && ms(tijd.verwacht) < nu;
 }
+
+/**
+ * Plek van elke halte op de lijn (0 = vertrek, 1 = aankomst), op tijd verdeeld. Een tussenstop staat
+ * in het midden van zijn stilstand. Altijd oplopend, ook als de tijden van de vervoerder dat niet zijn.
+ */
+export function stopPosities(stops: StopTijd[]): number[] {
+	const n = stops.length;
+	if (n < 2) return stops.map(() => 0);
+	const begin = stops[0].vertrek;
+	const duur = stops[n - 1].aankomst - begin;
+	let vorige = 0;
+	return stops.map((s, k) => {
+		if (k === 0) return 0;
+		if (k === n - 1) return 1;
+		const p = duur > 0 && Number.isFinite(duur) ? ((s.aankomst + s.vertrek) / 2 - begin) / duur : k / (n - 1);
+		vorige = Math.min(1, Math.max(vorige, p));
+		return vorige;
+	});
+}
+
+/**
+ * Pixels vanaf het vertrekpunt bij uitgeklapte tussenstops: op tijd verdeeld over `lengte`, maar met
+ * minstens `minAfstand` tussen twee haltes (zodat de namen leesbaar blijven). De eerste tussenstop
+ * staat minstens `eersteVanaf` na het vertrek en de laatste minstens `laatsteAfstand` voor de aankomst
+ * (zodat de namen niet tegen die van het vertrek- en aankomststation aan staan).
+ */
+export function spreidPosities(posities: number[], lengte: number, minAfstand: number, eersteVanaf = 0, laatsteAfstand = minAfstand): number[] {
+	const uit: number[] = [];
+	posities.forEach((p, k) => {
+		if (k === 0) return uit.push(0);
+		const laatste = k === posities.length - 1;
+		let y = Math.max((laatste ? 1 : p) * lengte, uit[k - 1] + (laatste && k > 1 ? laatsteAfstand : minAfstand));
+		if (k === 1 && !laatste) y = Math.max(y, eersteVanaf);
+		uit.push(y);
+	});
+	return uit;
+}
+
+/** Waar het bolletje staat (in dezelfde eenheid als `posities`), gegeven de voortgang uit ritVoortgang */
+export function plekOpLijn(posities: number[], voortgang: { index: number; fractie: number }): number {
+	const van = posities[voortgang.index] ?? 0;
+	const naar = posities[Math.min(voortgang.index + 1, posities.length - 1)] ?? van;
+	return van + (naar - van) * voortgang.fractie;
+}
