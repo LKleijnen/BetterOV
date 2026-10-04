@@ -1,6 +1,6 @@
 <script lang="ts">
 	import { onDestroy, onMount, untrack } from 'svelte';
-	import { LocateFixed, RefreshCw, TriangleAlert, Info, ChevronRight } from '@lucide/svelte';
+	import { LocateFixed, RefreshCw, TriangleAlert, Info, ChevronRight, Building2 } from '@lucide/svelte';
 	import type { Plek, Vertrek, VertrekAntwoord } from '$lib/types';
 	import { api, metCache } from '$lib/client/api';
 	import { huidigePositie } from '$lib/client/gps';
@@ -100,6 +100,15 @@
 	const heeftTreinen = $derived((antwoord?.vertrekken ?? []).some((v) => v.modus === 'trein'));
 	const heeftAnder = $derived((antwoord?.vertrekken ?? []).some((v) => v.modus !== 'trein'));
 
+	// Bij een treinstation: link naar de stationspagina (plattegrond, sporen, voorzieningen)
+	const stationHref = $derived.by(() => {
+		if (!antwoord || !heeftTreinen) return null;
+		const lat = antwoord.halte.lat ?? halte?.lat ?? inDeBuurt?.lat;
+		const lon = antwoord.halte.lon ?? halte?.lon ?? inDeBuurt?.lon;
+		if (lat === undefined || lon === undefined) return null;
+		return `/station?${new URLSearchParams({ naam: antwoord.halte.naam, lat: String(lat), lon: String(lon) })}`;
+	});
+
 	/** "nu", "7 min", of niets als het nog meer dan een uur duurt */
 	function minutenTot(iso: string): string {
 		const min = Math.round((Date.parse(iso) - nu) / 60000);
@@ -136,6 +145,7 @@
 		<section class="stapel" aria-live="polite">
 			<div class="rij tussen">
 				<h2>{antwoord.halte.naam}</h2>
+				{#if stationHref}<a class="knop tweede klein stationknop" href={stationHref}><Building2 size={16} aria-hidden="true" /> Station</a>{/if}
 				<button class="icoonknop" aria-label="Verversen" onclick={laad} disabled={laden}><RefreshCw size={18} class={laden ? 'draai' : ''} /></button>
 			</div>
 			{#if antwoord.melding}<div class="melding info klein"><Info size={16} /> <span>{antwoord.melding}</span></div>{/if}
@@ -198,6 +208,10 @@
 </main>
 
 <style>
+	.stationknop {
+		margin-left: auto;
+		gap: 6px;
+	}
 	.bord {
 		padding: 0;
 		overflow: hidden;

@@ -7,7 +7,7 @@ import { schattingTrein, berekenPrijs } from './prijs';
 import { naarVelden, vanVelden, Tijdstempel } from './firestore';
 import { opVertrek, plan } from './planner';
 import { berekenInstapadvies } from './trein';
-import { bakIndeling, nsVoorziening } from './ns';
+import { bakIndeling, hoortBijStation, nsVoorziening } from './ns';
 import { kiesLaatste } from './laatste';
 import { maakAdvies, ovLeg, loopLeg, t } from '../testdata';
 
@@ -465,6 +465,18 @@ describe('voorzieningen op een station (Places API)', () => {
 	it('slaat voorzieningen zonder naam over en negeert onveilige links', () => {
 		expect(nsVoorziening({ lat: 52 }, {})).toBeNull();
 		expect(nsVoorziening({ name: 'Kiosk', link: { uri: 'javascript:alert(1)' } }, { type: 'shop' })?.link).toBeUndefined();
+	});
+
+	it('houdt alleen voorzieningen van dit station over', () => {
+		const ut = { code: 'UT', lat: 52.0894, lon: 5.1101 };
+		// Op stationscode, ook als de plek wat verder weg ligt
+		expect(hoortBijStation({ stationCode: 'ut', lat: 52.1, lon: 5.12 }, ut)).toBe(true);
+		expect(hoortBijStation({ stationCode: 'ASD', lat: 52.0894, lon: 5.1101 }, ut)).toBe(false);
+		// Zonder stationscode: binnen 1 km
+		expect(hoortBijStation({ lat: 52.091, lng: 5.112 }, ut)).toBe(true);
+		expect(hoortBijStation({ lat: 52.379, lng: 4.9 }, ut)).toBe(false);
+		// Zonder code en zonder plek weten we het niet: weglaten
+		expect(hoortBijStation({ name: 'Toiletten' }, ut)).toBe(false);
 	});
 });
 

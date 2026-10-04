@@ -318,6 +318,10 @@ test('station: vanuit een overstap naar de stationspagina met sporen, kaart en v
 	await page.getByRole('button', { name: 'Vertrektijden' }).click();
 	await page.waitForURL('**/vertrektijden');
 	await expect(page.getByText(/Ververst elke 30 s/)).toBeVisible();
+	// En vanaf het vertrekbord weer naar de stationspagina
+	await page.getByRole('link', { name: 'Station', exact: true }).click();
+	await page.waitForURL(/\/station\?naam=/);
+	await expect(page.getByRole('heading', { name: 'Plattegrond' })).toBeVisible();
 	expect(fouten).toEqual([]);
 });
 
