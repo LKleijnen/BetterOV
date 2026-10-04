@@ -210,3 +210,42 @@ describe('materieel', () => {
 		expect(heeftVoertuiginfo(ovLeg('A', 'B', '10:00', '10:30', { modus: 'bus', ritnummer: undefined, rolstoel: true }))).toBe(true);
 	});
 });
+
+describe('splitsen: minder treinstellen na een station, verder geen treinstellen bekend', () => {
+	// Zoals IC 2769 Enkhuizen – Maastricht: in Eindhoven gaat alleen 9469 verder, daarna geeft NS geen treinstellen meer
+	const delen = [
+		{ nummer: '9469', faciliteiten: [], bakken: 4 },
+		{ nummer: '9528', faciliteiten: [], bakken: 4 }
+	];
+	const stop = (naam: string, nummers: string[] | null): NsRitHalte => ({
+		naam,
+		lat: 52,
+		lon: 5,
+		status: 'STOP',
+		bestemming: 'Maastricht / Heerlen',
+		vertrekken: [{ naar: 'Maastricht', ritnummer: '2769', nummers: nummers ?? [] }],
+		materieel: nummers ? { aantalDelen: nummers.length * 4, delen: nummers.map((nummer) => ({ nummer, faciliteiten: [] })) } : undefined
+	});
+	const rit = [
+		stop("'s-Hertogenbosch", ['9469', '9528']),
+		stop('Eindhoven Centraal', ['9469']),
+		stop('Weert', null),
+		stop('Roermond', null),
+		{ ...stop('Maastricht', null), bestemming: 'Maastricht', vertrekken: undefined }
+	];
+
+	it('weet welk treinstel naar jouw station gaat en waar de rest heen gaat', () => {
+		const s = bepaalSplitsing(delen, rit, { stationNaam: "'s-Hertogenbosch", naar: 'Roermond', ritnummer: '2769' });
+		expect(s).toEqual({
+			station: 'Eindhoven Centraal',
+			jouwDelen: [0],
+			bestemmingen: [
+				{ deel: 0, naar: 'Maastricht' },
+				{ deel: 1, naar: 'Heerlen' }
+			],
+			jouwBestemming: 'Maastricht',
+			andereBestemmingen: ['Heerlen'],
+			voorUitstappen: true
+		});
+	});
+});

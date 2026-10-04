@@ -234,6 +234,9 @@ export function bepaalSplitsing(
 			const n = aantalDelen(stoppend[i]);
 			if (n !== undefined && n < begin) {
 				iSplits = i;
+				// Waar de rest heen gaat staat soms in de bestemming op het bord ("Maastricht / Heerlen")
+				const bord = (stoppend[iVan].bestemming ?? '').split('/').map((b) => b.trim()).filter(Boolean);
+				if (bord.length > 1) anderen = bord.filter((b) => !zelfdeNaam(b, eind?.naam));
 				break;
 			}
 		}
@@ -247,9 +250,13 @@ export function bepaalSplitsing(
 	if ((!perTreinstel && iSplits < 0) || (allesZelfde && !zeker)) return undefined;
 
 	// ---------- Welke treinstellen zijn van jou? ----------
-	const nummersBij = (h?: NsRitHalte) => new Set((h?.materieel?.delen ?? []).map((d) => d.nummer).filter(Boolean));
-	// Treinstellen die na de splitsing nog in jouw tak rijden: bij je uitstapstation, of anders aan het eind
-	const naSplitsing = iNaar >= 0 && iNaar >= iSplits ? stoppend[iNaar] : eind;
+	const nummersBij = (h?: NsRitHalte) =>
+		new Set([...(h?.materieel?.delen ?? []).map((d) => d.nummer), ...(h?.vertrekken ?? []).flatMap((d) => d.nummers)].filter(Boolean));
+	// Treinstellen die na de splitsing nog in jouw tak rijden: bij je uitstapstation, of anders aan het eind.
+	// NS geeft de treinstellen niet altijd bij elke halte; dan de laatste halte ervoor (vanaf de splitsing) waar ze wel staan.
+	let iNa = iNaar >= 0 && iNaar >= iSplits ? iNaar : stoppend.length - 1;
+	while (iNa > Math.max(iSplits, iVan) && !nummersBij(stoppend[iNa]).size) iNa--;
+	const naSplitsing = iSplits >= 0 && iNa >= iSplits ? stoppend[iNa] : iNaar >= 0 && iNaar >= iSplits ? stoppend[iNaar] : eind;
 	const metNummer = (nummers: Set<string | undefined>) =>
 		delen.map((d, i) => (d.nummer && nummers.has(d.nummer) ? i : -1)).filter((i) => i >= 0);
 	let jouwDelen = vertrekNummers ? metNummer(new Set(vertrekNummers)) : [];
