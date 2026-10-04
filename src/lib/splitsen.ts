@@ -48,15 +48,25 @@ export function splitsTekst(info: TreinInfo | null | undefined): SplitsTekst | n
 	const plek = plekVanJouwDeel(info);
 	const waar = s.station ? ` in ${s.station}` : ' onderweg';
 
-	const kop = blijftStaan ? `Een deel van deze trein stopt${waar}` : `Deze trein splitst${waar}`;
+	const kop = s.alleenKorter
+		? `Niet de hele trein rijdt verder dan ${s.station ?? 'een station onderweg'}`
+		: blijftStaan
+			? `Een deel van deze trein stopt${waar}`
+			: `Deze trein splitst${waar}`;
 	const jouw = plek
 		? `Zit in het ${plek} deel${jouwNaar ? ` naar ${jouwNaar}` : ''}.`
 		: jouwNaar
 			? `Zit in het deel naar ${jouwNaar}; let op de borden en de omroep.`
 			: 'Let op de borden en de omroep in welk deel je moet zitten.';
-	const anders = blijftStaan ? 'Het andere deel rijdt niet verder.' : anderen.length ? `Het andere deel gaat naar ${anderen.join(' en ')}.` : '';
+	const anders = s.alleenKorter
+		? 'Waar het andere deel daarna heen gaat, geeft NS niet door.'
+		: blijftStaan
+			? 'Het andere deel rijdt niet verder.'
+			: anderen.length
+				? `Het andere deel gaat naar ${anderen.join(' en ')}.`
+				: '';
 	const kortWaar = s.station ? ` in ${s.station}` : '';
-	const kort = `${blijftStaan ? `Deel stopt${kortWaar}` : `Splitst${kortWaar}`} · ${
+	const kort = `${s.alleenKorter ? `Korter vanaf${kortWaar || ' onderweg'}` : blijftStaan ? `Deel stopt${kortWaar}` : `Splitst${kortWaar}`} · ${
 		plek ? `zit ${KORT_PLEK[plek]}${jouwNaar ? ` (naar ${jouwNaar})` : ''}` : jouwNaar ? `zit in het deel naar ${jouwNaar}` : 'let op in welk deel je zit'
 	}`;
 	return { kop, jouw, anders, kort };
