@@ -52,7 +52,6 @@
 
 	function variantFeiten(va: Voertuig['varianten'][number]): [string, string][] {
 		const uit: [string, string][] = [];
-		if (va.herkenning) uit.push(['Herkennen', va.herkenning]);
 		if (va.bakken) uit.push(['Bakken', va.bakken]);
 		if (va.zitplaatsen) uit.push(['Zitplaatsen', va.zitplaatsen]);
 		if (va.gebouwd) uit.push(['Gebouwd', va.gebouwd]);
@@ -112,27 +111,25 @@
 		<section class="stapel" aria-labelledby="versies">
 			<h2 id="versies">Versies</h2>
 			{#each voertuig.varianten as va, i (i)}
-				<article class="kaart stapel versie" class:jouw={i === jouwVariant} id={variantAnker(i)}>
-					<div class="rij tussen">
-						<h3>{va.naam || va.code}</h3>
+				<article class="versie" class:jouw={i === jouwVariant} id={variantAnker(i)}>
+					<h3>
+						{va.naam || va.code}
+						{#if va.naam && va.code !== va.naam}<span class="zwak klein code">({va.code})</span>{/if}
 						{#if i === jouwVariant}<span class="jouwlabel">Jouw trein</span>{/if}
-					</div>
-					{#if va.naam && va.code !== va.naam}<span class="zwak klein code">{va.code}</span>{/if}
+					</h3>
 					<p>{va.omschrijving}</p>
+					{#if va.herkenning}<p><em>Herkennen:</em> {va.herkenning}</p>{/if}
 					{#if variantFeiten(va).length}
-						<dl class="feiten klein">
-							{#each variantFeiten(va) as [label, waarde] (label)}
-								<dt class="zwak">{label}</dt>
-								<dd>{waarde}</dd>
-							{/each}
-						</dl>
+						<p class="klein zwak">
+							{#each variantFeiten(va) as [label, waarde], k (label)}{k ? ' · ' : ''}{label}: {waarde}{/each}
+						</p>
 					{/if}
 				</article>
 			{/each}
 		</section>
 
 		{#if voertuig.techniek.length}
-			<section class="kaart stapel" aria-labelledby="techniek">
+			<section class="stapel" aria-labelledby="techniek">
 				<h2 id="techniek">Techniek</h2>
 				<dl class="feiten">
 					{#each voertuig.techniek as t, i (i)}
@@ -144,7 +141,7 @@
 		{/if}
 
 		{#if voertuig.kosten}
-			<section class="kaart stapel" aria-labelledby="kosten">
+			<section class="stapel" aria-labelledby="kosten">
 				<h2 id="kosten">Wat kostte hij?</h2>
 				<p>{voertuig.kosten}</p>
 			</section>
@@ -158,7 +155,7 @@
 		{/if}
 
 		{#if voertuig.feiten.length}
-			<section class="kaart stapel" aria-labelledby="feiten">
+			<section class="stapel" aria-labelledby="feiten">
 				<h2 id="feiten">Leuke feiten</h2>
 				<ul class="feitenlijst">
 					{#each voertuig.feiten as feit, i (i)}<li>{feit}</li>{/each}
@@ -232,18 +229,25 @@
 		font-size: 1rem;
 	}
 	.versie {
-		gap: 6px;
+		display: flex;
+		flex-direction: column;
+		gap: 4px;
 		scroll-margin-top: 80px;
 	}
-	.versie.jouw {
-		outline: 3px solid var(--ok);
-		outline-offset: -1px;
+	.versie + .versie {
+		margin-top: 8px;
 	}
-	.code {
-		margin-top: -4px;
+	/* Jouw versie: een groene streep ervoor, geen vak */
+	.versie.jouw {
+		padding-left: 12px;
+		border-left: 4px solid var(--ok);
+	}
+	h3 .code {
+		font-weight: 400;
 	}
 	.jouwlabel {
-		flex: 0 0 auto;
+		margin-left: 6px;
+		vertical-align: 2px;
 		white-space: nowrap;
 		padding: 1px 7px;
 		border-radius: 6px;
