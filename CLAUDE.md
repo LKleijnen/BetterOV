@@ -15,7 +15,7 @@ Advertentievrije OV-webapp (PWA) voor een kleine kring (±20 mensen, alleen op u
 
 ## Architectuur
 - **SvelteKit 2 + Svelte 5 (runes)** als Cloudflare Worker (`@sveltejs/adapter-cloudflare`, `wrangler.jsonc`). `ssr = false`: de server levert de schil + `/api/*`.
-- **Cron-worker** in `cron/` (elke minuut): controleert actieve reizen, stuurt FCM-push, waarschuwt voor de laatste trein naar huis (`laatsteTreinWekkers`, logica in `src/lib/wekker.ts`), rondt reizen af, ruimt gedeelde reizen op. Importeert alleen gedeelde modules met **relatieve imports** (geen `$lib`, geen `$env`).
+- **Cron-worker** in `cron/` (elke minuut): controleert actieve reizen, stuurt FCM-push, waarschuwt voor de laatste trein naar huis (`laatsteTreinWekkers`, logica in `src/lib/wekker.ts`), stuurt herinneringen voor in- en uitstappen (`src/lib/herinneringen.ts`; instellingen in het profiel, kopie in `actieveReizen/{uid}.herinneringen`; wat binnen de minuut valt wacht de worker af en stuurt hij op de seconde), rondt reizen af, ruimt gedeelde reizen op. Importeert alleen gedeelde modules met **relatieve imports** (geen `$lib`, geen `$env`).
 - **Firebase**: Auth (Google) + Firestore + FCM. Server praat met Firestore/FCM via REST met een service account (`src/lib/server/firestore.ts`, `google.ts`, `fcm.ts`) — géén Admin SDK.
 - Gedeelde logica (client, server én cron): `src/lib/types.ts`, `reis.ts` (overstappen, problemen, huidige stap), `tijd.ts` (altijd Europe/Amsterdam), `geo.ts`.
 - Server: `src/lib/server/` — `motis.ts` (Transitous v6, fallback v5), `ns.ts` (defensief parsen: NS-velden kunnen ontbreken), `planner.ts` (4 s timeout → NS-fallback), `reisstatus.ts`, `trein.ts`, `prijs.ts` + `src/lib/data/tarieven.json`.
@@ -38,6 +38,7 @@ Advertentievrije OV-webapp (PWA) voor een kleine kring (±20 mensen, alleen op u
 - Werk op een branch, open een PR naar `main`. De workflow `.github/workflows/uitrollen.yml` test elke PR; na merge naar `main` rolt hij app én cron-worker uit naar Cloudflare en zet de secrets.
 - Secrets (GitHub → Actions → Repository secrets): `CLOUDFLARE_API_TOKEN`, `CLOUDFLARE_ACCOUNT_ID`, `NS_API_KEY`, `FIREBASE_SERVICE_ACCOUNT`, `ADMIN_EMAILS`. Variables: `PUBLIC_FIREBASE_*`.
 - Een gewijzigd GitHub-secret komt pas in Cloudflare na een nieuwe run van de workflow (*Actions → Testen en uitrollen → Run workflow*).
+- Testversie per PR: job `testversie` doet `wrangler versions upload --preview-alias test` (niet live) → `test-betterov.<subdomein>.workers.dev`. Handmatig *Run workflow* op een branch met `cron_van_branch` zet alleen de cron-worker van die branch live (om meldingen te testen); nieuwe cron-functies daarom zo bouwen dat ze niets doen voor reizen die met de oude app zijn gestart.
 
 ## Bekende open punten
 - **NS Virtual Train API** (instapadvies per bak, kortere trein, treinposities) is niet openbaar gedocumenteerd en nog niet met echte data getest. Parser: `nsSamenstelling` in `ns.ts`; de UI heeft "Ruwe NS-data" om het echte formaat te bekijken.

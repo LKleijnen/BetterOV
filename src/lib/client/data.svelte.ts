@@ -30,6 +30,7 @@ import type {
 import { firebaseActief } from './config';
 import { fbDb } from './firebase';
 import { lees, schrijf } from './opslag';
+import { herinneringInstellingen } from '$lib/herinneringen';
 
 export function nieuweId(lengte = 16): string {
 	const bytes = new Uint8Array(lengte);
@@ -122,6 +123,10 @@ class Data {
 		this.profiel = { ...this.profiel, ...wijziging };
 		if (this.lokaal) return schrijf('lokaal:profiel', this.profiel);
 		await setDoc(doc(fbDb(), 'users', uid), schoon(wijziging), { merge: true });
+		// Loopt er een reis, dan gelden nieuwe herinneringen meteen (de cron-worker leest de kopie bij de reis)
+		if (wijziging.herinneringen && this.actieveReis?.status === 'actief') {
+			await setDoc(doc(fbDb(), 'actieveReizen', uid), { herinneringen: herinneringInstellingen(wijziging.herinneringen) }, { merge: true });
+		}
 	}
 
 	// ---------- Lijsten ----------
@@ -212,7 +217,8 @@ class Data {
 			naar,
 			advies,
 			gemeld: [],
-			eindeOp: advies.aankomst.verwacht
+			eindeOp: advies.aankomst.verwacht,
+			herinneringen: herinneringInstellingen(this.profiel.herinneringen)
 		};
 		const batch = writeBatch(db);
 		batch.set(doc(db, 'users', uid, 'reizen', id), rest);

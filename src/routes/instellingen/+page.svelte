@@ -6,6 +6,7 @@
 	import { isIOS, isStandalone, pushStatus, zetPushAan, lokaleMelding, type PushStatus } from '$lib/client/push';
 	import { weergave, type Thema } from '$lib/client/thema.svelte';
 	import PlekInvoer from '$lib/components/PlekInvoer.svelte';
+	import { HERINNERING_KEUZES, duurKort, herinneringInstellingen, type HerinneringInstellingen } from '$lib/herinneringen';
 
 	const themas: { waarde: Thema; label: string }[] = [
 		{ waarde: 'systeem', label: 'Automatisch' },
@@ -19,6 +20,21 @@
 	let opgeslagen = $state(false);
 	let fout = $state<string | null>(null);
 
+	// Herinneringen voor in- en uitstappen: meteen opslaan bij elke tik
+	let herinneringen = $state<HerinneringInstellingen>(herinneringInstellingen(data.profiel.herinneringen));
+	let herinneringFout = $state<string | null>(null);
+	async function wisselHerinnering(soort: keyof HerinneringInstellingen, seconden: number) {
+		const lijst = herinneringen[soort];
+		const nieuw = lijst.includes(seconden) ? lijst.filter((s) => s !== seconden) : [...lijst, seconden].sort((a, b) => b - a);
+		herinneringen = { ...herinneringen, [soort]: nieuw };
+		herinneringFout = null;
+		try {
+			await data.slaProfielOp({ herinneringen: $state.snapshot(herinneringen) });
+		} catch (e) {
+			herinneringFout = (e as Error).message;
+		}
+	}
+
 	let push = $state<PushStatus>(pushStatus());
 	let pushMelding = $state<string | null>(null);
 	let pushBezig = $state(false);
@@ -31,6 +47,7 @@
 		naam = data.profiel.naam ?? sessie.naam ?? '';
 		thuis = data.profiel.thuislocatie ?? null;
 		laatsteTrein = data.profiel.laatsteTrein ?? 'automatisch';
+		herinneringen = herinneringInstellingen(data.profiel.herinneringen);
 	});
 
 	async function bewaar() {
@@ -86,7 +103,6 @@
 
 	<section class="kaart stapel" aria-labelledby="push-kop">
 		<h2 id="push-kop" class="rij"><Bell size={20} aria-hidden="true" /> Meldingen tijdens je reis</h2>
-		<p class="zwak klein">Je krijgt binnen twee minuten een melding als een rit uitvalt, een overstap niet meer haalbaar is, het spoor wijzigt of je flink later aankomt.</p>
 		{#if isIOS() && !isStandalone()}
 			<div class="melding waarschuwing klein"><TriangleAlert size={16} /> <span>Op iPhone werken meldingen alleen als je de app eerst op je beginscherm zet (Meer → Op beginscherm zetten).</span></div>
 		{/if}
@@ -104,6 +120,21 @@
 		{#if !sessie.pushIngesteld && !sessie.demo}
 			<p class="klein zwak">Let op: de server voor achtergrondmeldingen is nog niet ingesteld.</p>
 		{/if}
+		{#if push === 'aan'}
+			{#each [{ soort: 'instappen', label: 'Instappen' }, { soort: 'uitstappen', label: 'Uitstappen' }] as const as r (r.soort)}
+				<div class="stapel veld-groep">
+					<span class="label" id="herinnering-{r.soort}">{r.label}</span>
+					<div class="chips keuzes" role="group" aria-labelledby="herinnering-{r.soort}">
+						{#each HERINNERING_KEUZES as sec (sec)}
+							<button type="button" class="chip" aria-pressed={herinneringen[r.soort].includes(sec)} onclick={() => wisselHerinnering(r.soort, sec)}>
+								{duurKort(sec)}
+							</button>
+						{/each}
+					</div>
+				</div>
+			{/each}
+			{#if herinneringFout}<p class="status-fout klein">{herinneringFout}</p>{/if}
+		{/if}
 	</section>
 
 	<section class="kaart stapel" aria-labelledby="weergave-kop">
@@ -120,6 +151,11 @@
 <style>
 	.veld-groep {
 		gap: 4px;
+	}
+	/* Alle keuzes in beeld (geen schuifbalk) */
+	.keuzes {
+		flex-wrap: wrap;
+		overflow: visible;
 	}
 	h2.rij {
 		gap: 8px;

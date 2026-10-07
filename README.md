@@ -20,6 +20,7 @@ Advertentievrije OV-webapp (PWA) voor eigen gebruik en een kleine kring vrienden
 | M6 | *Nu vertrekken*: looptijd vanaf GPS en aftelling | Reisadvies |
 | M7, M8 | Actieve reis met één tik; ververst bij openen en elke 30 s; samenvatting bovenaan, bolletje dat op tijd over de lijn schuift en precies bij een stipje is als de trein bij die halte is, doorgestreepte haltes, snelheid (GPS); alternatieven vanaf het overstappunt (inklapbaar, kiezen op de detailpagina) | Reis |
 | M9 | Pushmelding binnen 2 min bij uitval, onhaalbare overstap, spoorwijziging, vertraging | Cron-worker |
+| — | Herinnering vóór instappen en uitstappen, zelf in te stellen (bijvoorbeeld 5 min, 1 min en 30 s); instappen pas een minuut nadat je vorige voertuig is aangekomen, uitstappen pas als je onderweg bent | Meer → Instellingen, cron-worker |
 | M10 | Live kaart met eigen positie en (geschatte of GPS-)positie van het voertuig, ook vóór je instapt en na je uitstapt; de hele rit in zwart met jouw deel in geel; tussenstops als kleine grijze stipjes, met naam als je inzoomt of tikt, en link naar de stationspagina; treinen over het echte spoor (NS SpoorKaart), optioneel alle spoorlijnen | Reis en Reisadvies (kaartje, schermvullend), Voertuiginfo |
 | M11 | Fallback naar de NS-planner, met melding | Server |
 | M12 | Laatste data blijft zichtbaar bij slecht bereik, met tijdstip van ophalen | Overal |
@@ -45,6 +46,11 @@ npm run dev:mock      # nepdata, geen internet naar Transitous/NS nodig
 Zonder Firebase-config draait de app in **demo-modus**: geen login, gegevens alleen in je browser. Online werkt demo-modus alleen met `DEMO_MODUS=1`, zodat de API niet per ongeluk openstaat.
 
 Tests: `npm test` (unit), `npm run test:e2e` (Playwright, met nepdata), `npm run check` (types).
+
+## Een PR proberen vóór het mergen
+Bij elke PR zet de workflow een **testversie** klaar op `https://test-betterov.<jouw-subdomein>.workers.dev` (de exacte link staat bij de PR onder *Checks → Testen en uitrollen → Summary*). De echte app verandert niet. Let op: de testversie gebruikt dezelfde gegevens (favorieten, reizen) als de echte app.
+- Eenmalig: Firebase → *Authentication* → *Settings* → *Authorized domains* → *Add domain* → `test-betterov.<jouw-subdomein>.workers.dev`. Open de testversie daarna gewoon in de browser (niet op het beginscherm zetten; dan werkt inloggen met een pop-up).
+- Pushmeldingen komen van de cron-worker, die alleen live draait. Wil je die vóór het mergen testen: GitHub → *Actions* → *Testen en uitrollen* → *Run workflow* → kies de branch van de PR → vink **cron_van_branch** aan → *Run workflow*. Merge je de PR niet, zet de cron-worker dan terug met *Run workflow* op `main` (zonder vinkje).
 
 ## Stappenplan: zelf te doen (±25 minuten)
 
