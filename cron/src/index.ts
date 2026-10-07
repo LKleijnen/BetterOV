@@ -5,6 +5,7 @@
 import type { ActieveReisPointer, LaatsteTreinWekker, Leg } from '../../src/lib/types';
 import { probleemTitel, vindProblemen } from '../../src/lib/reis';
 import { wekkerMelding, wekkerVerlopen } from '../../src/lib/wekker';
+import { herinneringInstellingen, herinneringTitel, reisHerinneringen, teVersturen, type Herinnering } from '../../src/lib/herinneringen';
 import { verversAdvies } from '../../src/lib/server/reisstatus';
 import { Firestore, Tijdstempel, type FsDocument } from '../../src/lib/server/firestore';
 import { leesServiceAccount, type ServiceAccount } from '../../src/lib/server/google';
@@ -33,6 +34,8 @@ interface Context {
 	teller: Teller;
 	ritCache: Map<string, Promise<Leg | null>>;
 	nu: number;
+	/** Herinneringen die later in deze minuut precies op tijd verstuurd worden */
+	uitgesteld: Promise<number>[];
 }
 
 export async function controleer(env: CronEnv, nu = Date.now()): Promise<{ gecontroleerd: number; meldingen: number }> {
@@ -44,7 +47,7 @@ export async function controleer(env: CronEnv, nu = Date.now()): Promise<{ gecon
 	// Het ophalen van het Google-token telt ook als verzoek
 	const teller: Teller = { aantal: 1, max: MAX_VERZOEKEN };
 	const fs = new Firestore(sa, teller);
-	const ctx: Context = { fs, sa, env, teller, ritCache: new Map(), nu };
+	const ctx: Context = { fs, sa, env, teller, ritCache: new Map(), nu, uitgesteld: [] };
 
 	const pointers = await fs.lijst<ActieveReisPointer>('actieveReizen', 100);
 	// Elke minuut op een andere plek beginnen, zodat bij een vol budget iedereen aan de beurt komt
@@ -83,7 +86,22 @@ export async function controleer(env: CronEnv, nu = Date.now()): Promise<{ gecon
 			console.error(`Opruimen gedeelde reizen: ${(e as Error).message}`);
 		}
 	}
+	// Herinneringen voor in- en uitstappen die nog binnen deze minuut moeten: wachten tot het moment
+	for (const r of await Promise.allSettled(ctx.uitgesteld)) if (r.status === 'fulfilled') meldingen += r.value;
 	return { gecontroleerd, meldingen };
+}
+
+/** Wacht tot het moment van de herinnering en stuurt hem dan naar alle apparaten */
+async function verstuurHerinnering(ctx: Context, h: Herinnering, tokens: FsDocument[]): Promise<number> {
+	const wacht = h.moment - Date.now();
+	if (wacht > 0) await new Promise((klaar) => setTimeout(klaar, wacht));
+	let verstuurd = 0;
+	for (const t of tokens) {
+		const r = await stuurPush(ctx.sa, t.id, { titel: herinneringTitel(h, Date.now()), tekst: h.tekst, url: '/reis', tag: 'herinnering' }, ctx.env.APP_URL);
+		if (r === 'ok') verstuurd++;
+		if (r === 'ongeldig') await ctx.fs.verwijder(t.pad).catch(() => {});
+	}
+	return verstuurd;
 }
 
 /** Stuurt de meldingen voor de laatste trein naar huis (30 en 10 min vooraf, en bij uitval) */
@@ -153,14 +171,18 @@ async function controleerReis(ctx: Context, doc: FsDocument<ActieveReisPointer>)
 	const problemen = vindProblemen(advies, nu);
 	const gemeld = new Set(p.gemeld ?? []);
 	const nieuw = problemen.filter((x) => !gemeld.has(x.sleutel));
+	// Herinneringen voor in- en uitstappen die vóór de volgende controle aan de beurt zijn
+	const herinneringen = teVersturen(reisHerinneringen(advies, herinneringInstellingen(p.herinneringen)), gemeld, nu);
 	let verstuurd = 0;
+	let tokens: FsDocument[] | undefined;
+	const haalTokens = async () => (tokens ??= await fs.lijst(`users/${p.uid}/pushTokens`, 10));
 
 	if (nieuw.length > 0 && ctx.teller.aantal < ctx.teller.max - 2) {
-		const tokens = await fs.lijst(`users/${p.uid}/pushTokens`, 10);
+		const apparaten = await haalTokens();
 		const eerste = nieuw.find((x) => x.ernstig) ?? nieuw[0];
 		const titel = nieuw.length > 1 ? `${probleemTitel(eerste)} (+${nieuw.length - 1})` : probleemTitel(eerste);
 		const tekst = `${eerste.tekst}${eerste.ernstig ? ' Tik voor alternatieven.' : ''}`;
-		for (const t of tokens) {
+		for (const t of apparaten) {
 			if (ctx.teller.aantal >= ctx.teller.max - 1) break;
 			ctx.teller.aantal++;
 			const r = await stuurPush(ctx.sa, t.id, { titel, tekst, url: '/reis', tag: 'reis' }, ctx.env.APP_URL);
@@ -170,7 +192,19 @@ async function controleerReis(ctx: Context, doc: FsDocument<ActieveReisPointer>)
 		for (const x of nieuw) gemeld.add(x.sleutel);
 	}
 
-	if (gewijzigd || nieuw.length > 0) {
+	let herinnerd = false;
+	for (const h of herinneringen) {
+		if (ctx.teller.aantal >= ctx.teller.max - 3) break;
+		const apparaten = await haalTokens();
+		if (ctx.teller.aantal + apparaten.length > ctx.teller.max - 1) break;
+		ctx.teller.aantal += apparaten.length;
+		// Nu al als gemeld bewaren, zodat de volgende controle hem niet nog eens stuurt
+		gemeld.add(h.sleutel);
+		herinnerd = true;
+		ctx.uitgesteld.push(verstuurHerinnering(ctx, h, apparaten));
+	}
+
+	if (gewijzigd || nieuw.length > 0 || herinnerd) {
 		await fs.zet(
 			doc.pad,
 			{ advies, gemeld: [...gemeld].slice(-50), eindeOp: advies.aankomst.verwacht, laatsteCheck: tijd },

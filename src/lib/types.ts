@@ -298,6 +298,8 @@ export interface Profiel {
 	/** Niet meer in gebruik: snelst/goedkoopst/… zijn nu labels in de lijst */
 	standaardvoorkeur?: Voorkeur;
 	installatieUitlegGezien?: boolean;
+	/** Herinneringen voor in- en uitstappen: seconden van tevoren (leeg = uit; ontbreekt = standaard) */
+	herinneringen?: { instappen: number[]; uitstappen: number[] };
 }
 
 export interface GedeeldeReis {
@@ -341,6 +343,8 @@ export interface ActieveReisPointer {
 	eindeOp: string;
 	gedeeldId?: string;
 	laatsteCheck?: string;
+	/** Kopie van de instellingen voor in- en uitstapherinneringen uit het profiel */
+	herinneringen?: { instappen: number[]; uitstappen: number[] };
 }
 
 /** Een voorziening op of bij een station (NS Places API) */
