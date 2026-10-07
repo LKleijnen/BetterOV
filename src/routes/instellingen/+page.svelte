@@ -103,30 +103,6 @@
 
 	<section class="kaart stapel" aria-labelledby="push-kop">
 		<h2 id="push-kop" class="rij"><Bell size={20} aria-hidden="true" /> Meldingen tijdens je reis</h2>
-		<p class="zwak klein">Je krijgt binnen twee minuten een melding als een rit uitvalt, een overstap niet meer haalbaar of krap is, het spoor wijzigt of je flink later aankomt. En een herinnering voordat je moet in- of uitstappen:</p>
-		{#each [{ soort: 'instappen', label: 'Instappen' }, { soort: 'uitstappen', label: 'Uitstappen' }] as const as r (r.soort)}
-			<div class="stapel veld-groep">
-				<span class="label" id="herinnering-{r.soort}">{r.label}</span>
-				<div class="chips keuzes" role="group" aria-labelledby="herinnering-{r.soort}">
-					{#each HERINNERING_KEUZES as sec (sec)}
-						<button type="button" class="chip" aria-pressed={herinneringen[r.soort].includes(sec)} onclick={() => wisselHerinnering(r.soort, sec)}>
-							{duurKort(sec)}
-						</button>
-					{/each}
-				</div>
-				<span class="zwak klein">
-					{#if !herinneringen[r.soort].length}
-						Uit.
-					{:else}
-						{herinneringen[r.soort].map(duurKort).join(', ')} van tevoren.
-					{/if}
-					{r.soort === 'instappen'
-						? 'Zit je dan nog in een ander voertuig, dan komt hij pas een minuut nadat dat is aangekomen.'
-						: 'Alleen als je al onderweg bent in dat voertuig.'}
-				</span>
-			</div>
-		{/each}
-		{#if herinneringFout}<p class="status-fout klein">{herinneringFout}</p>{/if}
 		{#if isIOS() && !isStandalone()}
 			<div class="melding waarschuwing klein"><TriangleAlert size={16} /> <span>Op iPhone werken meldingen alleen als je de app eerst op je beginscherm zet (Meer → Op beginscherm zetten).</span></div>
 		{/if}
@@ -143,6 +119,21 @@
 		{#if pushMelding && push !== 'niet-ondersteund'}<p class="klein zwak">{pushMelding}</p>{/if}
 		{#if !sessie.pushIngesteld && !sessie.demo}
 			<p class="klein zwak">Let op: de server voor achtergrondmeldingen is nog niet ingesteld.</p>
+		{/if}
+		{#if push === 'aan'}
+			{#each [{ soort: 'instappen', label: 'Instappen' }, { soort: 'uitstappen', label: 'Uitstappen' }] as const as r (r.soort)}
+				<div class="stapel veld-groep">
+					<span class="label" id="herinnering-{r.soort}">{r.label}</span>
+					<div class="chips keuzes" role="group" aria-labelledby="herinnering-{r.soort}">
+						{#each HERINNERING_KEUZES as sec (sec)}
+							<button type="button" class="chip" aria-pressed={herinneringen[r.soort].includes(sec)} onclick={() => wisselHerinnering(r.soort, sec)}>
+								{duurKort(sec)}
+							</button>
+						{/each}
+					</div>
+				</div>
+			{/each}
+			{#if herinneringFout}<p class="status-fout klein">{herinneringFout}</p>{/if}
 		{/if}
 	</section>
 
