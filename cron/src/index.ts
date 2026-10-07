@@ -171,8 +171,10 @@ async function controleerReis(ctx: Context, doc: FsDocument<ActieveReisPointer>)
 	const problemen = vindProblemen(advies, nu);
 	const gemeld = new Set(p.gemeld ?? []);
 	const nieuw = problemen.filter((x) => !gemeld.has(x.sleutel));
-	// Herinneringen voor in- en uitstappen die vóór de volgende controle aan de beurt zijn
-	const herinneringen = teVersturen(reisHerinneringen(advies, herinneringInstellingen(p.herinneringen)), gemeld, nu);
+	// Herinneringen voor in- en uitstappen die vóór de volgende controle aan de beurt zijn. Alleen voor reizen
+	// die met een app-versie mét herinneringen zijn gestart (die schrijft de instellingen mee); zo kan deze
+	// cron-worker al live staan terwijl de app nog de oude versie is.
+	const herinneringen = p.herinneringen ? teVersturen(reisHerinneringen(advies, herinneringInstellingen(p.herinneringen)), gemeld, nu) : [];
 	let verstuurd = 0;
 	let tokens: FsDocument[] | undefined;
 	const haalTokens = async () => (tokens ??= await fs.lijst(`users/${p.uid}/pushTokens`, 10));

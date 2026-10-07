@@ -47,6 +47,11 @@ Zonder Firebase-config draait de app in **demo-modus**: geen login, gegevens all
 
 Tests: `npm test` (unit), `npm run test:e2e` (Playwright, met nepdata), `npm run check` (types).
 
+## Een PR proberen vóór het mergen
+Bij elke PR zet de workflow een **testversie** klaar op `https://test-betterov.<jouw-subdomein>.workers.dev` (de exacte link staat bij de PR onder *Checks → Testen en uitrollen → Summary*). De echte app verandert niet. Let op: de testversie gebruikt dezelfde gegevens (favorieten, reizen) als de echte app.
+- Eenmalig: Firebase → *Authentication* → *Settings* → *Authorized domains* → *Add domain* → `test-betterov.<jouw-subdomein>.workers.dev`. Open de testversie daarna gewoon in de browser (niet op het beginscherm zetten; dan werkt inloggen met een pop-up).
+- Pushmeldingen komen van de cron-worker, die alleen live draait. Wil je die vóór het mergen testen: GitHub → *Actions* → *Testen en uitrollen* → *Run workflow* → kies de branch van de PR → vink **cron_van_branch** aan → *Run workflow*. Merge je de PR niet, zet de cron-worker dan terug met *Run workflow* op `main` (zonder vinkje).
+
 ## Stappenplan: zelf te doen (±25 minuten)
 
 Dit kan alleen met je eigen accounts. Alles is gratis en vraagt geen creditcard.

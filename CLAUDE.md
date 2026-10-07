@@ -38,6 +38,7 @@ Advertentievrije OV-webapp (PWA) voor een kleine kring (±20 mensen, alleen op u
 - Werk op een branch, open een PR naar `main`. De workflow `.github/workflows/uitrollen.yml` test elke PR; na merge naar `main` rolt hij app én cron-worker uit naar Cloudflare en zet de secrets.
 - Secrets (GitHub → Actions → Repository secrets): `CLOUDFLARE_API_TOKEN`, `CLOUDFLARE_ACCOUNT_ID`, `NS_API_KEY`, `FIREBASE_SERVICE_ACCOUNT`, `ADMIN_EMAILS`. Variables: `PUBLIC_FIREBASE_*`.
 - Een gewijzigd GitHub-secret komt pas in Cloudflare na een nieuwe run van de workflow (*Actions → Testen en uitrollen → Run workflow*).
+- Testversie per PR: job `testversie` doet `wrangler versions upload --preview-alias test` (niet live) → `test-betterov.<subdomein>.workers.dev`. Handmatig *Run workflow* op een branch met `cron_van_branch` zet alleen de cron-worker van die branch live (om meldingen te testen); nieuwe cron-functies daarom zo bouwen dat ze niets doen voor reizen die met de oude app zijn gestart.
 
 ## Bekende open punten
 - **NS Virtual Train API** (instapadvies per bak, kortere trein, treinposities) is niet openbaar gedocumenteerd en nog niet met echte data getest. Parser: `nsSamenstelling` in `ns.ts`; de UI heeft "Ruwe NS-data" om het echte formaat te bekijken.
