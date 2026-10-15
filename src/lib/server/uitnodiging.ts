@@ -5,6 +5,7 @@
 import { ApiFout } from './http';
 import type { Firestore, FsDocument } from './firestore';
 import { normaliseerEmail } from './auth';
+import { nieuwGeheim, sha256 } from './geheim';
 
 export const GELDIG_DAGEN = 7;
 const COLLECTIE = 'uitnodigingen';
@@ -28,14 +29,11 @@ export function status(u: Uitnodiging, nu = Date.now()): UitnodigingStatus {
 
 /** Onraadbare code (192 bits), veilig in een URL */
 export function nieuweCode(): string {
-	const bytes = new Uint8Array(24);
-	crypto.getRandomValues(bytes);
-	return btoa(String.fromCharCode(...bytes)).replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '');
+	return nieuwGeheim();
 }
 
-export async function codeHash(code: string): Promise<string> {
-	const digest = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(code));
-	return [...new Uint8Array(digest)].map((b) => b.toString(16).padStart(2, '0')).join('');
+export function codeHash(code: string): Promise<string> {
+	return sha256(code);
 }
 
 export function geldigeCode(code: unknown): code is string {

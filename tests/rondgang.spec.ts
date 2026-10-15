@@ -412,3 +412,32 @@ test('voertuigen: zoeken, versie bij treinstelnummer, foto en vanuit Voertuiginf
 	await expect(page.locator('article.versie.jouw')).toContainText('6 bakken');
 	expect(fouten).toEqual([]);
 });
+
+test('AI-assistent: uitleg in de app en een MCP-endpoint dat antwoordt', async ({ page, request }) => {
+	await page.goto('/meer');
+	await page.getByRole('link', { name: /AI-assistent/ }).click();
+	await page.waitForURL('**/mcp');
+	await expect(page.getByRole('heading', { name: 'Wat is dit?' })).toBeVisible();
+	// Zonder Firebase kun je geen sleutel maken; dat zegt de pagina eerlijk
+	await expect(page.getByText(/Firebase is ingesteld/)).toBeVisible();
+
+	// Het endpoint zelf: welk gereedschap er is, en een echte reisvraag (met nepdata)
+	const lijst = await request.post('/api/mcp', { data: { jsonrpc: '2.0', id: 1, method: 'tools/list' } });
+	expect(lijst.ok()).toBe(true);
+	const namen = ((await lijst.json()).result.tools as { name: string }[]).map((t) => t.name);
+	expect(namen).toContain('plan_reis');
+	expect(namen).toContain('trein_info');
+
+	const plan = await request.post('/api/mcp', {
+		data: {
+			jsonrpc: '2.0',
+			id: 2,
+			method: 'tools/call',
+			params: { name: 'plan_reis', arguments: { van: 'Utrecht Centraal', naar: 'Amsterdam Centraal', aantal: 2 } }
+		}
+	});
+	const uitkomst = (await plan.json()).result as { content: { text: string }[]; isError: boolean };
+	expect(uitkomst.isError).toBe(false);
+	expect(uitkomst.content[0].text).toContain('Reisadviezen Utrecht Centraal');
+	expect(uitkomst.content[0].text).toMatch(/\d{2}:\d{2} → \d{2}:\d{2}/);
+});
