@@ -4,7 +4,7 @@ rules_version = '2';
 // - Alleen ingelogde gebruikers met een geverifieerd e-mailadres op de allowlist mogen iets.
 // - Iedereen ziet alleen zijn eigen gegevens.
 // - Een gedeelde reis is zonder login leesbaar met de (onraadbare) ID, tot verlooptOp.
-// - De allowlist wordt alleen door de server (service account) beheerd.
+// - De allowlist en de MCP-sleutels worden alleen door de server (service account) beheerd.
 
 service cloud.firestore {
   match /databases/{database}/documents {
@@ -29,6 +29,11 @@ service cloud.firestore {
       // Alleen je eigen regel mag je zien; wijzigen gaat via de server
       allow get: if ingelogd() && email() == adres;
       allow list, write: if false;
+    }
+
+    // Sleutels voor AI-assistenten (MCP): alleen de server (service account) leest en schrijft die
+    match /mcpSleutels/{hash} {
+      allow read, write: if false;
     }
 
     match /users/{uid} {

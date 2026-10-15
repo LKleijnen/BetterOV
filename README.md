@@ -34,6 +34,7 @@ Advertentievrije OV-webapp (PWA) voor eigen gebruik en een kleine kring vrienden
 | — | Stationspagina: kaart van het station met voorzieningen (NS Places API), sporen, reisassistentie, OV-fietsen, openingstijden; bij een overstap met aankomst- en vertrekspoor | Stationsicoon bij een treinhalte, overstap |
 | C1, C2 | Eerdere reizen, weekplanning van vaste reizen | Meer |
 | — | Weergave automatisch (systeem), licht of donker | Meer → Instellingen |
+| — | AI-assistent (MCP): koppel Claude of een andere assistent en vraag in gewone taal hoe je moet reizen, welke trein je hebt, in welk deel je moet zitten of of je je overstap haalt; de assistent kan ook een reis laten bewaken | Meer → AI-assistent |
 
 ## Lokaal proberen
 
@@ -120,6 +121,18 @@ Optioneel: zet de GitHub-variabele `PUBLIC_FIREBASE_AUTH_DOMAIN` op `betterov.<j
 ### 8. In gebruik nemen
 Open de app, log in met Google en nodig mensen uit via *Meer* → *Beheer: uitnodigingen*: maak een uitnodigingslink en stuur die via WhatsApp of mail. Wie de link opent en inlogt met Google, krijgt meteen toegang (de link werkt één keer en is 7 dagen geldig). Een Gmail-adres direct toevoegen kan ook nog. Op iPhone: Safari → *Deel* → *Zet op beginscherm*, daarna meldingen aanzetten via *Meer* → *Instellingen*.
 
+## AI-assistent (MCP)
+
+BetterOV heeft een MCP-endpoint (`/api/mcp`), zodat een AI-assistent alles kan wat de app zelf ook kan. Zo zet je het aan:
+
+1. Open in de app *Meer* → *AI-assistent* en maak een sleutel. Kopieer hem meteen: hij is daarna niet meer te zien (de server bewaart alleen een SHA-256).
+2. Voeg in je assistent een MCP-server van het soort **HTTP** toe met het adres `https://<jouw-app>/api/mcp` en de kop `Authorization: Bearer bov_…`.
+   Met Claude Code in de terminal: `claude mcp add --transport http betterov https://<jouw-app>/api/mcp --header "Authorization: Bearer bov_…"`.
+   Kan een programma geen koppen meegeven, dan mag de sleutel ook in het adres (`?sleutel=bov_…`) — minder veilig, want de sleutel komt dan in logboeken.
+3. Vraag bijvoorbeeld: *“Hoe kom ik nu thuis?”*, *“Welk spoor en is de trein korter dan normaal?”*, *“Haal ik mijn overstap?”*
+
+Het gereedschap: `plan_reis`, `vertrektijden`, `mijn_reis`, `trein_info`, `rit_haltes`, `station_info`, `voertuig_info`, `zoek_plek`, `laatste_trein_naar_huis`, `mijn_gegevens`, `start_reis` en `stop_reis`. Alleen de laatste twee veranderen iets (ze starten of stoppen de bewaking van een reis, met pushmeldingen); de assistent vraagt daar eerst om bevestiging. Een sleutel geeft toegang tot je eigen gegevens (reizen, thuislocatie, favorieten), dus behandel hem als een wachtwoord en trek hem in als je hem niet meer gebruikt.
+
 ## Architectuur
 
 | Route | Doet |
@@ -136,11 +149,14 @@ Open de app, log in met Google en nodig mensen uit via *Meer* → *Beheer: uitno
 | `GET /api/rit`, `/api/voertuig`, `/api/zoek`, `/api/omgekeerd` | Rit met alle haltes, treinpositie, zoeken, adres bij GPS |
 | `GET /api/station` | NS-station (code, of naam + lat/lon): sporen, soort, reisassistentie en voorzieningen |
 | `GET/POST/DELETE /api/wekker` | Waarschuwing voor de laatste trein naar huis aan/uit (Firestore `laatsteTreinWekkers`) |
+| `POST /api/mcp` | MCP-endpoint voor AI-assistenten (JSON-RPC 2.0, zonder sessies); inloggen met een MCP-sleutel |
+| `GET/POST/DELETE /api/mcp-sleutels` | Je eigen MCP-sleutels maken, tonen en intrekken |
 | Cron (elke minuut) | Controleert actieve reizen, stuurt push, waarschuwt voor de laatste trein naar huis, rondt reizen af, ruimt gedeelde reizen op |
 
 Datamodel zoals in de projectomschrijving, met twee toevoegingen:
 - `actieveReizen/{uid}`: compacte kopie van de actieve reis, zodat de cron alleen actieve reizen leest (geen extra index nodig).
 - `users/{uid}/plekken/{id}`: favoriete plekken (werk, oma, …).
+- `mcpSleutels/{sha256}`: sleutels voor AI-assistenten (alleen de hash, met uid en e-mailadres). Alleen de server leest en schrijft ze.
 
 ## Beperkingen en nog te controleren
 
