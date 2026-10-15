@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { behandelBericht, behandelPayload, FOUT, MCP_VERSIE, type Behandelaar, type Gereedschap } from './protocol';
+import { behandelBericht, behandelPayload, BEKENDE_VERSIES, FOUT, MCP_VERSIE, type Behandelaar, type Gereedschap } from './protocol';
 
 const echo: Gereedschap<{ naam: string }> = {
 	naam: 'echo',
@@ -40,9 +40,19 @@ describe('MCP-protocol', () => {
 		});
 	});
 
-	it('valt bij een onbekende versie terug op onze eigen versie', async () => {
-		const a = await roep({ jsonrpc: '2.0', id: 1, method: 'initialize', params: { protocolVersion: 'gisteren' } });
-		expect((a?.result as { protocolVersion: string }).protocolVersion).toBe(MCP_VERSIE);
+	it('valt bij een onbekende of nieuwere versie terug op een versie die we echt doen', async () => {
+		for (const gevraagd of ['gisteren', '2026-07-28']) {
+			const a = await roep({ jsonrpc: '2.0', id: 1, method: 'initialize', params: { protocolVersion: gevraagd } });
+			expect((a?.result as { protocolVersion: string }).protocolVersion).toBe(MCP_VERSIE);
+		}
+		// We beweren geen versie te spreken waarvan we de handdruk niet hebben
+		expect(BEKENDE_VERSIES).not.toContain('2026-07-28');
+	});
+
+	it('antwoordt ook op server/discover, voor clients zonder initialize', async () => {
+		const a = await roep({ jsonrpc: '2.0', id: 9, method: 'server/discover' });
+		expect(a?.result).toMatchObject({ serverInfo: { name: 'betterov' }, capabilities: { tools: { listChanged: false } } });
+		expect((a?.result as { protocolVersions: string[] }).protocolVersions).toContain(MCP_VERSIE);
 	});
 
 	it('werkt ook zonder initialize (geen sessie nodig)', async () => {

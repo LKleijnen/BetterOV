@@ -4,8 +4,14 @@
 
 export const MCP_VERSIE = '2025-06-18';
 
-/** Versies die we kennen; vraagt een client er een van, dan antwoorden we met diezelfde versie */
-export const BEKENDE_VERSIES = ['2024-11-05', '2025-03-26', '2025-06-18', '2025-11-25', '2026-07-28'];
+/**
+ * Versies die we kennen; vraagt een client er een van, dan antwoorden we met diezelfde versie.
+ * Revisie 2026-07-28 staat er bewust NIET bij: die schaft de initialize-handdruk af en vervangt
+ * hem door `server/discover`, en dat antwoord hebben we niet tegen de echte specificatie kunnen
+ * controleren. We kaatsen dus liever een versie terug die we wél helemaal doen; een client die
+ * nieuwer is, hoort daarop terug te vallen.
+ */
+export const BEKENDE_VERSIES = ['2024-11-05', '2025-03-26', '2025-06-18', '2025-11-25'];
 
 export interface JsonRpcBericht {
 	jsonrpc?: unknown;
@@ -114,6 +120,18 @@ export async function behandelBericht<C>(
 		case 'initialize':
 			return antwoord(id, {
 				protocolVersion: kiesVersie(params.protocolVersion),
+				capabilities: { tools: { listChanged: false } },
+				serverInfo: { name: server.naam, title: server.titel, version: server.versie },
+				instructions: server.instructies
+			});
+		// Vanaf revisie 2026-07-28 vervangt server/discover de initialize-handdruk. De precieze vorm
+		// van dit antwoord konden we niet tegen de specificatie controleren, dus we geven dezelfde
+		// gegevens als bij initialize: een client die deze methode nodig heeft, kan daar meer mee
+		// dan met "methode onbekend".
+		case 'server/discover':
+			return antwoord(id, {
+				protocolVersion: MCP_VERSIE,
+				protocolVersions: BEKENDE_VERSIES,
 				capabilities: { tools: { listChanged: false } },
 				serverInfo: { name: server.naam, title: server.titel, version: server.versie },
 				instructions: server.instructies

@@ -1,6 +1,6 @@
 <script lang="ts">
 	import { onMount } from 'svelte';
-	import { Bot, Check, ChevronLeft, Copy, KeyRound, Plus, Trash2 } from '@lucide/svelte';
+	import { Bot, Check, ChevronLeft, Copy, KeyRound, Plus, Trash2, TriangleAlert } from '@lucide/svelte';
 	import { api } from '$lib/client/api';
 	import { sessie } from '$lib/client/sessie.svelte';
 	import { firebaseActief } from '$lib/client/config';
@@ -24,7 +24,9 @@
 
 	let adres = $state('/api/mcp');
 	const voorbeeldSleutel = $derived(nieuw ?? 'bov_JOUW_SLEUTEL');
-	const opdracht = $derived(`claude mcp add --transport http betterov ${adres} --header "Authorization: Bearer ${voorbeeldSleutel}"`);
+	const kopWaarde = $derived(`Bearer ${voorbeeldSleutel}`);
+	const adresMetSleutel = $derived(`${adres}/${voorbeeldSleutel}`);
+	const opdracht = $derived(`claude mcp add --transport http --scope user betterov ${adres} --header "Authorization: Bearer ${voorbeeldSleutel}"`);
 
 	async function laad() {
 		try {
@@ -74,6 +76,12 @@
 	});
 </script>
 
+{#snippet kopieerknop(tekst: string, wat: string, label: string)}
+	<button class="knop tweede klein" onclick={() => kopieer(tekst, wat)}>
+		{#if gekopieerd === wat}<Check size={18} /> Gekopieerd{:else}<Copy size={18} /> {label}{/if}
+	</button>
+{/snippet}
+
 <svelte:head><title>AI-assistent · BetterOV</title></svelte:head>
 
 <main class="pagina stapel">
@@ -85,7 +93,7 @@
 	<section class="kaart stapel">
 		<h2 class="rij"><Bot size={20} aria-hidden="true" /> Wat is dit?</h2>
 		<p>
-			Je kunt een AI-assistent (zoals Claude of ChatGPT) aan BetterOV koppelen. Daarna kun je gewoon vragen stellen:
+			Je kunt een AI-assistent (zoals Claude) aan BetterOV koppelen. Daarna kun je gewoon vragen stellen:
 			<em>“Hoe reis ik nu naar huis?”</em>, <em>“Welke trein moet ik pakken?”</em>, <em>“In welk deel van de trein moet ik zitten?”</em>
 			of <em>“Haal ik mijn overstap nog?”</em>
 		</p>
@@ -120,40 +128,64 @@
 					<input class="veld" bind:value={naam} maxlength="40" placeholder="Waarvoor is de sleutel? (bijv. Claude op mijn telefoon)" aria-label="Naam van de sleutel" />
 					<button class="knop" type="submit" disabled={bezig}><Plus size={18} /> {bezig ? 'Maken…' : 'Maak een sleutel'}</button>
 				</form>
+				<p class="zwak klein">Houd de sleutel erbij: je hebt hem bij stap 2 nodig en je ziet hem maar één keer.</p>
 			{/if}
 		</section>
 
 		<section class="kaart stapel">
-			<h2>Stap 2: koppel je assistent</h2>
-			<p class="klein">Het adres van BetterOV voor assistenten:</p>
-			<div class="code klein">{adres}</div>
-			<button class="knop tweede klein" onclick={() => kopieer(adres, 'adres')}>
-				{#if gekopieerd === 'adres'}<Check size={18} /> Gekopieerd{:else}<Copy size={18} /> Kopieer adres{/if}
-			</button>
-
-			<h3>In Claude (of een andere assistent met “MCP”)</h3>
-			<ol class="klein stappen">
-				<li>Zoek in de instellingen naar <strong>Connectors</strong> of <strong>MCP-servers</strong> en kies “toevoegen”.</li>
-				<li>Soort verbinding: <strong>HTTP</strong> (soms “Streamable HTTP” of “remote server”).</li>
-				<li>Adres: het adres hierboven.</li>
-				<li>
-					Voeg een kop (“header”) toe met naam <code>Authorization</code> en als waarde
-					<code>Bearer {voorbeeldSleutel}</code>.
-				</li>
-			</ol>
-
-			<h3>Met Claude Code in de terminal</h3>
-			<div class="code klein">{opdracht}</div>
-			<button class="knop tweede klein" onclick={() => kopieer(opdracht, 'opdracht')}>
-				{#if gekopieerd === 'opdracht'}<Check size={18} /> Gekopieerd{:else}<Copy size={18} /> Kopieer opdracht{/if}
-			</button>
-
-			<h3>Als je alleen een adres kwijt kan</h3>
-			<p class="zwak klein">
-				Sommige programma’s kunnen geen koppen meegeven. Dan mag de sleutel ook in het adres:
-				<code>{adres}?sleutel={voorbeeldSleutel}</code>. Minder veilig (de sleutel staat dan in logboeken), dus gebruik
-				het alleen als het anders niet lukt, en trek de sleutel in als je hem niet meer gebruikt.
+			<h2>Stap 2: de Claude-app (werkt daarna ook op je telefoon)</h2>
+			<p class="klein">
+				<strong>Doe dit op een computer of laptop</strong>, in de browser of in de Claude-desktopapp. In de Claude-app op je
+				telefoon kun je geen nieuwe connector toevoegen — maar zodra je het hier hebt gedaan, staat BetterOV automatisch ook
+				in de app op je telefoon.
 			</p>
+			<ol class="klein stappen">
+				<li>Ga naar <strong>claude.ai</strong> → klik op je naam of profielfoto → <strong>Settings</strong> → <strong>Connectors</strong>.</li>
+				<li>Klik op <strong>Add custom connector</strong> (soms eerst op <strong>Add</strong> en dan op <strong>Custom</strong>).</li>
+				<li>Naam: <strong>BetterOV</strong>.</li>
+				<li>
+					URL: dit adres, <strong>zonder</strong> je sleutel erachter.
+					<div class="code klein">{adres}</div>
+					{@render kopieerknop(adres, 'adres', 'Kopieer adres')}
+				</li>
+				<li>Bij <strong>Authentication</strong>: kies <strong>No sign-in</strong>. Laat OAuth-velden leeg.</li>
+				<li>
+					Bij <strong>Request headers</strong>: kies als naam <strong>authorization</strong> (niet iets anders) en vul als waarde in:
+					<div class="code klein">{kopWaarde}</div>
+					{@render kopieerknop(kopWaarde, 'kop', 'Kopieer waarde')}
+				</li>
+				<li>Klik <strong>Add</strong>. Onder <em>Your connectors</em> moet BetterOV nu op <strong>Connected</strong> staan.</li>
+				<li>In een gesprek gebruiken: open een nieuw gesprek, tik op <strong>+</strong> bij het tekstvak → <strong>Connectors</strong> → zet BetterOV aan. Dat doe je per gesprek, ook op je telefoon.</li>
+			</ol>
+			<p class="let-op klein">
+				<TriangleAlert size={18} aria-hidden="true" />
+				<span>
+					Zie je bij stap 6 <strong>geen</strong> kopje <em>Request headers</em>? Dan heeft jouw Claude-account die functie nog
+					niet (hij wordt stap voor stap uitgerold). Dat is geen fout van jou — probeer dan stap 3.
+				</span>
+			</p>
+		</section>
+
+		<section class="kaart stapel">
+			<h2>Stap 3: alleen als stap 2 niet lukt</h2>
+			<p class="klein">
+				Kan de app je sleutel niet als kop meesturen, dan mag hij ook ín het adres. Vul dan bij <strong>URL</strong> dit in,
+				kies <strong>No sign-in</strong> en vul geen koppen in:
+			</p>
+			<div class="code klein">{adresMetSleutel}</div>
+			{@render kopieerknop(adresMetSleutel, 'adres-sleutel', 'Kopieer adres met sleutel')}
+			<p class="zwak klein">
+				Let op: dit adres is dan net zo geheim als een wachtwoord, want je sleutel zit erin. Het is ook de minst zekere weg —
+				Claude raadt sleutels in een adres af en het kan geweigerd worden. Krijg je <em>“Couldn't reach the MCP server”</em>,
+				stop dan en laat het mij weten; dan moet er echte login (OAuth) in BetterOV komen.
+			</p>
+		</section>
+
+		<section class="kaart stapel">
+			<h2>Op je laptop in de terminal (werkt zeker)</h2>
+			<p class="zwak klein">Gebruik je Claude Code? Dan is dit de simpelste en meest betrouwbare manier — maar alleen op die laptop, niet op je telefoon.</p>
+			<div class="code klein">{opdracht}</div>
+			{@render kopieerknop(opdracht, 'opdracht', 'Kopieer opdracht')}
 		</section>
 
 		<section class="kaart stapel">
@@ -172,6 +204,10 @@
 				{/each}
 				{#if !laden && sleutels.length === 0}<li class="zwak">Nog geen sleutels.</li>{/if}
 			</ul>
+			<p class="zwak klein">
+				Maak je een nieuwe sleutel, dan moet je de connector in Claude verwijderen (de drie puntjes → <em>Remove</em>) en
+				opnieuw toevoegen: Claude laat de sleutel van een bestaande connector niet meer wijzigen.
+			</p>
 		</section>
 	{/if}
 </main>
@@ -184,25 +220,15 @@
 	h2 {
 		margin: 0;
 	}
-	h3 {
-		margin: 8px 0 0;
-		font-size: 0.9rem;
-		color: var(--tekst-zwak);
-	}
 	p {
 		margin: 0;
 	}
 	.code {
+		margin: 6px 0;
 		padding: 10px;
 		border-radius: 10px;
 		background: var(--kaart-2);
 		font-family: ui-monospace, 'SF Mono', Menlo, monospace;
-		word-break: break-all;
-	}
-	code {
-		padding: 1px 4px;
-		border-radius: 5px;
-		background: var(--kaart-2);
 		word-break: break-all;
 	}
 	.stappen {
@@ -210,7 +236,15 @@
 		padding-left: 20px;
 		display: flex;
 		flex-direction: column;
-		gap: 6px;
+		gap: 10px;
+	}
+	.let-op {
+		display: flex;
+		gap: 8px;
+		align-items: flex-start;
+		padding: 10px;
+		border-radius: 10px;
+		background: var(--kaart-2);
 	}
 	.lijstje {
 		display: flex;
