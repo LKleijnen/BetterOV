@@ -11,6 +11,28 @@ const COLLECTIE = 'mcpSleutels';
 /** Zo begint elke sleutel; daarmee weet de server dat dit geen Firebase-token is */
 export const SLEUTEL_PREFIX = 'bov_';
 
+/** Het MCP-endpoint; met de sleutel erachter (/api/mcp/bov_…) voor clients die geen kop kunnen sturen */
+export const MCP_PAD = '/api/mcp';
+
+export function isMcpPad(pad: string): boolean {
+	return pad === MCP_PAD || pad.startsWith(`${MCP_PAD}/`);
+}
+
+/**
+ * De MCP-sleutel bij een verzoek: uit de Authorization-kop (de nette manier), uit x-mcp-sleutel,
+ * of als laatste stuk van het pad. Niet uit de querystring: de MCP-specificatie verbiedt tokens
+ * daar, en Anthropic raadt het af omdat URL-parameters in logboeken belanden.
+ */
+export function sleutelUitVerzoek(pad: string, koppen: { get(naam: string): string | null }): string | null {
+	const kop = koppen.get('authorization') ?? '';
+	const kandidaten = [
+		kop.startsWith('Bearer ') ? kop.slice(7).trim() : '',
+		koppen.get('x-mcp-sleutel')?.trim() ?? '',
+		pad.startsWith(`${MCP_PAD}/`) ? decodeURIComponent(pad.slice(MCP_PAD.length + 1)).replace(/\/+$/, '').trim() : ''
+	];
+	return kandidaten.find(geldigeSleutel) ?? null;
+}
+
 export interface McpSleutel {
 	uid: string;
 	email: string;

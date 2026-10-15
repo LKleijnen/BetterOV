@@ -1,6 +1,15 @@
 import { describe, expect, it } from 'vitest';
 import type { FsDocument } from './firestore';
-import { eigenaarVanSleutel, geldigeSleutel, lijstSleutels, maakSleutel, sleutelHash, trekSleutelIn } from './mcpsleutel';
+import {
+	eigenaarVanSleutel,
+	geldigeSleutel,
+	isMcpPad,
+	lijstSleutels,
+	maakSleutel,
+	sleutelHash,
+	sleutelUitVerzoek,
+	trekSleutelIn
+} from './mcpsleutel';
 
 /** Firestore in het geheugen, met een eenvoudige zoekopdracht op één veld */
 function nepOpslag() {
@@ -69,6 +78,34 @@ describe('MCP-sleutels', () => {
 		expect(fs.docs.has(`mcpSleutels/${andermans.id}`)).toBe(true);
 		await trekSleutelIn(fs, 'u1', mijn.id);
 		expect(await eigenaarVanSleutel(fs, mijn.sleutel)).toBeNull();
+	});
+
+	describe('waar een sleutel mag staan', () => {
+		const koppen = (x: Record<string, string> = {}) => ({ get: (n: string) => x[n] ?? null });
+		const SLEUTEL = 'bov_abcdefghijklmnopqrstuvwxyz12345';
+
+		it('leest de sleutel uit de Authorization-kop, x-mcp-sleutel of het pad', () => {
+			expect(sleutelUitVerzoek('/api/mcp', koppen({ authorization: `Bearer ${SLEUTEL}` }))).toBe(SLEUTEL);
+			expect(sleutelUitVerzoek('/api/mcp', koppen({ 'x-mcp-sleutel': SLEUTEL }))).toBe(SLEUTEL);
+			// Voor clients die geen eigen kop kunnen sturen: de sleutel achter het pad
+			expect(sleutelUitVerzoek(`/api/mcp/${SLEUTEL}`, koppen())).toBe(SLEUTEL);
+			expect(sleutelUitVerzoek(`/api/mcp/${SLEUTEL}/`, koppen())).toBe(SLEUTEL);
+		});
+
+		it('leest hem niet uit de querystring (verboden door de MCP-specificatie)', () => {
+			expect(sleutelUitVerzoek('/api/mcp', koppen())).toBeNull();
+			// De querystring zit niet in het pad, dus ook via die weg komt er niets binnen
+			expect(sleutelUitVerzoek('/api/mcp', koppen({ authorization: 'Bearer onzin' }))).toBeNull();
+			expect(sleutelUitVerzoek('/api/mcp/geen-geldige-sleutel', koppen())).toBeNull();
+		});
+
+		it('ziet alleen het MCP-endpoint als MCP-pad, niet het sleutelbeheer', () => {
+			expect(isMcpPad('/api/mcp')).toBe(true);
+			expect(isMcpPad(`/api/mcp/${SLEUTEL}`)).toBe(true);
+			// Hier mag een MCP-sleutel juist NIET gelden: dit beheert sleutels en vraagt om een echte login
+			expect(isMcpPad('/api/mcp-sleutels')).toBe(false);
+			expect(isMcpPad('/api/plan')).toBe(false);
+		});
 	});
 
 	it('keurt alleen sleutels met het juiste voorvoegsel en lengte goed', () => {

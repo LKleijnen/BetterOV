@@ -1,35 +1,23 @@
-import { json, type Handle, type RequestEvent } from '@sveltejs/kit';
+import { json, type Handle } from '@sveltejs/kit';
 import { config } from '$lib/server/config';
 import { controleerAllowlist, controleerIdToken, isBeheerder } from '$lib/server/auth';
 import { Firestore } from '$lib/server/firestore';
-import { eigenaarVanSleutel, geldigeSleutel } from '$lib/server/mcpsleutel';
+import { eigenaarVanSleutel, isMcpPad, sleutelUitVerzoek } from '$lib/server/mcpsleutel';
 
-/** Het MCP-endpoint voor AI-assistenten; daar mag je ook met een MCP-sleutel inloggen */
-const MCP_PAD = '/api/mcp';
-
-/** Koppen bij een weigering op /api/mcp: ook een client in de browser moet de melding kunnen lezen */
+/** Koppen bij een weigering op het MCP-endpoint: ook een client in de browser moet de melding lezen */
 const MCP_FOUTKOPPEN = { 'access-control-allow-origin': '*' };
 const UITDAGING = { ...MCP_FOUTKOPPEN, 'www-authenticate': 'Bearer realm="BetterOV", error="invalid_token"' };
-
-/** Een MCP-sleutel uit de kop (gewoonlijk), of uit de URL voor clients die alleen een link aankunnen */
-function mcpSleutel(event: RequestEvent): string | null {
-	const kop = event.request.headers.get('authorization') ?? '';
-	const kandidaten = [
-		kop.startsWith('Bearer ') ? kop.slice(7).trim() : '',
-		event.request.headers.get('x-mcp-sleutel')?.trim() ?? '',
-		event.url.searchParams.get('sleutel')?.trim() ?? ''
-	];
-	return kandidaten.find(geldigeSleutel) ?? null;
-}
 
 export const handle: Handle = async ({ event, resolve }) => {
 	const pad = event.url.pathname;
 
 	if (pad.startsWith('/api/')) {
 		const c = config();
-		const sleutel = pad === MCP_PAD ? mcpSleutel(event) : null;
+		// Alleen op het MCP-endpoint mag je met een MCP-sleutel inloggen in plaats van met Google
+		const mcp = isMcpPad(pad);
 		// Een MCP-client vraagt eerst welke koppen mogen (CORS); daar hoort nog geen sleutel bij
-		if (pad === MCP_PAD && event.request.method === 'OPTIONS') return resolve(event);
+		if (mcp && event.request.method === 'OPTIONS') return resolve(event);
+		const sleutel = mcp ? sleutelUitVerzoek(pad, event.request.headers) : null;
 
 		if (sleutel) {
 			if (!c.serviceAccount) {
@@ -54,8 +42,8 @@ export const handle: Handle = async ({ event, resolve }) => {
 			const token = kop.startsWith('Bearer ') ? kop.slice(7) : '';
 			const gebruiker = token ? await controleerIdToken(token, c.projectId) : null;
 			if (!gebruiker) {
-				const melding = pad === MCP_PAD ? 'Geef een MCP-sleutel mee in de Authorization-kop (Bearer bov_…).' : 'Je bent niet ingelogd.';
-				return json({ fout: melding }, { status: 401, headers: pad === MCP_PAD ? UITDAGING : undefined });
+				const melding = mcp ? 'Geef een MCP-sleutel mee in de Authorization-kop (Bearer bov_…).' : 'Je bent niet ingelogd.';
+				return json({ fout: melding }, { status: 401, headers: mcp ? UITDAGING : undefined });
 			}
 			const admin = isBeheerder(gebruiker.email, c.beheerders);
 			const uitslag = await controleerAllowlist(gebruiker.email, c.serviceAccount, c.beheerders);
