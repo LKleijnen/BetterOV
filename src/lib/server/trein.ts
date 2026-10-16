@@ -233,10 +233,9 @@ export function bepaalSplitsing(
 		for (let i = iVan + 1; i < stoppend.length && begin; i++) {
 			const n = aantalDelen(stoppend[i]);
 			if (n !== undefined && n < begin) {
+				// Vanaf hier rijden minder treinstellen mee. Of de rest ergens anders heen gaat (of hier blijft staan)
+				// staat niet in de ritdata; "Maastricht / Heerlen" op het bord zegt ook niet wáár de splitsing is.
 				iSplits = i;
-				// Waar de rest heen gaat staat soms in de bestemming op het bord ("Maastricht / Heerlen")
-				const bord = (stoppend[iVan].bestemming ?? '').split('/').map((b) => b.trim()).filter(Boolean);
-				if (bord.length > 1) anderen = bord.filter((b) => !zelfdeNaam(b, eind?.naam));
 				break;
 			}
 		}
@@ -293,7 +292,8 @@ export function bepaalSplitsing(
 		jouwBestemming: perTreinstel ? undefined : jouwBestemming,
 		andereBestemmingen: perTreinstel || !anderen.length ? undefined : anderen,
 		// Weten we het station zeker, dan alleen als het vóór je uitstapstation is; anders liever wel waarschuwen
-		voorUitstappen: iSplits < 0 || iNaar < 0 || (zeker ? iSplits < iNaar : iSplits <= iNaar)
+		voorUitstappen: iSplits < 0 || iNaar < 0 || (zeker ? iSplits < iNaar : iSplits <= iNaar),
+		...(!zeker && !perTreinstel && iSplits >= 0 ? { alleenKorter: true } : {})
 	};
 }
 

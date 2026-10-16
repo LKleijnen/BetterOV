@@ -183,6 +183,8 @@ export interface Splitsing {
 	andereBestemmingen?: string[];
 	/** Splitst vóór je uitstapt (anders ter informatie) */
 	voorUitstappen: boolean;
+	/** Alleen gezien aan minder treinstellen vanaf dit station: of het andere deel ergens anders heen rijdt is onbekend */
+	alleenKorter?: boolean;
 }
 
 export interface BakInfo {

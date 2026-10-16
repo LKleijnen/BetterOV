@@ -16,6 +16,25 @@ const info = (extra: Partial<TreinInfo>): TreinInfo => ({
 });
 
 describe('tekst bij splitsen', () => {
+	it('beweert niets over het andere deel als alleen de trein korter wordt', () => {
+		const t = splitsTekst(
+			info({
+				instapadvies: { eersteKlas: [], stilte: [], rijrichting: 'rechts', samenvatting: [], nauwkeurig: false },
+				splitsing: {
+					station: 'Eindhoven Centraal',
+					jouwDelen: [0],
+					bestemmingen: [{ deel: 0, naar: 'Maastricht' }],
+					jouwBestemming: 'Maastricht',
+					voorUitstappen: true,
+					alleenKorter: true
+				}
+			})
+		);
+		expect(t?.kop).toBe('Niet de hele trein rijdt verder dan Eindhoven Centraal');
+		expect(t?.jouw).toBe('Zit in het achterste deel naar Maastricht.');
+		expect(t?.anders).toBe('Waar het andere deel daarna heen gaat, geeft NS niet door.');
+	});
+
 	it('zegt in welk deel je moet zitten', () => {
 		const t = splitsTekst(
 			info({
